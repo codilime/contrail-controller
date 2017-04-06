@@ -93,8 +93,10 @@ void KSyncFlowMemory::InitFlowMem() {
     int encode_len, error, ret;
 
     assert((cl = nl_register_client()) != NULL);
-    //WINDOWSFIX assert(nl_socket(cl, AF_NETLINK, SOCK_DGRAM, NETLINK_GENERIC) > 0);
+#ifndef _WINDOWS
+    assert(nl_socket(cl, AF_NETLINK, SOCK_DGRAM, NETLINK_GENERIC) > 0);
     assert(nl_connect(cl, 0, 0) == 0);
+#endif
     assert(vrouter_get_family_id(cl) > 0);
 
     //WINDOWSFIX assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
