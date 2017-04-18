@@ -110,7 +110,7 @@ env.Prepend(LIBS=['bgp',
 		  'boost_chrono',
                   'boost_program_options',
                   'boost_filesystem',
-                  'crypto', 'ssl'])
+                  'libeay32', 'ssleay32'])
 
 if sys.platform != 'darwin':
     env.Append(LIBS=['rt'])

@@ -37,38 +37,7 @@
 static AclTable *acl_table_;
 
 using namespace autogen;
-int clock_gettime(int, struct timespec * ts)
-{
-	return 0;
 
-}
-u_int32_t custom_htonl(u_int32_t x)
-{
-	//#if BYTE_ORDER == LITTLE_ENDIAN
-	u_char *s = (u_char *)&x;
-	return (u_int32_t)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
-	//else
-	//	return x;
-	//#endif
-}
-unsigned int  sleep(unsigned int) { return 0; }
-void  bzero(unsigned char *, int) { }
-int  usleep(unsigned int) { return 0; }
-int  getrlimit(int, struct rlimit *) { return 0; }
-int  getrusage(int, struct rusage *) { return 0; }
-int  close(int) { return 0; }
-int  setrlimit(int, struct rlimit const *) { return 0; }
-void  WindowsCloseTaskFiles(void) {}
-char * gettempdirectory(void) { return 0; }
-unsigned long  getppid(void) { return 0; }
-char *  strptime(char const *, char const *, struct tm *) {return nullptr;}
-__int64  timegm(struct tm *) { return 0; }
-struct tm *  gmtime_r(__int64 const *, struct tm *){return nullptr;} 
-int ioctl(int fd, unsigned long request, ...) { return 0; }
-unsigned int  if_nametoindex(char const *) { return 0; }
-void  if_freenameindex(struct if_nameindex *) { return ; }
-struct if_nameindex *  if_nameindex(void) { return 0; }
-struct ether_addr *  ether_aton(char const *) { return 0; }
 
 SandeshTraceBufferPtr AclTraceBuf(SandeshTraceBufferCreate("Acl", 32000));
 

@@ -11,7 +11,8 @@ subdirs = [
     'rapidjson',
     'thrift',
     'openvswitch',
-	'openssl'
+	'openssl',
+	'windowsstubs'
 ]
 
 (distname, version, _) = platform.dist()

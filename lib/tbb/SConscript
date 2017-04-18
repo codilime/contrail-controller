@@ -12,9 +12,14 @@ print 'building windows tbb'
 vpath = '#/third_party/tbb2017_20160916oss'
 
 env = DefaultEnvironment()
-arch = 'ia32'
+
+if env['TARGET_ARCH'] == 'x86':
+   arch = 'ia32'
+else:
+   arch = 'intel64'
+
 vcversion = 'vc14'
-bindir = r'\build\windows_' + arch + '_cl_' + vcversion +'_debug'#debug is default for now
+bindir = r'\build\windows_' + arch + '_cl_' + vcversion +'_' + env['TARGET_CONFIG'] #debug is default for now
 abs_vpath = Dir(vpath).abspath
 
 def build_tbb_for_windows(target,source,env):

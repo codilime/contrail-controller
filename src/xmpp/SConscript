@@ -47,7 +47,7 @@ libxmpp = env.Library('xmpp',
                       ] + sandesh_files_ )
 
 env.Prepend(LIBS=['sandesh', 'http_parser', 'curl', 'http',
-                  'io', 'ssl', 'pugixml', 'xml', 'boost_regex'])
+                  'io', 'ssleay32', 'pugixml', 'xml', 'boost_regex'])
 
 if sys.platform != 'darwin':
     env.Append(LIBS=['rt'])

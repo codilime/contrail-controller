@@ -2,11 +2,16 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
+#ifdef _WINDOWS
+#include <boost/asio.hpp>
+#include <windows.h>
+#endif
+
 #include <memory>
 
 #include <pthread.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+//#include <sys/socket.h>
 #include <netinet/in.h>
 
 #include <boost/bind.hpp>
@@ -162,6 +167,7 @@ protected:
 
 TEST_F(EchoServerTest, Basic) {
     server_->Initialize(0);
+	
     task_util::WaitForIdle();
     thread_->Start();		// Must be called after initialization
     int port = server_->GetPort();
@@ -173,6 +179,7 @@ TEST_F(EchoServerTest, Basic) {
     client_->SetSocketOptions();
     task_util::WaitForIdle();
     TASK_UTIL_EXPECT_TRUE(client_->GetSession()->IsEstablished());
+	
     TASK_UTIL_ASSERT_TRUE((server_->GetSession() != NULL));
 
     const char msg[] = "Test Message";
@@ -249,6 +256,7 @@ TEST_F(EchoServerTest, Basic) {
     task_util::WaitForIdle();
     TASK_UTIL_ASSERT_EQ(total, server_->GetSession()->GetTotal());
     server_->GetSession()->ResetTotal();
+
 }
 
 TEST_F(EchoServerTest, ReadInterrupt) {

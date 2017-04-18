@@ -77,7 +77,7 @@ buildinfo_dep_libs += MapBuildAgentLib([
     'pkt/pkt.lib', 'diag/diag.lib',
     'services/agent_services.lib', 'uve/uve.lib',
     'uve/statsuve.lib', 'vrouter/flow_stats/flowstats.lib',
-    'vrouter/stats_collector/statscollector.lib'
+    'vrouter/stats_collector/statscollector.lib',
 ])
 
 env.GenerateBuildInfoCode(
@@ -104,7 +104,7 @@ if sys.platform.startswith('freebsd'):
 elif sys.platform.startswith('linux'):
     platform_dependent = 'linux/pkt0_interface.cc'
 elif sys.platform.startswith('win'):
-    platform_dependent = 'windows/pkt0_interface.cc'
+    platform_dependent = ['windows/pkt0_interface.cc','#build/lib/windowsstubs.lib']
 
 
 contrail_vrouter_agent = env.Program(target = 'contrail-vrouter-agent',

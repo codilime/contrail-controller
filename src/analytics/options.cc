@@ -47,8 +47,8 @@ void Options::Initialize(EventManager &evm,
     }
 
     vector<string> conf_files;
-    conf_files.push_back("/etc/contrail/contrail-collector.conf");
-    conf_files.push_back("/etc/contrail/contrail-keystone-auth.conf");
+    conf_files.push_back(AgentConstants::contrail_collector_conf);
+    conf_files.push_back(AgentConstants::contrail_keystone_auth_conf);
 
     opt::options_description generic("Generic options");
 
@@ -210,11 +210,11 @@ void Options::Initialize(EventManager &evm,
         ("KEYSTONE.memcache_servers", opt::value<string>()->default_value(
                     "127.0.0.1:11211"), "memcache servers")
         ("KEYSTONE.certfile", opt::value<string>()->default_value(
-                    "/etc/contrail/ks-cert"), "Keystone certificate")
+                    AgentConstants::contrail_ks_cert), "Keystone certificate")
         ("KEYSTONE.keyfile", opt::value<string>()->default_value(
-                    "/etc/contrail/ks-key"), "Keystone private key")
+                    AgentConstants::contrail_ks_key), "Keystone private key")
         ("KEYSTONE.cafile", opt::value<string>()->default_value(
-                    "/etc/contrail/ks-ca"), "Keystone CA chain")
+                    AgentConstants::contrail_ks_ca), "Keystone CA chain")
         ;
 
     config_file_options_.add(config).add(cassandra_config);

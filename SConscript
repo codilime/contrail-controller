@@ -4,7 +4,7 @@
 import os
 SConscript(dirs=['lib', 'src'])
 
-env = DefaultEnvironment(TARGET_ARCH='x86')
+env = DefaultEnvironment()
 if os.name == 'nt':
  env.Append(CPPPATH = ['#windows'])
 

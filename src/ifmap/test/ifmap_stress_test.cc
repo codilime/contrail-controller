@@ -426,7 +426,7 @@ void IFMapStressTest::CreateXmppClients() {
     assert(xmpp_clients_.empty());
     for (int i = 0; i < config_options_.num_xmpp_clients(); ++i) {
         string client_name(XmppClientNameCreate(i));
-        string filename("/tmp/" + GetUserName() + "_" + client_name);
+        string filename(AgentConstants::temp_directory + GetUserName() + "_" + client_name);
         IFMapXmppClientMock *client =
             new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(),
                                     client_name, filename);

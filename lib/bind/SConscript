@@ -9,7 +9,7 @@ import subprocess
 vpath = '#/third_party/bind-9.11.0-p1/'
 sbinpath = '#/build/sbin'
 
-env = DefaultEnvironment(TARGET_ARCH='x86')
+env = DefaultEnvironment()
 
 #for windows we use the zip file with the binaries
 #copy binaries to sbin

@@ -22,6 +22,7 @@
 #include "net/address.h"
 #include "net/esi.h"
 #include "net/rd.h"
+#include "sys/wintypes.h"
 
 class BgpAttr;
 class BgpAttrDB;
