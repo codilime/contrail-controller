@@ -78,12 +78,14 @@ uint32_t PktHandler::EncapHeaderLen() const {
 
 // Send packet to tap interface
 void PktHandler::Send(const AgentHdr &hdr, const PacketBufferPtr &buff) {
+#ifndef _WINDOWS //WINDOWSFIX
     stats_.PktSent(PktHandler::PktModuleName(buff->module()));
     pkt_trace_.at(buff->module()).AddPktTrace(PktTrace::Out, buff->data_len(),
                                               buff->data(), &hdr);
     if (agent_->pkt()->control_interface()->Send(hdr, buff) <= 0) {
         PKT_TRACE(Err, "Error sending packet");
     }
+#endif
     return;
 }
 
