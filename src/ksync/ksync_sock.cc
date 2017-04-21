@@ -583,11 +583,12 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
 KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios)
     : pipe_(ios)
 {
-    // TODO
+    // TODO JW-409: Open pipe
 }
 #endif
 
 KSyncSockNetlink::~KSyncSockNetlink() {
+    // TODO JW-409: Close pipe
 }
 
 #ifndef _WINDOWS
@@ -682,7 +683,7 @@ void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
 #else
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
     pipe_.async_read_some(buf, cb);
-    // TODO JW-256: "The read operation may not read all of the requested number of bytes.
+    // TODO JW-408: "The read operation may not read all of the requested number of bytes.
     //       Consider using the async_read function if you need to ensure that the
     //       requested amount of data is read before the asynchronous operation completes."
 }
