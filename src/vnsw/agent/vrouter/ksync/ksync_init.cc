@@ -358,6 +358,10 @@ void GenericNetlinkInit() {
     LOG(DEBUG, "Vrouter family is " << family);
     KSyncSock::SetNetlinkFamilyId(family);
     nl_free_client(cl);
+#else
+    // Value is unused under Windows, but method
+    // initializes internal structures
+    KSyncSock::SetNetlinkFamilyId(0);
 #endif
 }
 

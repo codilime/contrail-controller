@@ -188,31 +188,25 @@ static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
 }
 #endif
 
-static void InitNetlink(nl_client *client) { // TODO JW-256: check
-#if 0 //WINDOWSFIX
+static void InitNetlink(nl_client *client) {
     nl_init_generic_client_req(client, KSyncSock::GetNetlinkFamilyId());
     unsigned char *nl_buf;
     uint32_t nl_buf_len;
     assert(nl_build_header(client, &nl_buf, &nl_buf_len) >= 0);
-#endif
 }
 
-static void ResetNetlink(nl_client *client) { // TODO JW-256: check
-#if 0 //WINDOWSFIX
+static void ResetNetlink(nl_client *client) {
     unsigned char *nl_buf;
     uint32_t nl_buf_len;
     client->cl_buf_offset = 0;
     nl_build_header(client, &nl_buf, &nl_buf_len);
-#endif
 }
 
-static void UpdateNetlink(nl_client *client, uint32_t len, uint32_t seq_no) { // TODO JW-256: check
-#if 0 //WINDOWSFIX
+static void UpdateNetlink(nl_client *client, uint32_t len, uint32_t seq_no) {
     nl_update_header(client, len);
     struct nlmsghdr *nlh = (struct nlmsghdr *)client->cl_buf;
     nlh->nlmsg_pid = KSyncSock::GetPid();
     nlh->nlmsg_seq = seq_no;
-#endif
 }
 
 static void DecodeSandeshMessages(char *buf, uint32_t buf_len,
@@ -238,8 +232,7 @@ KSyncSock::KSyncSock() :
     send_queue_(this),
     max_bulk_msg_count_(kMaxBulkMsgCount), max_bulk_buf_size_(kMaxBulkMsgSize),
     bulk_seq_no_(kInvalidBulkSeqNo), tx_count_(0), err_count_(0),
-    read_inline_(true) { // TODO JW-256: check
-#if 0 //WINDOWSFIX
+    read_inline_(true) {
     TaskScheduler *scheduler = TaskScheduler::GetInstance();
     uint32_t task_id = 0;
     for(int i = 0; i < IoContext::MAX_WORK_QUEUES; i++) {
@@ -252,16 +245,16 @@ KSyncSock::KSyncSock() :
         sprintf(name, "KSync Receive Queue-%d", i);
         receive_work_queue[i]->set_name(name);
     }
+
     task_id = scheduler->GetTaskId("Ksync::AsyncSend");
     nl_client_ = (nl_client *)malloc(sizeof(nl_client));
     bzero(nl_client_, sizeof(nl_client));
     rx_buff_ = NULL;
     seqno_ = 0;
     uve_seqno_ = 0;
-#endif
 }
 
-KSyncSock::~KSyncSock() { // TODO JW-256: check
+KSyncSock::~KSyncSock() {
     assert(wait_tree_.size() == 0);
 
     if (rx_buff_) {
@@ -277,6 +270,7 @@ KSyncSock::~KSyncSock() { // TODO JW-256: check
     if (nl_client_->cl_buf) {
         free(nl_client_->cl_buf);
     }
+
     free(nl_client_);
 }
 
