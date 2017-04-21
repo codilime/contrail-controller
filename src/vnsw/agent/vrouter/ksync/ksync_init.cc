@@ -125,17 +125,20 @@ void KSync::InitFlowMem() {
 }
 
 void KSync::NetlinkInit() {
-#if 0 //WINDOWSFIX
     EventManager *event_mgr;
 
     event_mgr = agent_->event_manager();
     boost::asio::io_service &io = *event_mgr->io_service();
 
-    //WINDOWFIX KSyncSockNetlink::Init(io, NETLINK_GENERIC);
+#ifdef _WINDOWS
+    KSyncSockNetlink::Init(io);
+#else
+    KSyncSockNetlink::Init(io, NETLINK_GENERIC);
+#endif
+
     KSyncSock::SetAgentSandeshContext
         (new KSyncSandeshContext(ksync_flow_memory_.get()));
     GenericNetlinkInit();
-#endif
 }
 
 int KSync::Encode(Sandesh &encoder, uint8_t *buf, int buf_len) {
@@ -343,7 +346,7 @@ void KSync::Shutdown() {
 }
 
 void GenericNetlinkInit() {
-#if 0 //WINDOWSFIX
+#ifndef _WINDOWS
     struct nl_client    *cl;
     int    family;
 
@@ -356,7 +359,6 @@ void GenericNetlinkInit() {
     KSyncSock::SetNetlinkFamilyId(family);
     nl_free_client(cl);
 #endif
-    return;
 }
 
 KSyncTcp::KSyncTcp(Agent *agent): KSync(agent) {
