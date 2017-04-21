@@ -107,8 +107,8 @@ static bool NetlinkMsgDone(char *data) {
 #endif
 
 // Common validation for netlink messages
-static bool ValidateNetlink(char *data) { // TODO JW-256: check
-#if 0 //WINDOWSFIX
+#ifndef _WINDOWS
+static bool ValidateNetlink(char *data) {
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     if (nlh->nlmsg_type == NLMSG_ERROR) {
         LOG(ERROR, "Netlink error for seqno " << nlh->nlmsg_seq << " len "
@@ -149,9 +149,22 @@ static bool ValidateNetlink(char *data) { // TODO JW-256: check
         assert(0);
         return false;
     }
-#endif
+
     return true;
 }
+#else
+static bool ValidateNetlink(char *data) {
+    struct ksync_response_header *krh = (struct ksync_response_header *)data;
+    if (krh->len + sizeof(struct ksync_response_header) > KSyncSock::kBufLen) {
+        LOG(ERROR, "Length of " << (krh->len + sizeof(struct ksync_response_header)) <<
+            " is more than expected length of " << KSyncSock::kBufLen);
+        assert(0);
+        return false;
+    }
+
+    return true;
+}
+#endif
 
 #ifndef _WINDOWS
 static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
@@ -604,7 +617,7 @@ bool KSyncSockNetlink::IsMoreData(char *data) {
 }
 
 bool KSyncSockNetlink::Validate(char *data) {
-    return ValidateNetlink(data); // TODO JW-256: check
+    return ValidateNetlink(data);
 }
 
 //netlink socket class for interacting with kernel
@@ -634,25 +647,22 @@ size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) { // TO
 }
 
 // Static method to decode non-bulk message
-void KSyncSockNetlink::NetlinkDecoder(char *data, SandeshContext *ctxt) { // TODO JW-256: check
-#if 0 //WINDOWSFIX
+void KSyncSockNetlink::NetlinkDecoder(char *data, SandeshContext *ctxt) {
     assert(ValidateNetlink(data));
     char *buf = NULL;
     uint32_t buf_len = 0;
     GetNetlinkPayload(data, &buf, &buf_len);
     DecodeSandeshMessages(buf, buf_len, ctxt, NLA_ALIGNTO);
-#endif
 }
 
-bool KSyncSockNetlink::Decoder(char *data, AgentSandeshContext *context) { // TODO JW-256: check
+bool KSyncSockNetlink::Decoder(char *data, AgentSandeshContext *context) {
     NetlinkDecoder(data, context);
     return true;
 }
 
 // Static method used in ksync_sock_user only
-void KSyncSockNetlink::NetlinkBulkDecoder(char *data, SandeshContext *ctxt, // TODO JW-256: check
+void KSyncSockNetlink::NetlinkBulkDecoder(char *data, SandeshContext *ctxt,
                                           bool more) {
-#if 0 //WINDOWSFIX
     assert(ValidateNetlink(data));
     char *buf = NULL;
     uint32_t buf_len = 0;
@@ -660,7 +670,6 @@ void KSyncSockNetlink::NetlinkBulkDecoder(char *data, SandeshContext *ctxt, // T
     KSyncBulkSandeshContext *bulk_context =
         dynamic_cast<KSyncBulkSandeshContext *>(ctxt);
     bulk_context->Decoder(buf, buf_len, NLA_ALIGNTO, more);
-#endif
 }
 
 bool KSyncSockNetlink::BulkDecoder(char *data,
