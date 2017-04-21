@@ -248,7 +248,7 @@ KSyncSock::KSyncSock() :
 
     task_id = scheduler->GetTaskId("Ksync::AsyncSend");
     nl_client_ = (nl_client *)malloc(sizeof(nl_client));
-    bzero(nl_client_, sizeof(nl_client));
+    memset(nl_client_, 0, sizeof(nl_client));
     rx_buff_ = NULL;
     seqno_ = 0;
     uve_seqno_ = 0;
