@@ -660,12 +660,21 @@ bool KSyncSockNetlink::BulkDecoder(char *data,
 	return false;
 }
 
+#ifndef _WINDOWS
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
-    //WINDOWSFIX sock_.async_receive(buf, cb);
+    sock_.async_receive(buf, cb);
 }
+#else
+void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
+    pipe_.async_read_some(buf, cb);
+    // TODO: "The read operation may not read all of the requested number of bytes.
+    //       Consider using the async_read function if you need to ensure that the
+    //       requested amount of data is read before the asynchronous operation completes."
+}
+#endif
 
+#ifndef _WINDOWS
 void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
-#if 0 //WINDOWSFIX
     sock_.receive(buf);
     struct nlmsghdr *nlh = buffer_cast<struct nlmsghdr *>(buf);
     if (nlh->nlmsg_type == NLMSG_ERROR) {
@@ -673,8 +682,18 @@ void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
                 << " len " << nlh->nlmsg_len);
         assert(0);
     }
-#endif
 }
+#else
+void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
+    boost::system::error_code ec;
+    pipe_.read_some(buf, ec);
+    if (ec) {
+        LOG(ERROR, "Pipe read failed: " << ec);
+        assert(0);
+    }
+}
+#endif
+
 
 /////////////////////////////////////////////////////////////////////////////
 // KSyncSockUdp routines
