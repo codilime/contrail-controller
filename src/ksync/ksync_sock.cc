@@ -107,7 +107,7 @@ static bool NetlinkMsgDone(char *data) {
 #endif
 
 // Common validation for netlink messages
-static bool ValidateNetlink(char *data) {
+static bool ValidateNetlink(char *data) { // TODO JW-256: check
 #if 0 //WINDOWSFIX
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     if (nlh->nlmsg_type == NLMSG_ERROR) {
@@ -175,7 +175,7 @@ static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
 }
 #endif
 
-static void InitNetlink(nl_client *client) {
+static void InitNetlink(nl_client *client) { // TODO JW-256: check
 #if 0 //WINDOWSFIX
     nl_init_generic_client_req(client, KSyncSock::GetNetlinkFamilyId());
     unsigned char *nl_buf;
@@ -184,7 +184,7 @@ static void InitNetlink(nl_client *client) {
 #endif
 }
 
-static void ResetNetlink(nl_client *client) {
+static void ResetNetlink(nl_client *client) { // TODO JW-256: check
 #if 0 //WINDOWSFIX
     unsigned char *nl_buf;
     uint32_t nl_buf_len;
@@ -193,7 +193,7 @@ static void ResetNetlink(nl_client *client) {
 #endif
 }
 
-static void UpdateNetlink(nl_client *client, uint32_t len, uint32_t seq_no) {
+static void UpdateNetlink(nl_client *client, uint32_t len, uint32_t seq_no) { // TODO JW-256: check
 #if 0 //WINDOWSFIX
     nl_update_header(client, len);
     struct nlmsghdr *nlh = (struct nlmsghdr *)client->cl_buf;
@@ -225,7 +225,7 @@ KSyncSock::KSyncSock() :
     send_queue_(this),
     max_bulk_msg_count_(kMaxBulkMsgCount), max_bulk_buf_size_(kMaxBulkMsgSize),
     bulk_seq_no_(kInvalidBulkSeqNo), tx_count_(0), err_count_(0),
-    read_inline_(true) {
+    read_inline_(true) { // TODO JW-256: check
 #if 0 //WINDOWSFIX
     TaskScheduler *scheduler = TaskScheduler::GetInstance();
     uint32_t task_id = 0;
@@ -248,7 +248,7 @@ KSyncSock::KSyncSock() :
 #endif
 }
 
-KSyncSock::~KSyncSock() {
+KSyncSock::~KSyncSock() { // TODO JW-256: check
     assert(wait_tree_.size() == 0);
 
     if (rx_buff_) {
@@ -604,12 +604,12 @@ bool KSyncSockNetlink::IsMoreData(char *data) {
 }
 
 bool KSyncSockNetlink::Validate(char *data) {
-    return ValidateNetlink(data);
+    return ValidateNetlink(data); // TODO JW-256: check
 }
 
 //netlink socket class for interacting with kernel
 void KSyncSockNetlink::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
-                                   HandlerCb cb) {
+                                   HandlerCb cb) { // TODO JW-256: check
 #if 0 //WINDOWSFIX
     ResetNetlink(nl_client_);
     KSyncBufferList::iterator it = iovec->begin();
@@ -622,7 +622,7 @@ void KSyncSockNetlink::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
 #endif
 }
 
-size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
+size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) { // TODO JW-256: check
     ResetNetlink(nl_client_);
     KSyncBufferList::iterator it = iovec->begin();
     iovec->insert(it, buffer((char *)nl_client_->cl_buf,
@@ -634,7 +634,7 @@ size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
 }
 
 // Static method to decode non-bulk message
-void KSyncSockNetlink::NetlinkDecoder(char *data, SandeshContext *ctxt) {
+void KSyncSockNetlink::NetlinkDecoder(char *data, SandeshContext *ctxt) { // TODO JW-256: check
 #if 0 //WINDOWSFIX
     assert(ValidateNetlink(data));
     char *buf = NULL;
@@ -644,13 +644,13 @@ void KSyncSockNetlink::NetlinkDecoder(char *data, SandeshContext *ctxt) {
 #endif
 }
 
-bool KSyncSockNetlink::Decoder(char *data, AgentSandeshContext *context) {
+bool KSyncSockNetlink::Decoder(char *data, AgentSandeshContext *context) { // TODO JW-256: check
     NetlinkDecoder(data, context);
     return true;
 }
 
 // Static method used in ksync_sock_user only
-void KSyncSockNetlink::NetlinkBulkDecoder(char *data, SandeshContext *ctxt,
+void KSyncSockNetlink::NetlinkBulkDecoder(char *data, SandeshContext *ctxt, // TODO JW-256: check
                                           bool more) {
 #if 0 //WINDOWSFIX
     assert(ValidateNetlink(data));
@@ -679,7 +679,7 @@ void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
 #else
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
     pipe_.async_read_some(buf, cb);
-    // TODO: "The read operation may not read all of the requested number of bytes.
+    // TODO JW-256: "The read operation may not read all of the requested number of bytes.
     //       Consider using the async_read function if you need to ensure that the
     //       requested amount of data is read before the asynchronous operation completes."
 }
