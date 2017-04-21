@@ -82,21 +82,29 @@ static uint32_t IoVectorToData(char *data, KSyncBufferList *iovec) {
 /////////////////////////////////////////////////////////////////////////////
 // Netlink utilities
 /////////////////////////////////////////////////////////////////////////////
+#ifndef _WINDOWS
 static uint32_t GetNetlinkSeqno(char *data) {
-#if 0 //WINDOWSFIX
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return nlh->nlmsg_seq;
-#endif
-	return 0;
 }
+#else
+static uint32_t GetNetlinkSeqno(char *data) {
+    // TODO JW-256: implement SEQ_NO in kernel
+    return 0;
+}
+#endif
 
+#ifndef _WINDOWS
 static bool NetlinkMsgDone(char *data) {
-#if 0 //WINDOWSFIX
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return ((nlh->nlmsg_flags & NLM_F_MULTI) != 0);
-#endif
-	return false;
 }
+#else
+static bool NetlinkMsgDone(char *data) {
+    struct ksync_response_header *krh = (struct ksync_response_header *)data;
+    return krh->type != KSYNC_RESPONSE_MULTIPLE;
+}
+#endif
 
 // Common validation for netlink messages
 static bool ValidateNetlink(char *data) {
@@ -145,8 +153,8 @@ static bool ValidateNetlink(char *data) {
     return true;
 }
 
+#ifndef _WINDOWS
 static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
-#if 0 //WINDOWSFIX
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     int len = 0;
     if (nlh->nlmsg_type == NLMSG_DONE) {
@@ -157,8 +165,15 @@ static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
 
     *buf = data + len;
     *buf_len = nlh->nlmsg_len - len;
-#endif
 }
+#else
+static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
+    struct ksync_response_header *krh = (struct ksync_response_header *)data;
+
+    *buf = data + sizeof(ksync_response_header);
+    *buf_len = krh->len;
+}
+#endif
 
 static void InitNetlink(nl_client *client) {
 #if 0 //WINDOWSFIX
@@ -650,14 +665,11 @@ void KSyncSockNetlink::NetlinkBulkDecoder(char *data, SandeshContext *ctxt,
 
 bool KSyncSockNetlink::BulkDecoder(char *data,
                                    KSyncBulkSandeshContext *bulk_context) {
-#if 0 //WINDOWSFIX
     // Get sandesh buffer and buffer-length
     uint32_t buf_len = 0;
     char *buf = NULL;
     GetNetlinkPayload(data, &buf, &buf_len);
     return bulk_context->Decoder(buf, buf_len, NLA_ALIGNTO, IsMoreData(data));
-#endif
-	return false;
 }
 
 #ifndef _WINDOWS
