@@ -41,10 +41,12 @@
 #include "vr_types.h"
 
 using namespace boost::asio;
-#define SO_RCVBUFFORCE  33 //WINDOWSFIX
+
+#ifndef _WINDOWS
 /* Note SO_RCVBUFFORCE is supported only for linux version 2.6.14 and above */
 typedef boost::asio::detail::socket_option::integer<SOL_SOCKET,
         SO_RCVBUFFORCE> ReceiveBuffForceSize;
+#endif
 
 int KSyncSock::vnsw_netlink_family_id_;
 AgentSandeshContext *KSyncSock::agent_sandesh_ctx_;
@@ -537,10 +539,10 @@ bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
 /////////////////////////////////////////////////////////////////////////////
 // KSyncSockNetlink routines
 /////////////////////////////////////////////////////////////////////////////
-KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol) 
-//WINDOWSFIX    : sock_(ios, protocol) 
+#ifndef _WINDOWS
+KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
+    : sock_(ios, protocol)
 {
-#if 0 //WINDOWSFIX
     ReceiveBuffForceSize set_rcv_buf;
     set_rcv_buf = KSYNC_SOCK_RECV_BUFF_SIZE;
     boost::system::error_code ec;
@@ -554,16 +556,29 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
     boost::system::error_code ec1;
     sock_.get_option(rcv_buf_size, ec);
     LOG(INFO, "Current receive sock buffer size is " << rcv_buf_size.value());
-#endif
 }
+#else
+KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios)
+    : pipe_(ios)
+{
+    // TODO
+}
+#endif
 
 KSyncSockNetlink::~KSyncSockNetlink() {
 }
 
+#ifndef _WINDOWS
 void KSyncSockNetlink::Init(io_service &ios, int protocol) {
     KSyncSock::SetSockTableEntry(new KSyncSockNetlink(ios, protocol));
     KSyncSock::Init(false);
 }
+#else
+void KSyncSockNetlink::Init(io_service &ios) {
+    KSyncSock::SetSockTableEntry(new KSyncSockNetlink(ios));
+    KSyncSock::Init(false);
+}
+#endif
 
 uint32_t KSyncSockNetlink::GetSeqno(char *data) {
     return GetNetlinkSeqno(data);

@@ -358,7 +358,11 @@ private:
 //netlink socket class for interacting with kernel
 class KSyncSockNetlink : public KSyncSock {
 public:
+#ifdef _WINDOWS
+    KSyncSockNetlink(boost::asio::io_service &ios);
+#else
     KSyncSockNetlink(boost::asio::io_service &ios, int protocol);
+#endif
     virtual ~KSyncSockNetlink();
 
     virtual uint32_t GetSeqno(char *data);
@@ -374,9 +378,18 @@ public:
 
     static void NetlinkDecoder(char *data, SandeshContext *ctxt);
     static void NetlinkBulkDecoder(char *data, SandeshContext *ctxt, bool more);
+#ifdef _WINDOWS
+    static void Init(boost::asio::io_service &ios);
+#else
     static void Init(boost::asio::io_service &ios, int protocol);
+#endif
+
 private:
-    //WINDOWS boost::asio::netlink::raw::socket sock_;
+#ifdef _WINDOWS
+    boost::asio::windows::stream_handle pipe_;
+#else
+    boost::asio::netlink::raw::socket sock_;
+#endif
 };
 
 //udp socket class for interacting with user vrouter
