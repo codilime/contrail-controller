@@ -558,6 +558,30 @@ bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
     return true;
 }
 
+#ifdef _WINDOWS
+std::string GetFormattedWindowsErrorMsg() {
+    DWORD error = GetLastError();
+    LPSTR message = NULL;
+
+    DWORD flags = (FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                   FORMAT_MESSAGE_FROM_SYSTEM |
+                   FORMAT_MESSAGE_IGNORE_INSERTS);
+    DWORD lang_id = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+    DWORD ret = FormatMessageA(flags, NULL, error, lang_id, (LPSTR)message, 0, NULL);
+
+    std::ostringstream sstr;
+
+    if (ret != 0) {
+        sstr << message << " ";
+    }
+
+    sstr << "[" << error << "]";
+    LocalFree(message);
+
+    return sstr.str();
+}
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // KSyncSockNetlink routines
 /////////////////////////////////////////////////////////////////////////////
@@ -583,12 +607,33 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
 KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios)
     : pipe_(ios)
 {
-    // TODO JW-409: Open pipe
+    DWORD access_flags = GENERIC_READ | GENERIC_WRITE;
+    DWORD attrs = OPEN_EXISTING;
+
+    nl_client_->cl_win_pipe = CreateFile(KSYNC_PATH, access_flags, 0, NULL, attrs, 0, NULL);
+    if (nl_client_->cl_win_pipe == INVALID_HANDLE_VALUE) {
+        LOG(ERROR, "Error while opening KSync pipe: " << GetFormattedWindowsErrorMsg());
+        assert(0);
+    }
+
+    boost::system::error_code ec;
+    pipe_.assign(nl_client_->cl_win_pipe, ec);
+    if (ec) {
+        LOG(ERROR, "Error while assigning KSync pipe: " << ec);
+        assert(0);
+    }
 }
 #endif
 
 KSyncSockNetlink::~KSyncSockNetlink() {
-    // TODO JW-409: Close pipe
+#ifdef _WINDOWS
+    boost::system::error_code ec;
+    pipe_.close(ec);
+    if (ec) {
+        LOG(ERROR, "Error closing KSync pipe: " << ec);
+        assert(0);
+    }
+#endif
 }
 
 #ifndef _WINDOWS
