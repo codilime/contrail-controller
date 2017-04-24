@@ -89,7 +89,7 @@ static uint32_t GetNetlinkSeqno(char *data) {
 }
 #else
 static uint32_t GetNetlinkSeqno(char *data) {
-    // TODO JW-256: implement SEQ_NO in kernel
+    // TODO JW-413: implement SEQ_NO in kernel
     return 0;
 }
 #endif
@@ -617,28 +617,41 @@ bool KSyncSockNetlink::Validate(char *data) {
 
 //netlink socket class for interacting with kernel
 void KSyncSockNetlink::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
-                                   HandlerCb cb) { // TODO JW-256: check
-#if 0 //WINDOWSFIX
+                                   HandlerCb cb) {
     ResetNetlink(nl_client_);
     KSyncBufferList::iterator it = iovec->begin();
     iovec->insert(it, buffer((char *)nl_client_->cl_buf,
                              nl_client_->cl_buf_offset));
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
 
+#ifndef _WINDOWS
     boost::asio::netlink::raw::endpoint ep;
     sock_.async_send_to(*iovec, ep, cb);
+#else
+    boost::asio::async_write(pipe_, *iovec, cb);
 #endif
 }
 
-size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) { // TODO JW-256: check
+size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
     ResetNetlink(nl_client_);
     KSyncBufferList::iterator it = iovec->begin();
     iovec->insert(it, buffer((char *)nl_client_->cl_buf,
                              nl_client_->cl_buf_offset));
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
 
-    //WINDOWSFIX boost::asio::netlink::raw::endpoint ep;
-	return 0;//WINDOWSFIX sock_.send_to(*iovec, ep);
+#ifndef _WINDOWS
+    boost::asio::netlink::raw::endpoint ep;
+    return sock_.send_to(*iovec, ep);
+#else
+    boost::system::error_code ec;
+    size_t sz = boost::asio::write(pipe_, *iovec, ec);
+    if (ec) {
+        LOG(ERROR, "Pipe read failed: " << ec);
+        assert(0);
+    }
+
+    return sz;
+#endif
 }
 
 // Static method to decode non-bulk message
@@ -683,9 +696,6 @@ void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
 #else
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
     pipe_.async_read_some(buf, cb);
-    // TODO JW-408: "The read operation may not read all of the requested number of bytes.
-    //       Consider using the async_read function if you need to ensure that the
-    //       requested amount of data is read before the asynchronous operation completes."
 }
 #endif
 
