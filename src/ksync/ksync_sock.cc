@@ -149,7 +149,6 @@ static bool ValidateNetlink(char *data) {
         assert(0);
         return false;
     }
-
     return true;
 }
 #else
@@ -270,7 +269,6 @@ KSyncSock::~KSyncSock() {
     if (nl_client_->cl_buf) {
         free(nl_client_->cl_buf);
     }
-
     free(nl_client_);
 }
 
@@ -740,7 +738,7 @@ void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
 }
 #else
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
-    pipe_.async_read_some(buf, cb);
+    pipe_.async_read_some(buf, cb); // TODO: JW-408
 }
 #endif
 
@@ -757,7 +755,7 @@ void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
 #else
 void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
     boost::system::error_code ec;
-    pipe_.read_some(buf, ec);
+    pipe_.read_some(buf, ec); // TODO: JW-408
     if (ec) {
         LOG(ERROR, "Pipe read failed: " << ec);
         assert(0);
