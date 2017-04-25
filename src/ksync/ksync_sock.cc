@@ -602,7 +602,7 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
     LOG(INFO, "Current receive sock buffer size is " << rcv_buf_size.value());
 }
 #else
-KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios)
+KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
     : pipe_(ios)
 {
     DWORD access_flags = GENERIC_READ | GENERIC_WRITE;
@@ -634,17 +634,10 @@ KSyncSockNetlink::~KSyncSockNetlink() {
 #endif
 }
 
-#ifndef _WINDOWS
 void KSyncSockNetlink::Init(io_service &ios, int protocol) {
     KSyncSock::SetSockTableEntry(new KSyncSockNetlink(ios, protocol));
     KSyncSock::Init(false);
 }
-#else
-void KSyncSockNetlink::Init(io_service &ios) {
-    KSyncSock::SetSockTableEntry(new KSyncSockNetlink(ios));
-    KSyncSock::Init(false);
-}
-#endif
 
 uint32_t KSyncSockNetlink::GetSeqno(char *data) {
     return GetNetlinkSeqno(data);
@@ -686,14 +679,7 @@ size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
     boost::asio::netlink::raw::endpoint ep;
     return sock_.send_to(*iovec, ep);
 #else
-    boost::system::error_code ec;
-    size_t sz = boost::asio::write(pipe_, *iovec, ec);
-    if (ec) {
-        LOG(ERROR, "Pipe read failed: " << ec);
-        assert(0);
-    }
-
-    return sz;
+    return boost::asio::write(pipe_, *iovec);
 #endif
 }
 
@@ -754,12 +740,7 @@ void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
 }
 #else
 void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
-    boost::system::error_code ec;
-    pipe_.read_some(buf, ec); // TODO: JW-408
-    if (ec) {
-        LOG(ERROR, "Pipe read failed: " << ec);
-        assert(0);
-    }
+    pipe_.read_some(buf); // TODO: JW-408
 }
 #endif
 

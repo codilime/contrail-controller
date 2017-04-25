@@ -130,11 +130,7 @@ void KSync::NetlinkInit() {
     event_mgr = agent_->event_manager();
     boost::asio::io_service &io = *event_mgr->io_service();
 
-#ifdef _WINDOWS
-    KSyncSockNetlink::Init(io);
-#else
     KSyncSockNetlink::Init(io, NETLINK_GENERIC);
-#endif
 
     KSyncSock::SetAgentSandeshContext
         (new KSyncSandeshContext(ksync_flow_memory_.get()));
