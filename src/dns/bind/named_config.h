@@ -10,6 +10,7 @@
 #include <set>
 #include <string>
 #include <base/timer.h>
+#include "AgentConstants.h"
 
 class BindStatus {
 public:
@@ -101,7 +102,7 @@ public:
                                         const std::string &name);
     virtual std::string GetZoneFilePath(const std::string &vdns, 
                                         const std::string &name);
-    virtual std::string GetResolveFile() { return "/etc/resolv.conf"; }
+    virtual std::string GetResolveFile() { return AgentConstants::resolv_conf; }
     std::string GetPidFilePath();
     const std::string &named_config_dir() const { return named_config_dir_; }
     const std::string &named_config_file() const { return named_config_file_; }

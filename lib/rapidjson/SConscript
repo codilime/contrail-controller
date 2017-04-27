@@ -21,9 +21,5 @@ if not os.path.exists(libpath):
 
 if not os.path.exists(Dir('#/build/include/rapidjson').abspath):
   shutil.copytree(Dir(rapidjson_path + '/include/rapidjson').abspath, Dir('#/build/include/rapidjson').abspath)
-#SymCopy([Dir('#/build/include/rapidjson')],
- #       [Dir(rapidjson_path + '/include/rapidjson')])
 print 'done installing rapidjson'
-# Local Variables:
-# mode: python
-# End:
+

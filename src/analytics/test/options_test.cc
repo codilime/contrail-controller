@@ -34,8 +34,8 @@ protected:
         hostname_ = host_name(error);
         host_ip_ = GetHostIp(evm_.io_service(), hostname_);
         default_cassandra_server_list_.push_back("127.0.0.1:9160");
-        default_conf_files_.push_back("/etc/contrail/contrail-collector.conf");
-        default_conf_files_.push_back("/etc/contrail/contrail-database.conf");
+        default_conf_files_.push_back(AgentConstants::contrail_collector_conf);
+        default_conf_files_.push_back(AgentConstants::contrail_database_conf);
     }
 
     virtual void TearDown() {
@@ -58,7 +58,7 @@ TEST_F(OptionsTest, NoArguments) {
 
     options_.Parse(evm_, argc, argv);
     vector<string> expected_conf_files_;
-    expected_conf_files_.push_back("/etc/contrail/contrail-collector.conf");
+    expected_conf_files_.push_back(AgentConstants::contrail_collector_conf);
     TASK_UTIL_EXPECT_VECTOR_EQ(default_cassandra_server_list_,
                      options_.cassandra_server_list());
     EXPECT_EQ(options_.redis_server(), "127.0.0.1");
@@ -119,7 +119,7 @@ TEST_F(OptionsTest, DefaultConfFile) {
     EXPECT_EQ(options_.http_server_port(), default_http_server_port);
     EXPECT_EQ(options_.log_category(), "");
     EXPECT_EQ(options_.log_disable(), false);
-    EXPECT_EQ(options_.log_file(), "/var/log/contrail/contrail-collector.log");
+    EXPECT_EQ(options_.log_file(), AgentConstants::contrail_collector_log);
     EXPECT_EQ(options_.log_files_count(), 10);
     EXPECT_EQ(options_.log_file_size(), 1024*1024);
     EXPECT_EQ(options_.log_level(), "SYS_NOTICE");
@@ -217,7 +217,7 @@ TEST_F(OptionsTest, OverrideBooleanFromCommandLine) {
     EXPECT_EQ(options_.http_server_port(), default_http_server_port);
     EXPECT_EQ(options_.log_category(), "");
     EXPECT_EQ(options_.log_disable(), false);
-    EXPECT_EQ(options_.log_file(), "/var/log/contrail/contrail-collector.log");
+    EXPECT_EQ(options_.log_file(), AgentConstants::contrail_collector_log);
     EXPECT_EQ(options_.log_files_count(), 10);
     EXPECT_EQ(options_.log_file_size(), 1024*1024);
     EXPECT_EQ(options_.log_level(), "SYS_NOTICE");

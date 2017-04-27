@@ -34,7 +34,7 @@ protected:
         host_ip_ = GetHostIp(evm_.io_service(), hostname_);
         default_cassandra_server_list_.push_back("127.0.0.1:9160");
         default_collector_server_list_.push_back("127.0.0.1:8086");
-        default_conf_files_.push_back("/etc/contrail/contrail-query-engine.conf");
+        default_conf_files_.push_back(AgentConstants::contrail_query_engine_conf);
     }
 
     virtual void TearDown() {
@@ -59,7 +59,7 @@ TEST_F(OptionsTest, NoArguments) {
     options_.Parse(evm_, argc, argv);
 
     vector<string> expected_conf_files_;
-    expected_conf_files_.push_back("/etc/contrail/contrail-query-engine.conf");
+    expected_conf_files_.push_back(AgentConstants::contrail_query_engine_conf);
 
     TASK_UTIL_EXPECT_VECTOR_EQ(default_cassandra_server_list_,
                      options_.cassandra_server_list());
@@ -117,7 +117,7 @@ TEST_F(OptionsTest, DefaultConfFile) {
     EXPECT_EQ(options_.http_server_port(), default_http_server_port);
     EXPECT_EQ(options_.log_category(), "");
     EXPECT_EQ(options_.log_disable(), false);
-    EXPECT_EQ(options_.log_file(), "/var/log/contrail/contrail-query-engine.log");
+    EXPECT_EQ(options_.log_file(), AgentConstants::contrail_query_engine_log);
     EXPECT_EQ(options_.log_files_count(), 10);
     EXPECT_EQ(options_.log_file_size(), 1024*1024);
     EXPECT_EQ(options_.log_level(), "SYS_NOTICE");
@@ -203,7 +203,7 @@ TEST_F(OptionsTest, OverrideBooleanFromCommandLine) {
     EXPECT_EQ(options_.http_server_port(), default_http_server_port);
     EXPECT_EQ(options_.log_category(), "");
     EXPECT_EQ(options_.log_disable(), false);
-    EXPECT_EQ(options_.log_file(), "/var/log/contrail/contrail-query-engine.log");
+    EXPECT_EQ(options_.log_file(), AgentConstants::contrail_query_engine_log);
     EXPECT_EQ(options_.log_files_count(), 10);
     EXPECT_EQ(options_.log_file_size(), 1024*1024);
     EXPECT_EQ(options_.log_level(), "SYS_NOTICE");

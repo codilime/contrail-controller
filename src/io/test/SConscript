@@ -10,19 +10,18 @@ import sys
 env = BuildEnv.Clone()
 env.CppDisableExceptions()
 env.Append(CPPPATH = [env['TOP']])
+env.Append(CPPPATH= '#windows')
 
 env.Append(LIBPATH = ['#/' + Dir('..').path,
                       '../../base'])
 
 env.Append(LIBPATH = env['TOP'] + '/base/test')
 
-env.Prepend(LIBS = ['gunit', 'task_test', 'io', 'sandesh', 'http',
+env.Prepend(LIBS = ['task_test', 'io', 'sandesh', 'http',
                     'sandeshvns', 'process_info', 'io', 'base',
                     'http_parser', 'curl',
-                    'boost_program_options', 'pugixml', 'ssl', 'crypto'])
+                    'boost_program_options', 'pugixml', 'ssl', 'crypto', 'gtest', 'windowsstubs'])
 
-if sys.platform != 'darwin':
-    env.Append(LIBS = ['rt'])
 
 event_manager_test = env.UnitTest('event_manager_test',
                                   ['event_manager_test.cc'],

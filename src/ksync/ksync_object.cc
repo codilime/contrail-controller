@@ -364,6 +364,7 @@ void KSyncDBObject::CleanupOnDel(KSyncEntry *entry) {
 // Generates events for the KSyncEntry state-machine based DBEntry
 // Stores the KSyncEntry allocated as DBEntry-state
 void KSyncDBObject::Notify(DBTablePartBase *partition, DBEntryBase *e) {
+#ifndef _WINDOWS //WINDOWSFIX
     tbb::recursive_mutex::scoped_lock lock(lock_);
     DBEntry *entry = static_cast<DBEntry *>(e);
     DBTableBase *table = partition->parent();
@@ -499,6 +500,7 @@ void KSyncDBObject::Notify(DBTablePartBase *partition, DBEntryBase *e) {
     if (ksync->Sync(entry) || need_sync) {
         NotifyEvent(ksync, KSyncEntry::ADD_CHANGE_REQ);
     }
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////

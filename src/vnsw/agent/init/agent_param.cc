@@ -12,6 +12,7 @@
 #ifdef _WINDOWS
 #include <boost/asio.hpp>
 #include <windows.h>
+#include "AgentConstants.h"
 #endif
 
 #include "base/os.h"
@@ -498,17 +499,17 @@ void AgentParam::ParseDefaultSection() {
 
     if (!GetValueFromTree<string>(xmpp_server_cert_, "DEFAULT.xmpp_server_cert")) {
         // set defaults
-        xmpp_server_cert_ = "/etc/contrail/ssl/certs/server.pem";
+        xmpp_server_cert_ = AgentConstants::contrail_ssl_certs_server_pem;
     }
 
     if (!GetValueFromTree<string>(xmpp_server_key_, "DEFAULT.xmpp_server_key")) {
         // set defaults
-        xmpp_server_key_ = "/etc/contrail/ssl/private/server-privkey.pem";
+        xmpp_server_key_ = AgentConstants::contrail_ssl_server_privkey_pem;
     }
 
     if (!GetValueFromTree<string>(xmpp_ca_cert_, "DEFAULT.xmpp_ca_cert")) {
         // set defaults
-        xmpp_ca_cert_ = "/etc/contrail/ssl/certs/ca-cert.pem";
+        xmpp_ca_cert_ = AgentConstants::contrail_ssl_certs_ca_cert_pem;
     }
 
     if (!GetValueFromTree<bool>(xmpp_dns_auth_enable_,
@@ -1492,11 +1493,11 @@ AgentParam::AgentParam(bool enable_flow_options,
          "Enable Xmpp over TLS")
         ("DEFAULT.xmpp_server_cert",
           opt::value<string>()->default_value(
-          "/etc/contrail/ssl/certs/server.pem"),
+          AgentConstants::contrail_ssl_certs_server_pem),
           "XMPP Server ssl certificate")
         ("DEFAULT.xmpp_server_key",
           opt::value<string>()->default_value(
-          "/etc/contrail/ssl/private/server-privkey.pem"),
+          AgentConstants::contrail_ssl_server_privkey_pem),
           "XMPP Server ssl private key")
         ("DEFAULT.xmpp_ca_cert",
           opt::value<string>()->default_value(

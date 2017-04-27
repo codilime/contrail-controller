@@ -2,7 +2,7 @@
 
 import sys
 print 'building gperftools'
-env = DefaultEnvironment(TARGET_ARCH='x86')
+env = DefaultEnvironment()
 
 vpath = '#/third_party/gperftools-2.1'
 

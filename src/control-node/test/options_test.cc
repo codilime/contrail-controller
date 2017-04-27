@@ -58,7 +58,7 @@ TEST_F(OptionsTest, NoArguments) {
     EXPECT_EQ(options_.bgp_port(), default_bgp_port);
     TASK_UTIL_EXPECT_VECTOR_EQ(default_collector_server_list_,
                      options_.collector_server_list());
-    EXPECT_EQ(options_.config_file(), "/etc/contrail/contrail-control.conf");
+    EXPECT_EQ(options_.config_file(), AgentConstants::contrail_control_conf);
     EXPECT_EQ(options_.discovery_server(), "127.0.0.1");
     EXPECT_EQ(options_.discovery_port(), default_discovery_port);
     EXPECT_EQ(options_.hostname(), hostname_);
@@ -111,7 +111,7 @@ TEST_F(OptionsTest, DefaultConfFile) {
     EXPECT_EQ(options_.http_server_port(), default_http_server_port);
     EXPECT_EQ(options_.log_category(), "");
     EXPECT_EQ(options_.log_disable(), false);
-    EXPECT_EQ(options_.log_file(), "/var/log/contrail/contrail-control.log");
+    EXPECT_EQ(options_.log_file(), AgentConstants::contrail_control_log);
     EXPECT_EQ(options_.log_files_count(), 10);
     EXPECT_EQ(options_.log_file_size(), 10*1024*1024);
     EXPECT_EQ(options_.log_level(), "SYS_NOTICE");
@@ -200,7 +200,7 @@ TEST_F(OptionsTest, OverrideBooleanFromCommandLine) {
     EXPECT_EQ(options_.http_server_port(), default_http_server_port);
     EXPECT_EQ(options_.log_category(), "");
     EXPECT_EQ(options_.log_disable(), false);
-    EXPECT_EQ(options_.log_file(), "/var/log/contrail/contrail-control.log");
+    EXPECT_EQ(options_.log_file(), AgentConstants::contrail_control_log);
     EXPECT_EQ(options_.log_files_count(), 10);
     EXPECT_EQ(options_.log_file_size(), 10*1024*1024);
     EXPECT_EQ(options_.log_level(), "SYS_NOTICE");
@@ -313,9 +313,9 @@ TEST_F(OptionsTest, CustomConfigFile) {
     EXPECT_EQ(options_.bgp_end_of_rib_timeout(), 200);
     EXPECT_EQ(options_.xmpp_end_of_rib_timeout(), 100);
     EXPECT_EQ(options_.xmpp_auth_enabled(), true);
-    EXPECT_EQ(options_.xmpp_server_cert(), "/etc/server.pem");
-    EXPECT_EQ(options_.xmpp_server_key(), "/etc/server.key");
-    EXPECT_EQ(options_.xmpp_ca_cert(), "/etc/ca-cert.pem");
+    EXPECT_EQ(options_.xmpp_server_cert(), AgentConstants::server_pem);
+    EXPECT_EQ(options_.xmpp_server_key(), AgentConstants::server_key);
+    EXPECT_EQ(options_.xmpp_ca_cert(), AgentConstants::ca_cert_pem);
     EXPECT_EQ(options_.sandesh_send_rate_limit(), 5);
 }
 

@@ -13,6 +13,7 @@
 #include "cmn/buildinfo.h"
 #include "cmn/dns_options.h"
 #include "net/address_util.h"
+#include "AgentConstants.h"
 
 using namespace std;
 using namespace boost::asio::ip;
@@ -49,7 +50,7 @@ void Options::Initialize(EventManager &evm,
     // Command line only options.
     generic.add_options()
         ("conf_file", opt::value<string>()->default_value(
-                                                    "/etc/contrail/contrail-dns.conf"),
+                                                    AgentConstants::contrail_dns_conf),
              "Configuration file")
          ("help", "help message")
         ("version", "Display version information")
@@ -76,10 +77,10 @@ void Options::Initialize(EventManager &evm,
              opt::value<string>()->default_value("contrail-named.conf"),
              "Named Configuration file")
         ("DEFAULT.named_config_directory",
-             opt::value<string>()->default_value("/etc/contrail/dns"),
+             opt::value<string>()->default_value(AgentConstants::contrail_dns),
              "Named Configuration directory")
         ("DEFAULT.named_log_file",
-             opt::value<string>()->default_value("/var/log/contrail/contrail-named.log"),
+             opt::value<string>()->default_value(AgentConstants::contrail_named_log),
              "Named log file")
         ("DEFAULT.rndc_config_file",
              opt::value<string>()->default_value("contrail-rndc.conf"),
@@ -165,15 +166,15 @@ void Options::Initialize(EventManager &evm,
              "Enable authentication over Xmpp")
         ("DEFAULT.xmpp_server_cert",
              opt::value<string>()->default_value(
-             "/etc/contrail/ssl/certs/server.pem"),
+             AgentConstants::contrail_ssl_certs_server_pem),
              "XMPP Server ssl certificate")
         ("DEFAULT.xmpp_server_key",
              opt::value<string>()->default_value(
-             "/etc/contrail/ssl/private/server-privkey.pem"),
+             AgentConstants::contrail_ssl_server_privkey_pem),
              "XMPP Server ssl private key")
         ("DEFAULT.xmpp_ca_cert",
              opt::value<string>()->default_value(
-             "/etc/contrail/ssl/certs/ca-cert.pem"),
+             AgentConstants::contrail_ssl_certs_ca_cert_pem),
              "XMPP CA ssl certificate")
         ;
 

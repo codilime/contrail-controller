@@ -107,6 +107,7 @@ void KSync::Init(bool create_vhost) {
 }
 
 void KSync::InitDone() {
+#ifndef _WINDOWS //WINDOWSFIX
     for (uint16_t i = 0; i < flow_table_ksync_obj_list_.size(); i++) {
         FlowTable *flow_table = agent_->pkt()->get_flow_proto()->GetTable(i);
         flow_table_ksync_obj_list_[i]->set_flow_table(flow_table);
@@ -118,6 +119,7 @@ void KSync::InitDone() {
     profile->RegisterKSyncStatsCb(boost::bind(&KSync::SetProfileData,
                                               this, _1));
     KSyncSock::Get(0)->SetMeasureQueueDelay(agent_->MeasureQueueDelay());
+#endif
 }
 
 void KSync::InitFlowMem() {
@@ -387,6 +389,7 @@ void KSyncTcp::TcpInit() {
 KSyncTcp::~KSyncTcp() { }
 
 void KSyncTcp::Init(bool create_vhost) {
+#ifndef _WINDOWS //WINDOWS-TEMP
     TcpInit();
     VRouterInterfaceSnapshot();
     InitFlowMem();
@@ -399,4 +402,5 @@ void KSyncTcp::Init(bool create_vhost) {
         flow_table_ksync_obj_list_[i]->Init();
     }
     ksync_flow_memory_.get()->Init();
+#endif
 }

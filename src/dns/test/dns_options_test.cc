@@ -51,12 +51,12 @@ TEST_F(OptionsTest, NoArguments) {
     TASK_UTIL_EXPECT_VECTOR_EQ(default_collector_server_list_,
                      options_.collector_server_list());
     EXPECT_EQ(options_.dns_config_file(), "dns_config.xml");
-    EXPECT_EQ(options_.config_file(), "/etc/contrail/contrail-dns.conf");
+    EXPECT_EQ(options_.config_file(), AgentConstants::contrail_dns_conf);
     EXPECT_EQ(options_.discovery_server(), "");
     EXPECT_EQ(options_.discovery_port(), default_discovery_port);
     EXPECT_EQ(options_.named_config_file(), "contrail-named.conf");
-    EXPECT_EQ(options_.named_config_dir(), "/etc/contrail/dns");
-    EXPECT_EQ(options_.named_log_file(), "/var/log/contrail/contrail-named.log");
+    EXPECT_EQ(options_.named_config_dir(), AgentConstants::contrail_dns);
+    EXPECT_EQ(options_.named_log_file(), AgentConstants::contrail_named_log);
     EXPECT_EQ(options_.rndc_config_file(), "contrail-rndc.conf");
     EXPECT_EQ(options_.rndc_secret(), "xvysmOR8lnUQRBcunkC6vg==");
     EXPECT_EQ(options_.named_max_cache_size(), "32M");
@@ -101,8 +101,8 @@ TEST_F(OptionsTest, DefaultConfFile) {
     EXPECT_EQ(options_.discovery_server(), "");
     EXPECT_EQ(options_.discovery_port(), default_discovery_port);
     EXPECT_EQ(options_.named_config_file(), "contrail-named.conf");
-    EXPECT_EQ(options_.named_config_dir(), "/etc/contrail/dns");
-    EXPECT_EQ(options_.named_log_file(), "/var/log/contrail/contrail-named.log");
+    EXPECT_EQ(options_.named_config_dir(), AgentConstants::contrail_dns);
+    EXPECT_EQ(options_.named_log_file(), AgentConstants::contrail_named_log);
     EXPECT_EQ(options_.rndc_config_file(), "contrail-rndc.conf");
     EXPECT_EQ(options_.rndc_secret(), "secret==$");
     EXPECT_EQ(options_.named_max_cache_size(), "32M");
@@ -112,7 +112,7 @@ TEST_F(OptionsTest, DefaultConfFile) {
     EXPECT_EQ(options_.dns_server_port(), default_dns_server_port);
     EXPECT_EQ(options_.log_category(), "");
     EXPECT_EQ(options_.log_disable(), false);
-    EXPECT_EQ(options_.log_file(), "/var/log/contrail/contrail-dns.log");
+    EXPECT_EQ(options_.log_file(), AgentConstants::contrail_dns_log);
     EXPECT_EQ(options_.log_property_file(), "");
     EXPECT_EQ(options_.log_files_count(), 10);
     EXPECT_EQ(options_.log_file_size(), 1024*1024);
@@ -155,8 +155,8 @@ TEST_F(OptionsTest, OverrideStringFromCommandLine) {
     EXPECT_EQ(options_.config_file(),
               "controller/src/dns/contrail-dns.conf");
     EXPECT_EQ(options_.named_config_file(), "contrail-named.conf");
-    EXPECT_EQ(options_.named_config_dir(), "/etc/contrail/dns");
-    EXPECT_EQ(options_.named_log_file(), "/var/log/contrail/contrail-named.log");
+    EXPECT_EQ(options_.named_config_dir(), AgentConstants::contrail_dns);
+    EXPECT_EQ(options_.named_log_file(), AgentConstants::contrail_named_log);
     EXPECT_EQ(options_.rndc_config_file(), "test.rndc");
     EXPECT_EQ(options_.rndc_secret(), "secret123");
     EXPECT_EQ(options_.discovery_server(), "");
@@ -206,7 +206,7 @@ TEST_F(OptionsTest, OverrideBooleanFromCommandLine) {
     EXPECT_EQ(options_.dns_server_port(), default_dns_server_port);
     EXPECT_EQ(options_.log_category(), "");
     EXPECT_EQ(options_.log_disable(), false);
-    EXPECT_EQ(options_.log_file(), "/var/log/contrail/contrail-dns.log");
+    EXPECT_EQ(options_.log_file(), AgentConstants::contrail_dns_log);
     EXPECT_EQ(options_.log_files_count(), 10);
     EXPECT_EQ(options_.log_file_size(), 1024*1024);
     EXPECT_EQ(options_.log_level(), "SYS_NOTICE");
@@ -288,8 +288,8 @@ TEST_F(OptionsTest, CustomConfigFile) {
     EXPECT_EQ(options_.discovery_server(), "1.0.0.1");
     EXPECT_EQ(options_.discovery_port(), 100);
     EXPECT_EQ(options_.named_config_file(), "named.test");
-    EXPECT_EQ(options_.named_config_dir(), "/var/log/dns");
-    EXPECT_EQ(options_.named_log_file(), "/etc/contrail/dns/named.log");
+    EXPECT_EQ(options_.named_config_dir(), AgentConstants::contrail_dns_log);
+    EXPECT_EQ(options_.named_log_file(), AgentConstants::contrail_dns_named_log);
     EXPECT_EQ(options_.rndc_config_file(), "file.rndc");
     EXPECT_EQ(options_.rndc_secret(), "abcd123");
     EXPECT_EQ(options_.hostname(), "test");
@@ -314,9 +314,9 @@ TEST_F(OptionsTest, CustomConfigFile) {
     EXPECT_EQ(options_.test_mode(), true);
     EXPECT_EQ(options_.sandesh_send_rate_limit(), 5);
     EXPECT_EQ(options_.xmpp_auth_enabled(), true);
-    EXPECT_EQ(options_.xmpp_server_cert(), "/etc/server.pem");
+    EXPECT_EQ(options_.xmpp_server_cert(), AgentConstants::server_pem);
     EXPECT_EQ(options_.xmpp_server_key(), "/etc/server-privkey.pem");
-    EXPECT_EQ(options_.xmpp_ca_cert(), "/etc/ca-cert.pem");
+    EXPECT_EQ(options_.xmpp_ca_cert(), AgentConstants::ca_cert_pem);
     std::remove("./dns_options_test_config_file.conf");
 }
 
@@ -398,8 +398,8 @@ TEST_F(OptionsTest, CustomConfigFileAndOverrideFromCommandLine) {
     EXPECT_EQ(options_.config_file(),
               "./dns_options_test_config_file.conf");
     EXPECT_EQ(options_.named_config_file(), "named.test");
-    EXPECT_EQ(options_.named_config_dir(), "/etc/contrail/dns/test");
-    EXPECT_EQ(options_.named_log_file(), "/etc/contrail/dns/named.log");
+    EXPECT_EQ(options_.named_config_dir(), AgentConstants::contrail_dns_test_dir);
+    EXPECT_EQ(options_.named_log_file(), AgentConstants::contrail_dns_named_log);
     EXPECT_EQ(options_.rndc_config_file(), "new.rndc");
     EXPECT_EQ(options_.rndc_secret(), "new-secret-123");
     EXPECT_EQ(options_.discovery_server(), "1.0.0.1");

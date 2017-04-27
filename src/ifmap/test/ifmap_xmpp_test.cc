@@ -352,7 +352,7 @@ TEST_F(XmppIfmapTest, Connection) {
 
     // create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_connection.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_connection.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -421,7 +421,7 @@ TEST_F(XmppIfmapTest, CheckClientGraphCleanupTest) {
 
     // create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_graph_cleanup_1.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_graph_cleanup_1.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -482,7 +482,7 @@ TEST_F(XmppIfmapTest, CheckClientGraphCleanupTest) {
     /////////////////////////////////////////////////////////
  
     // create the mock client
-    filename = "/tmp/" + GetUserName() + "_graph_cleanup_2.output";
+    filename = AgentConstants::temp_directory + GetUserName() + "_graph_cleanup_2.output";
     vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -551,7 +551,7 @@ TEST_F(XmppIfmapTest, DeleteProperty) {
 
     // create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_delete_property.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_delete_property.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -626,7 +626,7 @@ TEST_F(XmppIfmapTest, VrVmSubUnsub) {
 
     // Create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_vr_vm_sub_unsub.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_vr_vm_sub_unsub.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -740,7 +740,7 @@ TEST_F(XmppIfmapTest, VrVmSubUnsubTwice) {
 
     // Create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_vr_vm_sub_unsub_twice.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_vr_vm_sub_unsub_twice.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -897,7 +897,7 @@ TEST_F(XmppIfmapTest, VrVmSubThrice) {
 
     // Create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_vr_vm_sub_thrice.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_vr_vm_sub_thrice.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -1048,7 +1048,7 @@ TEST_F(XmppIfmapTest, VrVmUnsubThrice) {
 
     // Create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_vr_vm_unsub_thrice.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_vr_vm_unsub_thrice.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -1194,7 +1194,7 @@ TEST_F(XmppIfmapTest, VrVmSubConnClose) {
 
     // Create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_vr_vm_sub_conn_close.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_vr_vm_sub_conn_close.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -1300,7 +1300,7 @@ TEST_F(XmppIfmapTest, RegBeforeConfig) {
 
     // Create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_reg_before_config.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_reg_before_config.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -1426,7 +1426,7 @@ TEST_F(XmppIfmapTest, Cli1Vn1Vm3Add) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() + "_cli1_vn1_vm3_add.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_cli1_vn1_vm3_add.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -1510,7 +1510,7 @@ TEST_F(XmppIfmapTest, Cli1Vn2Np1Add) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() + "_cli1_vn2_np1_add.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_cli1_vn2_np1_add.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -1591,7 +1591,7 @@ TEST_F(XmppIfmapTest, Cli1Vn2Np2Add) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() + "_cli1_vn2_np2_add.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_cli1_vn2_np2_add.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -1672,7 +1672,7 @@ TEST_F(XmppIfmapTest, Cli2Vn2Np2Add) {
     // Establish client a1s27
     string cli_name1 =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename1("/tmp/" + GetUserName() + "_cli2_vn2_np2_add_s27.output");
+    string filename1(AgentConstants::temp_directory + GetUserName() + "_cli2_vn2_np2_add_s27.output");
     IFMapXmppClientMock *vnsw_cli1 =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), cli_name1,
                                 filename1);
@@ -1681,7 +1681,7 @@ TEST_F(XmppIfmapTest, Cli2Vn2Np2Add) {
     // Establish client a1s28
     string cli_name2 =
         string("default-global-system-config:a1s28.contrail.juniper.net");
-    string filename2("/tmp/" + GetUserName() + "_cli2_vn2_np2_add_s28.output");
+    string filename2(AgentConstants::temp_directory + GetUserName() + "_cli2_vn2_np2_add_s28.output");
     IFMapXmppClientMock *vnsw_cli2 =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), cli_name2,
                                 filename2);
@@ -1794,7 +1794,7 @@ TEST_F(XmppIfmapTest, Cli2Vn2Vm2Add) {
     // Establish client a1s27
     string cli_name1 =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename1("/tmp/" + GetUserName() + "_cli2_vn2_vm2_add_s27.output");
+    string filename1(AgentConstants::temp_directory + GetUserName() + "_cli2_vn2_vm2_add_s27.output");
     IFMapXmppClientMock *vnsw_cli1 =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), cli_name1,
                                 filename1);
@@ -1803,7 +1803,7 @@ TEST_F(XmppIfmapTest, Cli2Vn2Vm2Add) {
     // Establish client a1s28
     string cli_name2 =
         string("default-global-system-config:a1s28.contrail.juniper.net");
-    string filename2("/tmp/" + GetUserName() + "_cli2_vn2_vm2_add_s28.output");
+    string filename2(AgentConstants::temp_directory + GetUserName() + "_cli2_vn2_vm2_add_s28.output");
     IFMapXmppClientMock *vnsw_cli2 =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), cli_name2,
                                 filename2);
@@ -1916,7 +1916,7 @@ TEST_F(XmppIfmapTest, Cli2Vn3Vm6Np2Add) {
     // Establish client a1s27
     string cli_name1 =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename1("/tmp/" + GetUserName() +
+    string filename1(AgentConstants::temp_directory + GetUserName() +
                      "_cli2_vn3_vm6_np2_add_s27.output");
     IFMapXmppClientMock *vnsw_cli1 =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), cli_name1,
@@ -1926,7 +1926,7 @@ TEST_F(XmppIfmapTest, Cli2Vn3Vm6Np2Add) {
     // Establish client a1s28
     string cli_name2 =
         string("default-global-system-config:a1s28.contrail.juniper.net");
-    string filename2("/tmp/" + GetUserName() +
+    string filename2(AgentConstants::temp_directory + GetUserName() +
                      "_cli2_vn3_vm6_np2_add_s28.output");
     IFMapXmppClientMock *vnsw_cli2 =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), cli_name2,
@@ -2057,7 +2057,7 @@ TEST_F(XmppIfmapTest, CfgSubUnsub) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() + "_cfg_reg_unreg.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_cfg_reg_unreg.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -2214,7 +2214,7 @@ TEST_F(XmppIfmapTest, CfgAdd_Reg_CfgDel_Unreg) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() +
+    string filename(AgentConstants::temp_directory + GetUserName() +
                     "_cfgadd_reg_cfgdel_unreg.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
@@ -2386,7 +2386,7 @@ TEST_F(XmppIfmapTest, Reg_CfgAdd_CfgDel_Unreg) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() +
+    string filename(AgentConstants::temp_directory + GetUserName() +
                     "_reg_cfgadd_cfgdel_unreg.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
@@ -2578,7 +2578,7 @@ TEST_F(XmppIfmapTest, Reg_CfgAdd_Unreg_CfgDel) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() +
+    string filename(AgentConstants::temp_directory + GetUserName() +
                     "_reg_cfgadd_unreg_cfgdel.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
@@ -2760,7 +2760,7 @@ TEST_F(XmppIfmapTest, Reg_CfgAdd_Unreg_Close) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() + "_reg_cfgadd_unreg_close.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_reg_cfgadd_unreg_close.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -2954,7 +2954,7 @@ TEST_F(XmppIfmapTest, CheckIFMapObjectSeqInList) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() +
+    string filename(AgentConstants::temp_directory + GetUserName() +
                     "_check_ifmap_object_seq_in_list.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
@@ -3200,7 +3200,7 @@ TEST_F(XmppIfmapTest, ReadyNotready) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() + "_ready_not_ready.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_ready_not_ready.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -3248,7 +3248,7 @@ TEST_F(XmppIfmapTest, Bug788) {
     // Create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() + "_bug788.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_bug788.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -3377,7 +3377,7 @@ TEST_F(XmppIfmapTest, SpuriousVrSub) {
 
     // Create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() + "_spurious_vr_sub.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_spurious_vr_sub.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -3450,7 +3450,7 @@ TEST_F(XmppIfmapTest, VmSubUnsubWithNoVrSub) {
 
     // Create the mock client
     string client_name(kDefaultClientName);
-    string filename("/tmp/" + GetUserName() +
+    string filename(AgentConstants::temp_directory + GetUserName() +
                     "_vm_subunsub_with_novrsub.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
@@ -3530,7 +3530,7 @@ TEST_F(XmppIfmapTest, ConfigVrsubVrUnsub) {
     TASK_UTIL_EXPECT_TRUE(link != NULL);
 
     // Create the mock client
-    string filename("/tmp/" + GetUserName() + "_config_vrsub_vrunsub.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_config_vrsub_vrunsub.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -3579,7 +3579,7 @@ TEST_F(XmppIfmapTest, VrsubConfigVrunsub) {
     string gsc_str("gsc1");
 
     // Create the mock client
-    string filename("/tmp/" + GetUserName() + "_vrsub_config_vrunsub.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_vrsub_config_vrunsub.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -3665,7 +3665,7 @@ TEST_F(XmppIfmapTest, ConfignopropVrsub) {
     TASK_UTIL_EXPECT_TRUE(link != NULL);
 
     // Create the mock client
-    string filename("/tmp/" + GetUserName() + "_config_noprop_vrsub.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_config_noprop_vrsub.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -3723,7 +3723,7 @@ TEST_F(XmppIfmapTest, VrsubConfignoprop) {
     string gsc_str("gsc1");
 
     // Create the mock client
-    string filename("/tmp/" + GetUserName() + "_vrsub_config_noprop.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_vrsub_config_noprop.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -3796,7 +3796,7 @@ TEST_F(XmppIfmapTest, NodePropertyChanges) {
     string client_name("vr1");
 
     // Create the mock client
-    string filename("/tmp/" + GetUserName() + "_node_prop_changes.output");
+    string filename(AgentConstants::temp_directory + GetUserName() + "_node_prop_changes.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,
                                 filename);
@@ -3948,7 +3948,7 @@ TEST_F(XmppIfmapTest, DeleteClientPendingVmregCleanup) {
     // create the mock client
     string client_name =
         string("default-global-system-config:a1s27.contrail.juniper.net");
-    string filename("/tmp/" + GetUserName() +
+    string filename(AgentConstants::temp_directory + GetUserName() +
                     "_cfgadd_reg_cfgdel_unreg.output");
     IFMapXmppClientMock *vnsw_client =
         new IFMapXmppClientMock(&evm_, xmpp_server_->GetPort(), client_name,

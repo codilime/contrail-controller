@@ -362,7 +362,7 @@ TEST_F(FlowTest, Default_Cmdline_arg1) {
     EXPECT_EQ(param.stale_interface_cleanup_timeout(), 60);
     EXPECT_EQ(param.http_server_port(), 10001);
     EXPECT_STREQ(param.log_category().c_str(), "abc");
-    EXPECT_STREQ(param.log_file().c_str(), "/var/log/contrail/vrouter2.log");
+    EXPECT_STREQ(param.log_file().c_str(), AgentConstants::contrail_vrouter2_log);
     EXPECT_STREQ(param.log_level().c_str(), "SYS_ERR");
     EXPECT_TRUE(param.isXenMode());
     EXPECT_EQ(param.agent_mode(), AgentParam::TSN_AGENT);

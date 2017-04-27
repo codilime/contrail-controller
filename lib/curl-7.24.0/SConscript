@@ -6,9 +6,9 @@ import shutil
 # path to the sources
 vpath = '#/third_party/curl-curl-7_51_0'
 print 'curl for windows'
-env = DefaultEnvironment(TARGET_ARCH='x86').Clone()
+env = DefaultEnvironment().Clone()
 
-binaries_path = '/builds/libcurl-vc-x86-release-static-ipv6-sspi-winssl/'
+binaries_path = '/builds/libcurl-vc-x64-release-static-ipv6-sspi-winssl/'
 binpath = binaries_path + 'bin/'
 libpath = binaries_path + 'lib/'
 incpath = binaries_path + '/include/curl/'

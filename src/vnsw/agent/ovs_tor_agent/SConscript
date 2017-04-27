@@ -23,7 +23,7 @@ env.Prepend(LIBS = [
                     'vnswinit'
                    ])
 
-env.Append(LIBS = ['ssl', 'crypto'])
+env.Append(LIBS = ['ssleay32', 'crypto'])
 
 env.GenerateBuildInfoCode(
     target='buildinfo.cc',

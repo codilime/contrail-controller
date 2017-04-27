@@ -232,6 +232,7 @@ KSyncSock::KSyncSock() :
 }
 
 KSyncSock::~KSyncSock() {
+#ifndef _WINDOWS //WINDOWSFIX
     assert(wait_tree_.size() == 0);
 
     if (rx_buff_) {
@@ -248,28 +249,40 @@ KSyncSock::~KSyncSock() {
         free(nl_client_->cl_buf);
     }
     free(nl_client_);
+#endif
 }
 
 void KSyncSock::Shutdown() {
+#ifndef _WINDOWS //WINDOWSFIX
+
     shutdown_ = true;
     sock_->send_queue_.Shutdown();
     sock_.release();
+#endif
 }
 
 void KSyncSock::Init(bool use_work_queue) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     sock_->send_queue_.Init(use_work_queue);
     pid_ = getpid();
     shutdown_ = false;
+#endif
 }
 
 void KSyncSock::SetMeasureQueueDelay(bool val) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     sock_->send_queue_.set_measure_busy_time(val);
     for (int i = 0; i < IoContext::MAX_WORK_QUEUES; i++) {
         receive_work_queue[i]->set_measure_busy_time(val);
     }
+#endif
 }
 
 void KSyncSock::Start(bool read_inline) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     sock_->read_inline_ = read_inline;
     if (sock_->read_inline_) {
         return;
@@ -279,28 +292,45 @@ void KSyncSock::Start(bool read_inline) {
                         boost::bind(&KSyncSock::ReadHandler, sock_.get(),
                                     placeholders::error,
                                     placeholders::bytes_transferred));
+#endif
 }
 
 void KSyncSock::SetSockTableEntry(KSyncSock *sock) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     assert(sock_.get() == NULL);
     sock_.reset(sock);
+#endif
 }
 
 void KSyncSock::SetNetlinkFamilyId(int id) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     vnsw_netlink_family_id_ = id;
     InitNetlink(sock_->nl_client_);
+#endif
 }
 
 uint32_t KSyncSock::WaitTreeSize() const {
+#ifndef _WINDOWS //WINDOWSFIX
+
     return wait_tree_.size();
+#endif
+	return 0;
 }
 
 void KSyncSock::SetSeqno(uint32_t seq) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     seqno_ = seq;
     uve_seqno_ = seq;
+#endif
+
 }
 
 uint32_t KSyncSock::AllocSeqNo(bool is_uve) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     uint32_t seq;
     if (is_uve) {
         seq = uve_seqno_.fetch_and_add(2);
@@ -312,18 +342,30 @@ uint32_t KSyncSock::AllocSeqNo(bool is_uve) {
         return AllocSeqNo(is_uve);
     }
     return seq;
+#endif
+	return 0;
 }
 
 KSyncSock *KSyncSock::Get(DBTablePartBase *partition) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     return sock_.get();
+#endif
+	return nullptr;
 }
 
 KSyncSock *KSyncSock::Get(int idx) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     assert(idx == 0);
     return sock_.get();
+#endif
+	return nullptr; //WINDOWS-HACK
 }
 
 bool KSyncSock::ValidateAndEnqueue(char *data) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     Validate(data);
     IoContext::IoContextWorkQId q_id;
     if ((GetSeqno(data) & KSYNC_DEFAULT_Q_ID_SEQ) ==
@@ -333,12 +375,15 @@ bool KSyncSock::ValidateAndEnqueue(char *data) {
         q_id = IoContext::UVE_Q_ID;
     }
     receive_work_queue[q_id]->Enqueue(data);
+#endif
     return true;
 }
 
 // Read handler registered with boost::asio. Demux done based on seqno_
 void KSyncSock::ReadHandler(const boost::system::error_code& error,
                             size_t bytes_transferred) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     if (error) {
         LOG(ERROR, "Error reading from Ksync sock. Error : " << 
             boost::system::system_error(error).what());
@@ -355,11 +400,14 @@ void KSyncSock::ReadHandler(const boost::system::error_code& error,
                  boost::bind(&KSyncSock::ReadHandler, this,
                              placeholders::error,
                              placeholders::bytes_transferred));
+#endif
 }
 
 // Process kernel data - executes in the task specified by IoContext
 // Currently only Agent::KSync and Agent::Uve are possibilities
 bool KSyncSock::ProcessKernelData(char *data) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     uint32_t seqno = GetSeqno(data);
     WaitTree::iterator it;
     {
@@ -379,13 +427,16 @@ bool KSyncSock::ProcessKernelData(char *data) {
         wait_tree_.erase(it);
     }
     delete[] data;
+#endif
     return true;
 }
 
 bool KSyncSock::BlockingRecv() {
+
+
     char data[kBufLen];
     bool ret = false;
-
+#ifndef _WINDOWS //WINDOWSFIX
     do {
         Receive(boost::asio::buffer(data, kBufLen));
         AgentSandeshContext *ctxt = KSyncSock::GetAgentSandeshContext();
@@ -402,32 +453,40 @@ bool KSyncSock::BlockingRecv() {
             ret = true;
         }
     } while (IsMoreData(data));
-
+#endif
     return ret;
 }
 
 // BlockingSend does not support bulk messages.
 size_t KSyncSock::BlockingSend(char *msg, int msg_len) {
+#ifndef _WINDOWS //WINDOWSFIX
     KSyncBufferList iovec;
     iovec.push_back(buffer(msg, msg_len));
     bulk_buf_size_ = msg_len;
     return SendTo(&iovec, 0);
+#endif
+	return 0;
 }
 
 void KSyncSock::GenericSend(IoContext *ioc) {
+#ifndef _WINDOWS //WINDOWSFIX
     send_queue_.Enqueue(ioc);
+#endif
 }
 
 void KSyncSock::SendAsync(KSyncEntry *entry, int msg_len, char *msg,
                           KSyncEntry::KSyncEvent event) {
+#ifndef _WINDOWS //WINDOWSFIX
     uint32_t seq = AllocSeqNo(false);
     KSyncIoContext *ioc = new KSyncIoContext(entry, msg_len, msg, seq, event);
     send_queue_.Enqueue(ioc);
+#endif
 }
 
 // Write handler registered with boost::asio
 void KSyncSock::WriteHandler(const boost::system::error_code& error,
                              size_t bytes_transferred) {
+#if 0 //WINDOWSFIX
     if (error) {
         LOG(ERROR, "Ksync sock write error : " <<
             boost::system::system_error(error).what());
@@ -435,10 +494,12 @@ void KSyncSock::WriteHandler(const boost::system::error_code& error,
             assert(0);
         }
     }
+#endif
 }
 
 // End of messages in the work-queue. Send messages pending in bulk context
 void KSyncSock::OnEmptyQueue(bool done) {
+#if 0 //WINDOWSFIX
     if (bulk_seq_no_ == kInvalidBulkSeqNo)
         return;
     tbb::mutex::scoped_lock lock(mutex_);
@@ -446,11 +507,13 @@ void KSyncSock::OnEmptyQueue(bool done) {
     assert(it != wait_tree_.end());
     KSyncBulkSandeshContext *bulk_context = &it->second;
     SendBulkMessage(bulk_context, bulk_seq_no_);
+#endif
 }
 
 // Send messages accumilated in bulk context
 int KSyncSock::SendBulkMessage(KSyncBulkSandeshContext *bulk_context,
                                uint32_t seqno) {
+#if 0 //WINDOWSFIX
     KSyncBufferList iovec;
     // Get all buffers to send into single io-vector
     bulk_context->Data(&iovec);
@@ -473,12 +536,14 @@ int KSyncSock::SendBulkMessage(KSyncBulkSandeshContext *bulk_context,
         } while(more_data);
     }
     bulk_seq_no_ = kInvalidBulkSeqNo;
+#endif
     return true;
 }
 
 // Get the bulk-context for sequence-number
 KSyncBulkSandeshContext *KSyncSock::LocateBulkContext(uint32_t seqno,
                               IoContext::IoContextWorkQId io_context_type) {
+#if 0 //WINDOWSFIX
     tbb::mutex::scoped_lock lock(mutex_);
     if (bulk_seq_no_ == kInvalidBulkSeqNo) {
         bulk_seq_no_ = seqno;
@@ -491,6 +556,8 @@ KSyncBulkSandeshContext *KSyncSock::LocateBulkContext(uint32_t seqno,
     WaitTree::iterator it = wait_tree_.find(bulk_seq_no_);
     assert(it != wait_tree_.end());
     return &it->second;
+#endif
+	return nullptr;
 }
 
 // Try adding an io-context to bulk context. Returns
@@ -498,6 +565,7 @@ KSyncBulkSandeshContext *KSyncSock::LocateBulkContext(uint32_t seqno,
 //  - false : if message cannot be added to bulk context
 bool KSyncSock::TryAddToBulk(KSyncBulkSandeshContext *bulk_context,
                              IoContext *ioc) {
+#if 0 //WINDOWSFIX
     if ((bulk_buf_size_ + ioc->GetMsgLen()) > max_bulk_buf_size_)
         return false;
 
@@ -513,9 +581,12 @@ bool KSyncSock::TryAddToBulk(KSyncBulkSandeshContext *bulk_context,
 
     bulk_context->Insert(ioc);
     return true;
+#endif
+	return false;
 }
 
 bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
+#if 0 //WINDOWSFIX
     KSyncBulkSandeshContext *bulk_context = LocateBulkContext(ioc->GetSeqno(),
                                             ioc->GetWorkQId());
     // Try adding message to bulk-message list
@@ -532,6 +603,8 @@ bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
                                      ioc->GetWorkQId());
     assert(TryAddToBulk(bulk_context, ioc));
     return true;
+#endif
+	return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -593,19 +666,21 @@ void KSyncSockNetlink::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
 }
 
 size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
+#ifndef _WINDOWS //WINDOWSFIX
+
     ResetNetlink(nl_client_);
     KSyncBufferList::iterator it = iovec->begin();
     iovec->insert(it, buffer((char *)nl_client_->cl_buf,
                              nl_client_->cl_buf_offset));
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
-
+#endif
     //WINDOWSFIX boost::asio::netlink::raw::endpoint ep;
 	return 0;//WINDOWSFIX sock_.send_to(*iovec, ep);
 }
 
 // Static method to decode non-bulk message
 void KSyncSockNetlink::NetlinkDecoder(char *data, SandeshContext *ctxt) {
-#if 0 //WINDOWSFIX
+#ifndef _WINDOWS //WINDOWSFIX
     assert(ValidateNetlink(data));
     char *buf = NULL;
     uint32_t buf_len = 0;
@@ -713,7 +788,7 @@ void KSyncSockUdp::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
 }
 
 size_t KSyncSockUdp::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
-#if 0 //WINDOWSFIX
+#ifndef _WINDOWS //WINDOWSFIX
     struct uvr_msg_hdr hdr;
     hdr.seq_no = seq_no;
     hdr.flags = 0;
@@ -775,7 +850,7 @@ bool KSyncSockTcp::IsMoreData(char *data) {
 }
 
 size_t KSyncSockTcp::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
-#if 0 //WINDOWSFIX
+#ifndef _WINDOWS //WINDOWSFIX
     ResetNetlink(nl_client_);
     int offset = nl_client_->cl_buf_offset;
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
@@ -811,7 +886,7 @@ bool KSyncSockTcp::Decoder(char *data, AgentSandeshContext *context) {
 
 bool KSyncSockTcp::BulkDecoder(char *data,
                                KSyncBulkSandeshContext *bulk_context) {
-#if 0 //WINDOWSFIX
+#ifndef _WINDOWS //WINDOWSFIX
     // Get sandesh buffer and buffer-length
     uint32_t buf_len = 0;
     char *buf = NULL;
@@ -827,7 +902,7 @@ void KSyncSockTcp::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
 }
 
 void KSyncSockTcp::Receive(mutable_buffers_1 buf) {
-#if 0 //WINDOWSFIX
+#ifndef _WINDOWS //WINDOWSFIX
     uint32_t bytes_read = 0;
     boost::system::error_code ec;
     const struct nlmsghdr *nlh = NULL;
@@ -926,7 +1001,7 @@ KSyncSockTcpSessionReader::KSyncSockTcpSessionReader(
 }
 
 int KSyncSockTcpSessionReader::MsgLength(Buffer buffer, int offset) {
-#if 0 //WINDOWSFIX
+#ifndef _WINDOWS //WINDOWSFIX
     size_t size = TcpSession::BufferSize(buffer);
     int remain = size - offset;
     if (remain < GetHeaderLenSize()) {

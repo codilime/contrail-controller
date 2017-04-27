@@ -137,8 +137,8 @@ env.Prepend(LIBS = [
     'db',
     'cpuinfo',
     'io',
-    'ssl',
-    'crypto',
+    'ssleay32',
+    'libeay32',
     'sandesh',
     'nodeinfo',
     'cpuinfo',
@@ -151,6 +151,8 @@ env.Prepend(LIBS = [
     'boost_filesystem',
     'boost_program_options',
     'boost_regex',
+    'windowsstubs.lib',
+    'gdi32.lib'
 ])
 
 # Libvirt library
