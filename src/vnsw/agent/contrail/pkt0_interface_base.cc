@@ -68,19 +68,16 @@ void Pkt0Interface::WriteHandler(const boost::system::error_code &error,
 
 
 void Pkt0Interface::AsyncRead() {
-#ifndef _WINDOWS //temp hack
     read_buff_ = new uint8_t[kMaxPacketSize];
     input_.async_read_some(
             boost::asio::buffer(read_buff_, kMaxPacketSize),
             boost::bind(&Pkt0Interface::ReadHandler, this,
                         boost::asio::placeholders::error,
                         boost::asio::placeholders::bytes_transferred));
-#endif
 }
 
 void Pkt0Interface::ReadHandler(const boost::system::error_code &error,
                               std::size_t length) {
-#ifndef _WINDOWS //temp
     if (error) {
         TAP_TRACE(Err,
                   "Packet Tap Error <" + error.message() + "> reading packet");
@@ -101,12 +98,10 @@ void Pkt0Interface::ReadHandler(const boost::system::error_code &error,
     }
 
     AsyncRead();
-#endif
 }
 
 int Pkt0Interface::Send(uint8_t *buff, uint16_t buff_len,
                         const PacketBufferPtr &pkt) {
-#ifndef _WINDOWS
     std::vector<boost::asio::const_buffer> buff_list;
     buff_list.push_back(boost::asio::buffer(buff, buff_len));
     buff_list.push_back(boost::asio::buffer(pkt->data(), pkt->data_len()));
@@ -117,9 +112,6 @@ int Pkt0Interface::Send(uint8_t *buff, uint16_t buff_len,
                                         boost::asio::placeholders::bytes_transferred,
                                         pkt, buff));
     return (buff_len + pkt->data_len());
-#else
-	return 0;
-#endif
 }
 
 Pkt0RawInterface::Pkt0RawInterface(const std::string &name,

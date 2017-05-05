@@ -18,12 +18,8 @@
 // vrouter/include/vr_defs.h is prepended with control information
 class VrouterControlInterface : public ControlInterface {
 public:
-	static const uint32_t kAgentHdrLen =
-#ifndef _WINDOWS
-	(sizeof(ether_header) + sizeof(struct agent_hdr));
-#else
-		0;
-#endif
+    static const uint32_t kAgentHdrLen =
+        (sizeof(ether_header) + sizeof(struct agent_hdr));
 
     VrouterControlInterface() : ControlInterface() { }
     virtual ~VrouterControlInterface() {

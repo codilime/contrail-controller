@@ -37,8 +37,8 @@ protected:
 #ifndef _WINDOWS
     boost::asio::posix::stream_descriptor input_;
 #else
-	typedef boost::asio::windows::stream_handle stream_descriptor;
-		stream_descriptor input_;
+    typedef boost::asio::windows::stream_handle stream_descriptor;
+    stream_descriptor input_;
 #endif
 
     uint8_t *read_buff_;
