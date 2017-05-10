@@ -77,6 +77,7 @@ def build_boost_for_windows(target,source,env):
    copyboostlib(buildlibdir+'libboost_thread-vc140-mt-gd-1_62.lib','thread')
    copyboostlib(buildlibdir+'libboost_filesystem-vc140-mt-gd-1_62.lib','filesystem')
    copyboostlib(buildlibdir+'boost_filesystem.lib','filesystem')
+   copyboostlib(buildlibdir+'libboost_chrono-vc140-mt-gd-1_62.lib','chrono')
 
 
 

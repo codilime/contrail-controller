@@ -9,7 +9,7 @@
 #include <base/logging.h>
 #include "nexthop_client.h"
 #include "nexthop_server.h"
-#include <pthread.h>
+#include <boost/thread.hpp>
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"

@@ -2,7 +2,7 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
-#include <pthread.h>
+#include <boost/thread.hpp>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

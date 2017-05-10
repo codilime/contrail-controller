@@ -6,7 +6,9 @@
 #define vnsw_agent_cmn_test_hpp
 
 #include <cmn/agent_cmn.h>
-
+#ifdef _WINDOWS
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
 using namespace boost::uuids;
 using namespace std;
 

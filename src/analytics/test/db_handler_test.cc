@@ -2,7 +2,7 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
-#include <pthread.h>
+#include <boost/thread.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>

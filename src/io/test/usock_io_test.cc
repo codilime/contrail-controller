@@ -1,5 +1,5 @@
 #include <boost/asio.hpp>
-#include <pthread.h>
+#include <boost/thread.hpp>
 
 #include "testing/gunit.h"
 #include "base/task.h"

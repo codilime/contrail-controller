@@ -8,7 +8,7 @@
 #include "io/event_manager.h"
 
 #include <boost/scoped_ptr.hpp>
-#include <pthread.h>
+#include <boost/thread.hpp>
 #include <tbb/atomic.h>
 
 #include "base/logging.h"
