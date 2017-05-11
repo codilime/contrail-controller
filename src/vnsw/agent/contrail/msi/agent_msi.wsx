@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="0BA1E738-4DB7-4871-898C-545F16426BAF" UpgradeCode="488D475D-E73D-46AF-BEE6-173BE24FAF33" Name="Agent" Version="0.0.1" Manufacturer="Juniper Networks" Language="1033">
+        <Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" Platform="x64"/>
+        <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
+ 
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFiles64Folder">
+                <Directory Id="ManufacturerFolder" Name="Juniper Networks">
+                    <Directory Id="INSTALLDIR" Name="Agent">
+                        <Component Id="ApplicationFiles" Guid="0AA4E35B-89F0-4E60-8D1C-F79BFBE49F78" Win64="yes">
+                            <File Id="AgentMainExe" Source="../../../../../../build/debug/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
+                        </Component>
+                    </Directory>
+                </Directory>
+            </Directory>
+        </Directory>
+ 
+        <Feature Id="DefaultFeature" Level="1">
+            <ComponentRef Id="ApplicationFiles"/>
+        </Feature>
+    </Product>
+</Wix>

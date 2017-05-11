@@ -1,0 +1,4 @@
+# WIX Installer
+*.msi
+*.wixobj
+*.wixpdb
