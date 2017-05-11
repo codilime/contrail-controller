@@ -10,6 +10,8 @@
                     <Directory Id="INSTALLDIR" Name="Agent">
                         <Component Id="ApplicationFiles" Guid="0AA4E35B-89F0-4E60-8D1C-F79BFBE49F78" Win64="yes">
                             <File Id="AgentMainExe" Source="../../../../../../build/debug/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
+                            <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="shareProcess" Start="auto" ErrorControl="normal"/>
+                            <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="uninstall"/>
                         </Component>
                     </Directory>
                 </Directory>
