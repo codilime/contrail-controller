@@ -643,7 +643,7 @@ bool ServiceInstance::IsLess(const DBEntry &rhs) const {
 }
 
 std::string ServiceInstance::ToString() const {
-    return UuidToString(uuid_);
+    return UUIDToString(uuid_);
 }
 
 void ServiceInstance::SetKey(const DBRequestKey *key) {
@@ -660,7 +660,7 @@ DBEntryBase::KeyPtr ServiceInstance::GetDBRequestKey() const {
 bool ServiceInstance::DBEntrySandesh(Sandesh *sresp, std::string &name) const {
     ServiceInstanceResp *resp = static_cast<ServiceInstanceResp *> (sresp);
 
-    std::string str_uuid = UuidToString(uuid_);
+    std::string str_uuid = UUIDToString(uuid_);
     if (! name.empty() && str_uuid != name) {
         return false;
     }
@@ -668,7 +668,7 @@ bool ServiceInstance::DBEntrySandesh(Sandesh *sresp, std::string &name) const {
     ServiceInstanceSandeshData data;
 
     data.set_uuid(str_uuid);
-    data.set_instance_id(UuidToString(properties_.instance_id));
+    data.set_instance_id(UUIDToString(properties_.instance_id));
 
     data.set_service_type(ServiceInstanceTypesMapping::IntServiceTypeToStr(
                     static_cast<ServiceType>(properties_.service_type)));
@@ -677,8 +677,8 @@ bool ServiceInstance::DBEntrySandesh(Sandesh *sresp, std::string &name) const {
                     static_cast<VirtualizationType>(
                                     properties_.virtualization_type)));
 
-    data.set_vmi_inside(UuidToString(properties_.vmi_inside));
-    data.set_vmi_outside(UuidToString(properties_.vmi_outside));
+    data.set_vmi_inside(UUIDToString(properties_.vmi_inside));
+    data.set_vmi_outside(UUIDToString(properties_.vmi_outside));
 
     Agent *agent = Agent::GetInstance();
     DBTableBase *si_table = agent->db()->FindTable("db.service-instance.0");

@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <cstring>
 #include <string>
+#include<WinSock2.h> 
 #include <net/if.h>
 #include <unistd.h>
 

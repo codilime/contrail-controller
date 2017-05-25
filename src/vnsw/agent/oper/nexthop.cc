@@ -161,7 +161,7 @@ void NextHop::FillObjectLog(AgentLogEvent::type event,
         case AgentLogEvent::ADD:
             str.assign("Addition ");
             break;
-        case AgentLogEvent::DELETE:
+        case AgentLogEvent::DEL:
             str.assign("Deletion ");
             break;
         case AgentLogEvent::CHANGE:
@@ -202,7 +202,7 @@ void NextHop::FillObjectLogIntf(const Interface *intf,
             break;
         }
         info.set_intf_type(if_type_str);
-        info.set_intf_uuid(UuidToString(intf->GetUuid()));
+        info.set_intf_uuid(UUIDToString(intf->GetUuid()));
         info.set_intf_name(intf->name());
     }
 }

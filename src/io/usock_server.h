@@ -1,8 +1,7 @@
 /*
  * Implement a UNIX domain socket interface using boost::asio.
  */
-#ifndef _IO_USOCK_SERVER_H_
-#define _IO_USOCK_SERVER_H_
+#pragma once
 
 #include <cstdio>
 #include <iostream>
@@ -14,10 +13,9 @@
 #include <boost/asio.hpp>
 #include <boost/function.hpp>
 
-#if defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
 
-class UnixDomainSocketSession :
-public boost::enable_shared_from_this<UnixDomainSocketSession>
+class WindowsDomainSocketSession :
+public boost::enable_shared_from_this<WindowsDomainSocketSession>
 {
  public:
     static const int kPDULen = 4096;
@@ -31,17 +29,17 @@ public boost::enable_shared_from_this<UnixDomainSocketSession>
         CLOSE
     };
 
-    typedef boost::function <void (UnixDomainSocketSession *, Event)>
+    typedef boost::function <void (WindowsDomainSocketSession *, Event)>
       EventObserver;
 
-    UnixDomainSocketSession (boost::asio::io_service &io_service)
+    WindowsDomainSocketSession (boost::asio::io_service &io_service)
         : socket_(io_service), session_id_(0)
     {
     }
 
-    ~UnixDomainSocketSession();
+    ~WindowsDomainSocketSession();
 
-    boost::asio::local::stream_protocol::socket &socket()
+    boost::asio::generic::stream_protocol::socket &socket()
     {
         return socket_;
     }
@@ -76,14 +74,14 @@ public boost::enable_shared_from_this<UnixDomainSocketSession>
     void HandleRead(const boost::system::error_code & error, size_t bytes);
     void HandleWrite(const boost::system::error_code & error);
 
-    boost::asio::local::stream_protocol::socket socket_;
+    boost::asio::generic::stream_protocol::socket socket_;
     BufferQueue buffer_queue_;
     uint8_t data_[kPDULen];
     EventObserver observer_;
     uint64_t session_id_;
 };
 
-typedef boost::shared_ptr <UnixDomainSocketSession> SessionPtr;
+typedef boost::shared_ptr <WindowsDomainSocketSession> SessionPtr;
 
 class UnixDomainSocketServer
 {
@@ -97,7 +95,7 @@ class UnixDomainSocketServer
     };
 
     typedef boost::function <void (UnixDomainSocketServer *,
-                                   UnixDomainSocketSession *, Event) >
+                                   WindowsDomainSocketSession *, Event) >
       EventObserver;
 
     UnixDomainSocketServer(boost::asio::io_service &io_service,
@@ -114,12 +112,6 @@ class UnixDomainSocketServer
  private:
     boost::asio::io_service &io_service_;
     EventObserver observer_;
-    boost::asio::local::stream_protocol::acceptor acceptor_;
+   //WINDOWS-TEMP boost::asio::generic::stream_protocol::acceptor acceptor_;
     uint64_t session_idspace_;
 };
-
-#else // defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
-#error Local sockets not available on this platform.
-#endif // defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
-
-#endif

@@ -147,7 +147,7 @@ TEST_F(OvsBaseTest, physical_port) {
 
 TEST_F(OvsBaseTest, VrfAuditRead) {
     VrfOvsdbObject *table = tcp_session_->client_idl()->vrf_ovsdb();
-    VrfOvsdbEntry vrf_key(table, UuidToString(MakeUuid(1)));
+    VrfOvsdbEntry vrf_key(table, UUIDToString(MakeUuid(1)));
     WAIT_FOR(1000, 10000, (table->Find(&vrf_key) != NULL));
 
     OvsdbLogicalSwitchReq *req = new OvsdbLogicalSwitchReq();

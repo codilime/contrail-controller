@@ -7,6 +7,7 @@
 
 #include <string>
 #include <unistd.h>
+#include"winutils.h"
 
 //
 // Utility routines to retrieve and log back trace from stack at run time in

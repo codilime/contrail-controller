@@ -11,9 +11,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <asm/types.h>
+//WINDOWS #include <sys/ipc.h>
+//WINDOWS #include <sys/shm.h>
+//WINDOWS #include <asm/types.h>
 #include <boost/asio.hpp>
 #include <boost/asio/buffer.hpp>
 
@@ -224,7 +224,7 @@ int FlowTableKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     req.set_fr_flow_vrf(flow_entry_->data().vrf);
     uint16_t flags = 0;
 
-    if (op == sandesh_op::DELETE) {
+    if (op == sandesh_op::DEL) {
         if (hash_id_ == FlowEntry::kInvalidFlowHandle) {
             return 0;
         }
@@ -494,7 +494,7 @@ int FlowTableKSyncEntry::ChangeMsg(char *buf, int buf_len) {
 }
 
 int FlowTableKSyncEntry::DeleteMsg(char *buf, int buf_len) {
-    return Encode(sandesh_op::DELETE, buf, buf_len);
+    return Encode(sandesh_op::DEL, buf, buf_len);
 }
 
 std::string FlowTableKSyncEntry::ToString() const {

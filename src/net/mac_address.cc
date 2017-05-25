@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <WinSock2.h>
 #include "net/mac_address.h"
 
 #include <cstring>
@@ -42,7 +42,8 @@ MacAddress::MacAddress(unsigned int a, unsigned int b, unsigned int c,
 
 MacAddress::MacAddress(const std::string &s,
                        boost::system::error_code *errorp) {
-    this->addr_ = FromString(s, errorp);
+//ambiguous operator()(const ether_addr&) vs move (c++11) operator()(const ether_addr&&)
+	this->addr_ =  (const ether_addr&)FromString(s, errorp);
 }
 
 string MacAddress::ToString() const {

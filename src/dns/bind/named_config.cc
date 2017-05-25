@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <cstdio>
 #include <iomanip>
 #include <assert.h>
@@ -128,7 +129,7 @@ void NamedConfig::DelZone(const Subnet &subnet, const VirtualDnsConfig *vdns) {
 
 void NamedConfig::UpdateNamedConf(const VirtualDnsConfig *updated_vdns) {
     CreateNamedConf(updated_vdns);
-    sync();
+    //WINDOWS-TEMP sync();
     // rndc_reconfig();
     // TODO: convert this to a call to rndc library
     std::stringstream str;

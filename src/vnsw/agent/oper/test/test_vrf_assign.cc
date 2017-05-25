@@ -101,7 +101,7 @@ TEST_F(VrfAssignTest, basic_1) {
     //Check for sandesh request
     VrfAssignReq *vrf_assign_list_req = new VrfAssignReq();
     std::vector<int> result = list_of(1);
-    vrf_assign_list_req->set_uuid(UuidToString(MakeUuid(1)));
+    vrf_assign_list_req->set_uuid(UUIDToString(MakeUuid(1)));
     Sandesh::set_response_callback(boost::bind(ValidateSandeshResponse, _1, result));
     vrf_assign_list_req->HandleRequest();
     client->WaitForIdle();
@@ -121,7 +121,7 @@ TEST_F(VrfAssignTest, basic_1_invalid_vrf) {
     //Check for sandesh request
     VrfAssignReq *vrf_assign_list_req = new VrfAssignReq();
     std::vector<int> result = list_of(1);
-    vrf_assign_list_req->set_uuid(UuidToString(MakeUuid(1)));
+    vrf_assign_list_req->set_uuid(UUIDToString(MakeUuid(1)));
     Sandesh::set_response_callback(boost::bind(ValidateSandeshResponse, _1, result));
     vrf_assign_list_req->HandleRequest();
     client->WaitForIdle();

@@ -8,6 +8,14 @@
 #include <netinet/in.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
+#ifdef _WINDOWS
+#include <WinSock2.h>
+#include <netinet/udp.h>
+#include <netinet/ip.h>
+#include <netinet/icmp.h>
+#include <netinet/tcp.h>
+
+#endif
 
 #include "cmn/agent_cmn.h"
 #include "net/address_util.h"
@@ -1052,7 +1060,7 @@ std::size_t PktInfo::hash(const EcmpLoadBalance &ecmp_load_balance) const {
         uint32_t *words;
 
         if (ecmp_load_balance.is_source_ip_set()) {
-            words = (uint32_t *) (ip_saddr.to_v6().to_bytes().c_array());
+            words = (uint32_t *) (ip_saddr.to_v6().to_bytes().data());
             boost::hash_combine(seed, words[0]);
             boost::hash_combine(seed, words[1]);
             boost::hash_combine(seed, words[2]);
@@ -1060,7 +1068,7 @@ std::size_t PktInfo::hash(const EcmpLoadBalance &ecmp_load_balance) const {
         }
 
         if (ecmp_load_balance.is_destination_ip_set()) {
-            words = (uint32_t *) (ip_daddr.to_v6().to_bytes().c_array());
+            words = (uint32_t *) (ip_daddr.to_v6().to_bytes().data());
             boost::hash_combine(seed, words[0]);
             boost::hash_combine(seed, words[1]);
             boost::hash_combine(seed, words[2]);

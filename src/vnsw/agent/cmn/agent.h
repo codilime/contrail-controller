@@ -4,17 +4,22 @@
 
 #ifndef vnsw_agent_hpp
 #define vnsw_agent_hpp
-
 #include <vector>
 #include <stdint.h>
 #include <string>
+#ifndef _WINDOWS
 #include <net/ethernet.h>
+#else
+#include "net/address.h"
+#undef interface //conflict with windows specific "interface"  in objbase.h
+#endif
 #include <boost/intrusive_ptr.hpp>
 #include <base/intrusive_ptr_back_ref.h>
 #include <cmn/agent_cmn.h>
 #include <base/connection_info.h>
 #include "net/mac_address.h"
 #include "oper/agent_types.h"
+
 
 class Agent;
 class AgentParam;

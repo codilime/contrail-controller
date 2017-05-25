@@ -1,6 +1,12 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#ifdef _WINDOWS
+#include <boost/asio.hpp>
+#include <windows.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#endif
 
 #include <stdint.h>
 #include "base/os.h"
@@ -8,6 +14,7 @@
 #include "vr_defs.h"
 #include "base/timer.h"
 #include "cmn/agent_cmn.h"
+
 #include "pkt/proto.h"
 #include "pkt/proto_handler.h"
 #include "diag/diag.h"
@@ -58,7 +65,7 @@ bool DiagEntry::TimerExpiry( uint32_t seq_no) {
     DiagEntryOp *op;
     RequestTimedOut(seq_no);
     if (IsDone()) {
-        op = new DiagEntryOp(DiagEntryOp::DELETE, this);
+        op = new DiagEntryOp(DiagEntryOp::DEL, this);
     } else {
         op = new DiagEntryOp(DiagEntryOp::RETRY, this);
     }
@@ -77,7 +84,7 @@ bool DiagTable::Process(DiagEntryOp *op) {
         Add(op->de_);
         break;
 
-    case DiagEntryOp::DELETE:
+    case DiagEntryOp::DEL:
         if (op->de_->TimerCancel() == true) {
             op->de_->SendSummary();
             delete op->de_;

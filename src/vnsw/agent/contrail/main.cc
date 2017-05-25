@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <boost/program_options.hpp>
 #include <base/logging.h>
@@ -57,7 +59,6 @@ bool GetBuildInfo(std::string &build_info_str) {
 
 int main(int argc, char *argv[]) {
     AgentParam params;
-
     try {
         params.ParseArguments(argc, argv);
     } catch (...) {

@@ -144,7 +144,7 @@ TEST_F(UnicastRemoteTest, TunnelIpChange) {
     client->WaitForIdle();
 
     VrfOvsdbObject *table = tcp_session_->client_idl()->vrf_ovsdb();
-    VrfOvsdbEntry vrf_key(table, UuidToString(MakeUuid(2)));
+    VrfOvsdbEntry vrf_key(table, UUIDToString(MakeUuid(2)));
     VrfOvsdbEntry *vrf_entry;
     WAIT_FOR(100, 10000,
              (vrf_entry =
@@ -255,7 +255,7 @@ TEST_F(UnicastRemoteTest, TunnelIpChange) {
 
     // Validate Logical switch deleted
     LogicalSwitchTable *l_table = tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry l_key(table, UuidToString(MakeUuid(2)));
+    LogicalSwitchEntry l_key(table, UUIDToString(MakeUuid(2)));
     WAIT_FOR(100, 10000, (l_table->Find(&l_key) == NULL));
 }
 
@@ -279,7 +279,7 @@ TEST_F(UnicastRemoteTest, LogicalSwitchDeleteOnRefRelease) {
     client->WaitForIdle();
 
     VrfOvsdbObject *table = tcp_session_->client_idl()->vrf_ovsdb();
-    VrfOvsdbEntry vrf_key(table, UuidToString(MakeUuid(2)));
+    VrfOvsdbEntry vrf_key(table, UUIDToString(MakeUuid(2)));
     VrfOvsdbEntry *vrf_entry;
     WAIT_FOR(100, 10000,
              (vrf_entry =
@@ -316,7 +316,7 @@ TEST_F(UnicastRemoteTest, LogicalSwitchDeleteOnRefRelease) {
 
     // Validate Logical switch deleted
     LogicalSwitchTable *l_table = tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry l_key(table, UuidToString(MakeUuid(2)));
+    LogicalSwitchEntry l_key(table, UUIDToString(MakeUuid(2)));
     WAIT_FOR(100, 10000, (l_table->Find(&l_key) == NULL));
 }
 
@@ -364,7 +364,7 @@ TEST_F(UnicastRemoteTest, PhysicalLocatorCreateWait) {
     client->WaitForIdle();
 
     VrfOvsdbObject *table = tcp_session_->client_idl()->vrf_ovsdb();
-    VrfOvsdbEntry vrf_key(table, UuidToString(MakeUuid(2)));
+    VrfOvsdbEntry vrf_key(table, UUIDToString(MakeUuid(2)));
     VrfOvsdbEntry *vrf_entry;
     WAIT_FOR(100, 10000,
              (vrf_entry =
@@ -411,7 +411,7 @@ TEST_F(UnicastRemoteTest, PhysicalLocatorCreateWait) {
 
     // Validate Logical switch deleted
     LogicalSwitchTable *l_table = tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry l_key(table, UuidToString(MakeUuid(2)));
+    LogicalSwitchEntry l_key(table, UUIDToString(MakeUuid(2)));
     WAIT_FOR(100, 10000, (l_table->Find(&l_key) == NULL));
 }
 

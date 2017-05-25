@@ -17,6 +17,7 @@
 #include "vr_os.h"
 #endif
 
+#include<WinSock2.h> 
 #include <net/if.h>
 
 #include <io/event_manager.h>
@@ -124,15 +125,17 @@ void KSync::InitFlowMem() {
 }
 
 void KSync::NetlinkInit() {
+#if 0 //WINDOWSFIX
     EventManager *event_mgr;
 
     event_mgr = agent_->event_manager();
     boost::asio::io_service &io = *event_mgr->io_service();
 
-    KSyncSockNetlink::Init(io, NETLINK_GENERIC);
+    //WINDOWFIX KSyncSockNetlink::Init(io, NETLINK_GENERIC);
     KSyncSock::SetAgentSandeshContext
         (new KSyncSandeshContext(ksync_flow_memory_.get()));
     GenericNetlinkInit();
+#endif
 }
 
 int KSync::Encode(Sandesh &encoder, uint8_t *buf, int buf_len) {
@@ -340,6 +343,7 @@ void KSync::Shutdown() {
 }
 
 void GenericNetlinkInit() {
+#if 0 //WINDOWSFIX
     struct nl_client    *cl;
     int    family;
 
@@ -351,6 +355,7 @@ void GenericNetlinkInit() {
     LOG(DEBUG, "Vrouter family is " << family);
     KSyncSock::SetNetlinkFamilyId(family);
     nl_free_client(cl);
+#endif
     return;
 }
 

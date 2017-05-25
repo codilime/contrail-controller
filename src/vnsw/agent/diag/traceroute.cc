@@ -4,6 +4,12 @@
 
 #include <stdint.h>
 #include <netinet/udp.h>
+#ifdef _WINDOWS
+#include "winsock2.h"
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/icmp.h>
+#endif
 #include "vr_defs.h"
 #include <sandesh/sandesh.h>
 #include <sandesh/sandesh_types.h>

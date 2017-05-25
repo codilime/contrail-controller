@@ -8,7 +8,7 @@
 #include <net/ethernet.h>
 #include <iomanip>
 #include <sstream>
-
+#define ETHERTYPE_ARP (0x0806) //WINDOWS-TEMP move to header
 using namespace std;
 
 NHKState::NHKState(KNHResp *obj, const std::string &resp_ctx,

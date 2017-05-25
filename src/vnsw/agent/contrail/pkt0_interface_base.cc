@@ -7,11 +7,13 @@
 #include <string.h>
 #include <fcntl.h>
 #include <assert.h>
+#ifndef _WINDOWS
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-
+#include<WinSock2.h>
+#include<WinSock2.h> 
 #include <net/if.h>
-
+#endif
 #include "base/logging.h"
 #include "cmn/agent_cmn.h"
 #include "sandesh/sandesh_types.h"
@@ -28,7 +30,7 @@ do {                                                                     \
 } while (false)                                                          \
 
 ///////////////////////////////////////////////////////////////////////////////
-const string Pkt0Socket::kSocketDir = "/var/run/vrouter";
+const string Pkt0Socket::kSocketDir = "vrouter";
 const string Pkt0Socket::kAgentSocketPath = Pkt0Socket::kSocketDir
                                             + "/agent_pkt0";
 const string Pkt0Socket::kVrouterSocketPath = Pkt0Socket::kSocketDir
@@ -66,16 +68,19 @@ void Pkt0Interface::WriteHandler(const boost::system::error_code &error,
 
 
 void Pkt0Interface::AsyncRead() {
+#ifndef _WINDOWS //temp hack
     read_buff_ = new uint8_t[kMaxPacketSize];
     input_.async_read_some(
             boost::asio::buffer(read_buff_, kMaxPacketSize),
             boost::bind(&Pkt0Interface::ReadHandler, this,
                         boost::asio::placeholders::error,
                         boost::asio::placeholders::bytes_transferred));
+#endif
 }
 
 void Pkt0Interface::ReadHandler(const boost::system::error_code &error,
                               std::size_t length) {
+#ifndef _WINDOWS //temp
     if (error) {
         TAP_TRACE(Err,
                   "Packet Tap Error <" + error.message() + "> reading packet");
@@ -96,10 +101,12 @@ void Pkt0Interface::ReadHandler(const boost::system::error_code &error,
     }
 
     AsyncRead();
+#endif
 }
 
 int Pkt0Interface::Send(uint8_t *buff, uint16_t buff_len,
                         const PacketBufferPtr &pkt) {
+#ifndef _WINDOWS
     std::vector<boost::asio::const_buffer> buff_list;
     buff_list.push_back(boost::asio::buffer(buff, buff_len));
     buff_list.push_back(boost::asio::buffer(pkt->data(), pkt->data_len()));
@@ -110,6 +117,9 @@ int Pkt0Interface::Send(uint8_t *buff, uint16_t buff_len,
                                         boost::asio::placeholders::bytes_transferred,
                                         pkt, buff));
     return (buff_len + pkt->data_len());
+#else
+	return 0;
+#endif
 }
 
 Pkt0RawInterface::Pkt0RawInterface(const std::string &name,
@@ -125,7 +135,9 @@ Pkt0RawInterface::~Pkt0RawInterface() {
 
 Pkt0Socket::Pkt0Socket(const std::string &name,
     boost::asio::io_service *io):
-    connected_(false), socket_(*io), timer_(NULL),
+    connected_(false),
+	//WINDOWS socket_(*io), 
+	timer_(NULL),
     read_buff_(NULL), pkt_handler_(NULL), name_(name){
 }
 
@@ -139,10 +151,10 @@ void Pkt0Socket::CreateUnixSocket() {
     boost::filesystem::create_directory(kSocketDir);
     boost::filesystem::remove(kAgentSocketPath);
 
-    boost::system::error_code ec;
-    socket_.open();
-    local::datagram_protocol::endpoint ep(kAgentSocketPath);
-    socket_.bind(ep, ec);
+	boost::system::error_code ec;// = boost::system::errc::success;
+   //WINDOWS socket_.open();
+    //WINDOWS local::datagram_protocol::endpoint ep(kAgentSocketPath);
+   //WINDOWS  socket_.bind(ep, ec);
     if (ec) {
         LOG(DEBUG, "Error binding to the socket " << kAgentSocketPath
                 << ": " << ec.message());
@@ -163,34 +175,39 @@ void Pkt0Socket::IoShutdownControlInterface() {
     }
 
     boost::system::error_code ec;
-    socket_.close(ec);
+    //WINDOWS socket_.close(ec);
 }
 
 void Pkt0Socket::ShutdownControlInterface() {
 }
 
 void Pkt0Socket::AsyncRead() {
+#ifndef _WINDOWS
     read_buff_ = new uint8_t[kMaxPacketSize];
+
     socket_.async_receive(
             boost::asio::buffer(read_buff_, kMaxPacketSize), 
             boost::bind(&Pkt0Socket::ReadHandler, this,
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred));
+#endif
 }
 
 void Pkt0Socket::StartConnectTimer() {
+#ifndef _WINDOWS
     Agent *agent = pkt_handler()->agent();
     timer_.reset(TimerManager::CreateTimer(
                  *(agent->event_manager()->io_service()),
                  "UnixSocketConnectTimer"));
     timer_->Start(kConnectTimeout,
                   boost::bind(&Pkt0Socket::OnTimeout, this));
+#endif
 }
 
 bool Pkt0Socket::OnTimeout() {
-    local::datagram_protocol::endpoint ep(kVrouterSocketPath);
+  //WINDOWS  local::datagram_protocol::endpoint ep(kVrouterSocketPath);
     boost::system::error_code ec;
-    socket_.connect(ep, ec);
+   //WINDOWS socket_.connect(ep, ec);
     if (ec != 0) {
         LOG(DEBUG, "Error connecting to socket " << kVrouterSocketPath
                 << ": " << ec.message());
@@ -202,6 +219,8 @@ bool Pkt0Socket::OnTimeout() {
 
 int Pkt0Socket::Send(uint8_t *buff, uint16_t buff_len,
                       const PacketBufferPtr &pkt) {
+
+#ifndef _WINDOWS
     if (connected_ == false) {
         //queue the data?
         return (pkt->data_len());
@@ -216,11 +235,16 @@ int Pkt0Socket::Send(uint8_t *buff, uint16_t buff_len,
                        boost::asio::placeholders::error,
                        boost::asio::placeholders::bytes_transferred,
                        pkt, buff));
+
     return (buff_len + pkt->data_len());
+#else
+	return 0;
+#endif
 }
 
 void Pkt0Socket::ReadHandler(const boost::system::error_code &error,
                              std::size_t length) {
+#ifndef _WINDOWS
     if (error) {
         TAP_TRACE(Err,
                   "Packet Error <" + error.message() + "> reading packet");
@@ -241,13 +265,16 @@ void Pkt0Socket::ReadHandler(const boost::system::error_code &error,
     }
 
     AsyncRead();
+#endif
 }
 
 void Pkt0Socket::WriteHandler(const boost::system::error_code &error,
                               std::size_t length, PacketBufferPtr pkt,
                               uint8_t *buff) {
+#ifndef _WINDOWS
     if (error)
         TAP_TRACE(Err,
                   "Packet Error <" + error.message() + "> sending packet");
     delete [] buff;
+#endif
 }

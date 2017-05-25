@@ -164,13 +164,21 @@ struct Dhcpv6Options {
 
     uint16_t code;
     uint16_t len;
+#ifndef _WINDOWS
     uint8_t  data[0];
+#else
+	uint8_t  data[1];
+#endif
 };
 
 struct Dhcpv6Hdr {
     uint8_t     type;
     uint8_t     xid[3];
+#ifndef _WINDOWS
     Dhcpv6Options options[0];
+#else
+	Dhcpv6Options options[];
+#endif
 };
 
 struct Dhcpv6Ia {

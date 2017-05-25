@@ -118,7 +118,7 @@ protected:
             config->set_instance_name(rtinstance->name());
             config->set_name(out.str());
             boost::uuids::random_generator gen;
-            config->set_uuid(UuidToString(gen()));
+            config->set_uuid(UUIDToString(gen()));
             BgpTestPeer *peer = static_cast<BgpTestPeer *>(
                 rtinstance->peer_manager()->PeerLocate(server_.get(), config));
             peers_.push_back(peer);

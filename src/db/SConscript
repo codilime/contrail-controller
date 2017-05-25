@@ -3,10 +3,13 @@
 #
 
 # -*- mode: python; -*-
+import os
 
 Import('BuildEnv')
 
 env = BuildEnv.Clone()
+if os.name == 'nt':
+   env.Append(CPPPATH = ['#windows'])
 
 env.Append(CPPPATH = [env['TOP'],
                       env['TOP'] + '/db',

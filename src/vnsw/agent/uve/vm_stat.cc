@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <sys/times.h>
 #include <sys/types.h>
@@ -28,7 +30,7 @@ VmStat::VmStat(Agent *agent, const uuid &vm_uuid):
     virt_memory_(0), virt_memory_peak_(0), vm_memory_quota_(0),
     prev_cpu_stat_(0), cpu_usage_(0),
     prev_cpu_snapshot_time_(0), prev_vcpu_snapshot_time_(0),
-    input_(*(agent_->event_manager()->io_service())),
+  ////WINDOWS-TEMP  input_(*(agent_->event_manager()->io_service())),
     timer_(TimerManager::CreateTimer(*(agent_->event_manager())->io_service(),
     "VmStatTimer")), marked_delete_(false), pid_(0), retry_(0), virtual_size_(0),
     disk_size_(0), disk_name_() {
@@ -46,7 +48,7 @@ void VmStat::ReadData(const boost::system::error_code &ec,
 
     if (ec) {
         boost::system::error_code close_ec;
-        input_.close(close_ec);
+        ////WINDOWS-TEMP input_.close(close_ec);
         call_back_ = cb;
         //Enqueue a request to process data
         VmStatData *vm_stat_data = new VmStatData(this);
@@ -55,10 +57,10 @@ void VmStat::ReadData(const boost::system::error_code &ec,
             (agent_->uve()->vm_uve_table());
         vmt->EnqueueVmStatData(vm_stat_data);
     } else {
-        bzero(rx_buff_, sizeof(rx_buff_));
-        async_read(input_, boost::asio::buffer(rx_buff_, kBufLen),
-                   boost::bind(&VmStat::ReadData, this, placeholders::error,
-                   placeholders::bytes_transferred, cb));
+        bzero((unsigned char*)rx_buff_, sizeof(rx_buff_));
+        ////WINDOWS-TEMP async_read(input_, boost::asio::buffer(rx_buff_, kBufLen),
+		////WINDOWS-TEMP          boost::bind(&VmStat::ReadData, this, boost::asio::placeholders::error,
+		////WINDOWS-TEMP			   boost::asio::placeholders::bytes_transferred, cb));
     }
 }
 
@@ -80,14 +82,16 @@ void VmStat::ExecCmd(std::string cmd, DoneCb cb) {
     argv[3] = 0;
 
     int out[2];
-    if (pipe(out) < 0) {
-        return;
-    }
+    ////WINDOWS-TEMP if (pipe(out) < 0) {
+  ////WINDOWS-TEMP      return;
+  ////WINDOWS-TEMP  }
 
-    if (vfork() == 0) {
+    ////WINDOWS-TEMP if (vfork() == 0) 
+	  if(0)
+	   {
         //Close read end of pipe
         close(out[0]);
-        dup2(out[1], STDOUT_FILENO);
+        ////WINDOWS-TEMP dup2(out[1], STDOUT_FILENO);
         //Close out[1] as stdout is a exact replica of out[1]
         close(out[1]);
 
@@ -107,20 +111,20 @@ void VmStat::ExecCmd(std::string cmd, DoneCb cb) {
     if (fd == -1) {
         return;
     }
-    input_.assign(fd, ec);
+   ////WINDOWS-TEMP input_.assign(fd, ec);
     if (ec) {
         close(fd);
         return;
     }
 
-    bzero(rx_buff_, sizeof(rx_buff_));
-    async_read(input_, boost::asio::buffer(rx_buff_, kBufLen),
-               boost::bind(&VmStat::ReadData, this, placeholders::error,
-                           placeholders::bytes_transferred, cb));
+    bzero((unsigned char*)rx_buff_, sizeof(rx_buff_));
+	////WINDOWS-TEMP async_read(input_, boost::asio::buffer(rx_buff_, kBufLen),
+	////WINDOWS-TEMP          boost::bind(&VmStat::ReadData, this, boost::asio::placeholders::error,
+	////WINDOWS-TEMP			   boost::asio::placeholders::bytes_transferred, cb));
 }
 
 bool VmStat::BuildVmStatsMsg(VirtualMachineStats *uve) {
-    uve->set_name(UuidToString(vm_uuid_));
+    uve->set_name(UUIDToString(vm_uuid_));
 
     std::vector<VmCpuStats> cpu_stats_list;
     VmCpuStats stats;
@@ -140,7 +144,7 @@ bool VmStat::BuildVmStatsMsg(VirtualMachineStats *uve) {
 }
 
 bool VmStat::BuildVmMsg(UveVirtualMachineAgent *uve) {
-    uve->set_name(UuidToString(vm_uuid_));
+    uve->set_name(UUIDToString(vm_uuid_));
 
     VmCpuStats stats;
     stats.set_cpu_one_min_avg(cpu_usage_);

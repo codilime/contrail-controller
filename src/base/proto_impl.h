@@ -10,7 +10,7 @@
 namespace detail {
 
 extern bool debug_;
-#define PROTO_DEBUG(args...) if (detail::debug_) LOG(DEBUG, ##args)
+#define PROTO_DEBUG(args) if (detail::debug_) LOG(DEBUG, ##args)
 
 template <typename T>
 struct ApplySetter {

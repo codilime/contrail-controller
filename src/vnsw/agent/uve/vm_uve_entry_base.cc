@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <uve/vm_uve_entry.h>
 #include <uve/agent_uve_base.h>
 

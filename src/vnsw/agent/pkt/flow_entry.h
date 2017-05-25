@@ -312,7 +312,7 @@ struct FlowEventLog {
         FLOW_EVICT,
         FLOW_HANDLE_ASSIGN,
         FLOW_MSG_SKIP_EVICTED,
-        EVENT_MAX
+        EVENT_MAXIMUM
     };
 
     FlowEventLog();
@@ -649,9 +649,11 @@ class FlowEntry {
         flow_mgmt_request_ = req;
     }
 
-    FlowEntryInfo *flow_mgmt_info() const { return flow_mgmt_info_.get(); }
+    FlowEntryInfo *flow_mgmt_info() const { 
+		return flow_mgmt_info_.get(); 
+	}
     void set_flow_mgmt_info(FlowEntryInfo *info) {
-        flow_mgmt_info_.reset(info);
+       flow_mgmt_info_.reset(info);
     }
 private:
     friend class FlowTable;

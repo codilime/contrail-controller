@@ -1,6 +1,11 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#ifdef _WINDOWS
+#include<netinet/udp.h>
+#include <boost/asio.hpp>
+#include <windows.h>
+#endif
 
 #include <stdint.h>
 #include "base/os.h"

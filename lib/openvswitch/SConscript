@@ -2,8 +2,10 @@
 import os
 import subprocess
 import sys
+import shutil
 
-vpath = '#/third_party/openvswitch-2.3.0'
+print 'install openvswitch'
+vpath = '#/third_party/openvswitch-2.6.0'
 
 env = DefaultEnvironment()
 env['ENV']['CFLAGS'] = '-DOPEN_CONTRAIL_CLIENT -g'
@@ -31,5 +33,16 @@ def Symlink(target, source):
     if not os.path.exists(target[0].abspath):
         os.symlink(source[0].abspath, target[0].abspath)
 
-Symlink([Dir('#/build/include/openvswitch/include')], [Dir(vpath + '/include')])
-Symlink([Dir('#/build/include/openvswitch/lib')], [Dir(vpath + '/lib')])
+srcdir = Dir(vpath).abspath
+destdir = Dir('#/build/include/openvswitch').abspath
+
+if not os.path.exists(destdir + '/include'):
+  print 'copying to inc' + destdir 
+  shutil.copytree(srcdir+'/include', destdir+'/include')
+
+if not os.path.exists(destdir + '/lib'):
+  print 'copying to lib' + destdir 
+  shutil.copytree(srcdir+'/include', destdir+'/lib')
+
+
+print 'done installing openvswitch'

@@ -576,10 +576,10 @@ void IntfCfgAddThrift(PortInfo *input, int id) {
     uint16_t tx_vlan_id = VmInterface::kInvalidVlanId;
     uint16_t rx_vlan_id = VmInterface::kInvalidVlanId;
     int16_t port_type = CfgIntEntry::CfgIntVMPort;
-    std::string port_uuid = UuidToString(MakeUuid(input[id].intf_id));
-    std::string instance_uuid = UuidToString(MakeUuid(input[id].vm_id));
-    std::string vn_uuid = UuidToString(MakeUuid(input[id].vn_id));
-    std::string vm_project_uuid = UuidToString(MakeUuid(kProjectUuid));
+    std::string port_uuid = UUIDToString(MakeUuid(input[id].intf_id));
+    std::string instance_uuid = UUIDToString(MakeUuid(input[id].vm_id));
+    std::string vn_uuid = UUIDToString(MakeUuid(input[id].vn_id));
+    std::string vm_project_uuid = UUIDToString(MakeUuid(kProjectUuid));
     //Set all parameters
     port_req->set_port_uuid(port_uuid);
     port_req->set_instance_uuid(instance_uuid);

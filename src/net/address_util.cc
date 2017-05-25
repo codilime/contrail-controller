@@ -91,7 +91,7 @@ IpAddress PrefixToIp6Netmask(uint32_t plen) {
         return IpAddress(all_fs);
     }
 
-    boost::array<uint8_t, 16> bytes;
+    std::array<uint8_t, 16> bytes;
 
     int index = (int) (plen / 8);
     int remain_mask = plen % 8;
@@ -222,8 +222,8 @@ void VectorToIp(const std::vector<int8_t> &ip, int family, IpAddress *sip,
                 IpAddress *dip) {
     if (family == Address::INET) {
         assert(ip.size() >= 8);
-        boost::array<unsigned char, 4> sbytes;
-        boost::array<unsigned char, 4> dbytes;
+        std::array<unsigned char, 4> sbytes;
+        std::array<unsigned char, 4> dbytes;
         for (int i = 0; i < 4; i++) {
             sbytes[i] = ip.at(i);
             dbytes[i] = ip.at((i + 4));
@@ -231,8 +231,8 @@ void VectorToIp(const std::vector<int8_t> &ip, int family, IpAddress *sip,
         *sip = Ip4Address(sbytes);
         *dip = Ip4Address(dbytes);
     } else {
-        boost::array<unsigned char, 16> sbytes;
-        boost::array<unsigned char, 16> dbytes;
+        std::array<unsigned char, 16> sbytes;
+        std::array<unsigned char, 16> dbytes;
         assert(ip.size() >= 32);
         for (int i = 0; i < 16; i++) {
             sbytes[i] = ip.at(i);
@@ -246,8 +246,8 @@ void VectorToIp(const std::vector<int8_t> &ip, int family, IpAddress *sip,
 std::vector<int8_t> IpToVector(const IpAddress &sip, const IpAddress &dip,
                                Address::Family family) {
     if (family == Address::INET) {
-        boost::array<unsigned char, 4> sbytes = sip.to_v4().to_bytes();
-        boost::array<unsigned char, 4> dbytes = dip.to_v4().to_bytes();
+        std::array<unsigned char, 4> sbytes = sip.to_v4().to_bytes();
+        std::array<unsigned char, 4> dbytes = dip.to_v4().to_bytes();
         std::vector<int8_t> ip_vect(sbytes.begin(), sbytes.end());
         std::vector<int8_t>::iterator it = ip_vect.begin();
 
@@ -255,8 +255,8 @@ std::vector<int8_t> IpToVector(const IpAddress &sip, const IpAddress &dip,
         assert(ip_vect.size() == 8);
         return ip_vect;
     } else {
-        boost::array<unsigned char, 16> sbytes = sip.to_v6().to_bytes();
-        boost::array<unsigned char, 16> dbytes = dip.to_v6().to_bytes();
+        std::array<unsigned char, 16> sbytes = sip.to_v6().to_bytes();
+        std::array<unsigned char, 16> dbytes = dip.to_v6().to_bytes();
         std::vector<int8_t> ip_vect(sbytes.begin(), sbytes.end());
         std::vector<int8_t>::iterator it = ip_vect.begin();
 
@@ -275,8 +275,8 @@ void  CharArrayToIp(const unsigned char *ip, int size, int family,
                     IpAddress *sip, IpAddress *dip) {
     if (family == Address::INET) {
         assert(size >= 8);
-        boost::array<unsigned char, 4> sbytes;
-        boost::array<unsigned char, 4> dbytes;
+        std::array<unsigned char, 4> sbytes;
+        std::array<unsigned char, 4> dbytes;
         for (int i = 0; i < 4; i++) {
             sbytes[i] = ip[i];
             dbytes[i] = ip[i + 4];
@@ -285,8 +285,8 @@ void  CharArrayToIp(const unsigned char *ip, int size, int family,
         *dip = Ip4Address(dbytes);
     } else {
         assert(size >= 32);
-        boost::array<unsigned char, 16> sbytes;
-        boost::array<unsigned char, 16> dbytes;
+        std::array<unsigned char, 16> sbytes;
+        std::array<unsigned char, 16> dbytes;
         for (int i = 0; i < 16; i++) {
             sbytes[i] = ip[i];
             dbytes[i] = ip[i + 16];
@@ -300,7 +300,7 @@ void Ip6AddressToU64Array(const Ip6Address &addr, uint64_t *arr, int size) {
     uint32_t *words;
     if (size != 2)
         return;
-    words = (uint32_t *) (addr.to_bytes().c_array());
+    words = (uint32_t *) (addr.to_bytes().data());
     arr[0] = (((uint64_t)words[0] << 32) & 0xFFFFFFFF00000000U) |
              ((uint64_t)words[1] & 0x00000000FFFFFFFFU);
     arr[1] = (((uint64_t)words[2] << 32) & 0xFFFFFFFF00000000U) |

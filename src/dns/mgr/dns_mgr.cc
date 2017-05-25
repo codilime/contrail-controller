@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <base/contrail_ports.h>
 #include <cmn/dns.h>
 #include <bind/bind_util.h>

@@ -34,6 +34,21 @@
 #include "services/metadata_client_session.h"
 #include "services/services_sandesh.h"
 
+void isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
+	unsigned int len)
+{
+
+}
+
+void isc_hmacsha256_invalidate(isc_hmacsha256_t *ctx)
+{}
+
+void isc_hmacsha256_update(isc_hmacsha256_t *ctx, const unsigned char *buf,
+	unsigned int len)
+{}
+
+void isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len)
+{}
 ////////////////////////////////////////////////////////////////////////////////
 
 #define METADATA_TRACE(obj, arg)                                               \
@@ -62,6 +77,7 @@ static std::string ErrorMessage(uint16_t ec) {
 // Get HMAC SHA256 digest
 static std::string
 GetHmacSha256(const std::string &key, const std::string &data) {
+	
     isc_hmacsha256_t hmacsha256;
     isc_hmacsha256_init(&hmacsha256, (const unsigned char *)key.c_str(),
                         key.length());
@@ -70,6 +86,7 @@ GetHmacSha256(const std::string &key, const std::string &data) {
     unsigned char hmac_sha256_digest[ISC_SHA512_DIGESTLENGTH];
     isc_hmacsha256_sign(&hmacsha256, hmac_sha256_digest,
                         ISC_SHA256_DIGESTLENGTH);
+
     std::stringstream str;
     for (unsigned int i = 0; i < ISC_SHA256_DIGESTLENGTH; i++) {
         str << std::hex << std::setfill('0') << std::setw(2)

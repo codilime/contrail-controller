@@ -31,8 +31,7 @@ env.GenerateBuildInfoCode(
     path=str(Dir('.').abspath))
 
 env = AgentEnv.RemoveExceptionFlag(env)
-env.AppendUnique(CCFLAGS='-Wno-reorder')
-env.AppendUnique(CCFLAGS='-Wno-return-type')
+env.AppendUnique(CCFLAGS='/w')
 
 contrail_tor_agent = env.Program(target = 'contrail-tor-agent',
                         source = [

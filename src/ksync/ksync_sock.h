@@ -376,7 +376,7 @@ public:
     static void NetlinkBulkDecoder(char *data, SandeshContext *ctxt, bool more);
     static void Init(boost::asio::io_service &ios, int protocol);
 private:
-    boost::asio::netlink::raw::socket sock_;
+    //WINDOWS boost::asio::netlink::raw::socket sock_;
 };
 
 //udp socket class for interacting with user vrouter
@@ -411,7 +411,9 @@ protected:
     virtual int MsgLength(Buffer buffer, int offset);
 
     virtual const int GetHeaderLenSize() {
-        return sizeof(struct nlmsghdr);
+
+   //WINDOWS     return sizeof(struct nlmsghdr);
+		return 0; //WINDOWS
     }
 
     virtual const int GetMaxMessageSize() {

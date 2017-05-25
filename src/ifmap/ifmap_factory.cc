@@ -1,3 +1,5 @@
+#include <boost/asio.hpp>
+#include <windows.h>
 #include "ifmap/ifmap_factory.h"
 
 template <>

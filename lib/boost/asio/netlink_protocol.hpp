@@ -18,7 +18,7 @@
 #include <boost/asio/detail/push_options.hpp>
 
 namespace boost {
-namespace asio {
+//WINDOWS namespace asio {
 namespace netlink {
 
 //  asio netlink socket support
@@ -57,20 +57,22 @@ public:
     return AF_NETLINK;
 #elif defined(__FreeBSD__)
     return AF_VENDOR00;
+#elif defined _WINDOWS
+	  return AF_INET;
 #else
 #error "Unsupported platform"
 #endif
   }
 
   /// The NETLINK domain socket type.
-  typedef basic_raw_socket<raw> socket;
-  typedef basic_endpoint<raw> endpoint;
+  //WINDOWS typedef basic_raw_socket<raw> socket;
+  //WINDOWS typedef basic_endpoint<raw> endpoint;
 
   int proto;
 };
 
 } // namespace netlink
-} // namespace asio
+//WINDOWS } // namespace asio
 } // namespace boost
 
 #include <boost/asio/detail/pop_options.hpp>

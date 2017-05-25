@@ -57,7 +57,8 @@ void BgpAsAService::BindBgpAsAServicePorts(const std::vector<uint16_t> &ports) {
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = htonl(agent_->router_id().to_ulong());
         address.sin_port = htons(port);
-        int optval = 1;
+        unsigned char optval = 1;
+#if 0 //WINDOWS-TEMP
         if (fcntl(port_fd, F_SETFD, FD_CLOEXEC) < 0) {
             std::stringstream ss;
             ss << "Port setting fcntl failed with error ";
@@ -66,9 +67,10 @@ void BgpAsAService::BindBgpAsAServicePorts(const std::vector<uint16_t> &ports) {
             ss << port;
             BGPASASERVICETRACE(Trace, ss.str().c_str());
         }
+#endif
         setsockopt(port_fd, SOL_SOCKET, SO_REUSEADDR,
-                   &optval, sizeof(optval));
-        if (bind(port_fd, (struct sockaddr*) &address,
+                   (const char*) &optval, sizeof(optval));
+        if (::bind(port_fd, (struct sockaddr*) &address,
                  sizeof(sockaddr_in)) < 0) {
             std::stringstream ss;
             ss << "Port bind failed for port# ";
@@ -369,7 +371,7 @@ void BgpAsAServiceSandeshReq::HandleRequest() const {
            BgpAsAServiceSandeshList entry;
            entry.set_vm_bgp_peer_ip((*it).local_peer_ip_.to_string());
            entry.set_vm_nat_source_port((*it).source_port_);
-           entry.set_vmi_uuid(UuidToString(map_it->first));
+           entry.set_vmi_uuid(UUIDToString(map_it->first));
            bgpaas_map.push_back(entry);
            it++;
        }

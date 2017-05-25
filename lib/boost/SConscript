@@ -1,7 +1,9 @@
 # -*- mode: python; -*-
-
+# windows reference: http://www.boost.org/doc/libs/1_62_0/more/getting_started/windows.html
 import os
 import sys
+import subprocess
+import shutil
 
 cpu_count = 1
 try:
@@ -10,107 +12,18 @@ try:
 except ImportError:
     pass
     
-vpath = '#/third_party/boost_1_48_0'
+vpath = '#/third_party/boost_1_62_0'
 engine = vpath + '/tools/build/v2/engine'
-version = '1.48.0'
+version = '1.62.0'
+print "Building windows boost..."
+currentdir =  Dir('.').path
 
-def MapPath(xpath, list):
-    return map(lambda x: '#/' + Dir('.').path + '/tools/' + x, list)
+env = DefaultEnvironment(TARGET_ARCH='x86')
 
-VariantDir('#/' + Dir('.').path + '/tools', engine, duplicate=0)
-
-env = DefaultEnvironment()
-
-yyacc = env.Program('yyacc0', MapPath(engine, ['yyacc.c']))
-
-gram = env.Command(['jamgram.y', 'jamgram.h'], MapPath(engine, ['jamgram.yy']),
-                   Dir('.').path + '/yyacc0 $TARGETS $SOURCE')
-
-env.Depends(gram, yyacc)
-
-mkjambase = env.Program('mkjambase0', MapPath(engine, ['mkjambase.c']))
-
-jambase = env.Command('jambase.c', MapPath(engine, ['Jambase']),
-                      Dir('.').path + '/mkjambase0 $TARGET $SOURCE')
-env.Depends(jambase, mkjambase)
-
-sources = [ 'command.c', 'compile.c', 'debug.c', 'expand.c', 'glob.c', 'hash.c',
-            'hdrmacro.c', 'headers.c', 'jam.c', 'jamgram.c',
-            'lists.c', 'make.c', 'make1.c', 'newstr.c', 'option.c', 'output.c',
-            'parse.c', 'pathunix.c', 'pathvms.c', 'regexp.c',
-            'rules.c', 'scan.c', 'search.c', 'subst.c', 'timestamp.c',
-            'variable.c', 'modules.c', 'strings.c', 'filesys.c', 'builtins.c',
-            'pwd.c', 'class.c', 'native.c', 'md5.c', 'w32_getreg.c',
-            'modules/set.c', 'modules/path.c', 'modules/regex.c',
-            'modules/property-set.c', 'modules/sequence.c', 'modules/order.c',
-            'execunix.c', 'fileunix.c']
-
-srcs = MapPath(engine, sources)
-srcs.append('jambase.c')
-stage0 = env.Program('jam0', srcs)
-
-if sys.platform == 'darwin':
-    toolset = '--toolset=darwin'
-else:
-    toolset = '--toolset=gcc'
-
-cmd = ('(cd ' + Dir(engine).abspath +
-       '; ' + Dir('.').abspath + '/jam0 -f build.jam ' + toolset + ')')
-
-#--toolset=darwin
-#    '--extra-include=' + env['ENV']['SDKROOT'] + '/usr/include )')
-
-bjam = env.Command('tools/bjam', engine + '/build.jam', cmd,
-                   ENV={'PATH': env['ENV']['PATH'],
-                        'LOCATE_TARGET': Dir('.').abspath + '/tools',
-#                       'SDKROOT': env['ENV']['SDKROOT']
-                       })
-
-env.Depends(bjam, stage0)
-
-boost_libs = [
-    'system', 'thread', 'date_time', 'regex', 'python', 'program_options',
-    'filesystem', 'chrono'
-]
-
-jam_libs = ''
-for xlib in boost_libs:
-    if jam_libs:
-        jam_libs += ' '
-    jam_libs += '--with-' + xlib
-
-# Fix for libicu on FreeBSD. We have to use self-compiled libicu and not the one
-# from the system to ensure the same C++ ABI is used by all libs the Agent
-# is linked against.
-if sys.platform.startswith('freebsd'):
-    icu_path_opt = '-sICU_PATH=' + Dir('#/build').abspath
-else:
-    icu_path_opt = ''
-
-#
-# Use '--cxxflags=-option' to pass options to the compiler
-#
-build_cmd = ('(cd ' + Dir(vpath).abspath + '; ' +
-             Dir('.').abspath + '/tools/bjam ' +
-             icu_path_opt + ' ' +
-             '-j' + str(cpu_count) + ' ' +
-             '--build-dir=' + Dir('.').abspath + ' ' +
-             '--prefix=' + Dir('#/build').abspath + ' ' +
-             '--stagedir=' + Dir('#/build').abspath + ' ' +
-             jam_libs + ' stage )')
-
-generated_libs = map(lambda x: '#/build/lib/libboost_' + x + '.a', boost_libs)
-generated_libs += map(lambda x: '#/build/lib/libboost_' + x + '.so' + '.' + version, boost_libs)
-libs = env.Command(generated_libs, bjam, build_cmd,
-                   ENV={'PATH': env['ENV']['PATH']})
-
-env.Depends(libs, bjam);
-
-for lib in boost_libs:
-    solib = '#/build/lib/libboost_' + lib + '.so' + '.' + version
-    solink = '#/build/lib/libboost_' + lib + '.so'
-    env.Depends(solink, solib)
-    env.Alias('install', env.Install(env['INSTALL_LIB'], solib))
+stagedir = Dir('#').abspath;
+stagedir += '/build/third_party/boost_1_62_0'
+boostcmd = 'b2 -j4 toolset=msvc-14.0 --build-type=complete   architecture=x86 address-model=32 stage --stagedir='+ stagedir
+buildlibdir = Dir('#build/lib').abspath + '/'
 
 def Symlink(target, source):
     parent = os.path.dirname(target[0].abspath)
@@ -125,5 +38,45 @@ if not os.path.exists(libpath):
     print '%s not present' % libpath
     sys.exit(1)
 
-Symlink([Dir('#/build/include/boost')], [Dir(vpath + '/boost')])
+def copyifabsent(tofile, fromfile):
+    if not os.path.exists(tofile):
+       print 'copying ' + fromfile + ' to ' + tofile
+       shutil.copyfile(fromfile, tofile)
 
+
+def build_boost_for_windows(target,source,env):
+   cwd = os.getcwd()
+   os.chdir(Dir(vpath).abspath)
+   assert os.path.isdir(Dir(vpath).abspath)
+   print Dir(vpath).abspath
+   print os.getcwd()
+   subprocess.call("bootstrap.bat", shell=True)
+   subprocess.call(boostcmd, shell=True)
+   os.chdir(cwd)
+   copyifabsent(buildlibdir+ 'boost_program_options.lib', Dir(vpath).abspath+ r'\bin.v2\libs\program_options\build\msvc-14.0\debug\link-static\threading-multi\libboost_program_options-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'boost_regex.lib', Dir(vpath).abspath+ r'\bin.v2\libs\regex\build\msvc-14.0\debug\link-static\threading-multi\libboost_regex-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'boost_system.lib', Dir(vpath).abspath+ r'\bin.v2\libs\system\build\msvc-14.0\debug\link-static\threading-multi\libboost_system-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'libboost_system-vc140-mt-gd-1_62.lib', Dir(vpath).abspath+ r'\bin.v2\libs\system\build\msvc-14.0\debug\link-static\threading-multi\libboost_system-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'libboost_date_time-vc140-mt-gd-1_62.lib', Dir(vpath).abspath+ r'\bin.v2\libs\date_time\build\msvc-14.0\debug\link-static\threading-multi\libboost_date_time-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'libboost_regex-vc140-mt-gd-1_62.lib', Dir(vpath).abspath+ r'\bin.v2\libs\regex\build\msvc-14.0\debug\link-static\threading-multi\libboost_regex-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'libboost_program_options-vc140-mt-gd-1_62.lib', Dir(vpath).abspath+ r'\bin.v2\libs\program_options\build\msvc-14.0\debug\link-static\threading-multi\libboost_program_options-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'libboost_thread-vc140-mt-gd-1_62.lib', Dir(vpath).abspath+ r'\bin.v2\libs\thread\build\msvc-14.0\debug\link-static\threading-multi\libboost_thread-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'libboost_filesystem-vc140-mt-gd-1_62.lib', Dir(vpath).abspath+ r'\bin.v2\libs\filesystem\build\msvc-14.0\debug\link-static\threading-multi\libboost_filesystem-vc140-mt-gd-1_62.lib' )
+   copyifabsent(buildlibdir+'boost_filesystem.lib', Dir(vpath).abspath + r'\bin.v2\libs\filesystem\build\msvc-14.0\debug\link-static\threading-multi\libboost_filesystem-vc140-mt-gd-1_62.lib')
+
+
+
+srcdir = Dir(vpath +'/boost').abspath
+destdir = Dir('#/build/include/boost').abspath
+
+if not os.path.exists(destdir):
+  print 'copying files to' + destdir
+  shutil.copytree(srcdir, destdir)
+
+env.Command('#build/lib/boost_filesystem.lib', str(Dir(vpath)), build_boost_for_windows)
+
+
+
+#Default(SymCopy([Dir('#/build/include/boost')], [Dir(vpath + bin.v2\libs\filesystem\build\msvc-14.0\debug\link-static\runtime-link-static\threading-multi)]))
+
+print 'finished building boost for windows!! '

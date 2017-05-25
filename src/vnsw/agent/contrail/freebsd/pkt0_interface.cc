@@ -9,6 +9,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
+#include<WinSock2.h> 
 #include <net/if.h>
 #include <sys/sockio.h>
 #include <ifaddrs.h>

@@ -2,7 +2,9 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
+
 #include "base/os.h"
+
 #include <netinet/icmp6.h>
 
 #include <vr_defs.h>
@@ -17,10 +19,23 @@
 #include <oper/path_preference.h>
 #include <oper/vn.h>
 
+#ifdef _WINDOWS
+#include <netinet/ip6.h>
+#endif
+
+#ifndef _WINDOWS
 const boost::array<uint8_t, 16> Icmpv6Handler::kPrefix =
     { {0xFF, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0xFF, 0, 0, 0} };
 const boost::array<uint8_t, 16> Icmpv6Handler::kSuffix =
     { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0xFF} };
+#else
+const array<uint8_t, 16> Icmpv6Handler::kPrefix =
+{ { 0xFF, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0xFF, 0, 0, 0 } };
+const array<uint8_t, 16> Icmpv6Handler::kSuffix =
+{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0xFF } };
+
+#endif
+
 const Ip6Address Icmpv6Handler::kSolicitedNodeIpPrefix(kPrefix);
 const Ip6Address Icmpv6Handler::kSolicitedNodeIpSuffixMask(kSuffix);
 
@@ -110,7 +125,13 @@ bool Icmpv6Handler::Run() {
                 icmpv6_proto->IncrementStatsNeighborAdvertUnSolicited(vm_itf);
             }
             if (CheckPacket()) {
+
+#ifndef _WINDOWS
                 boost::array<uint8_t, 16> bytes;
+#else
+				array<uint8_t, 16> bytes;
+#endif
+
                 for (int i = 0; i < 16; i++) {
                     bytes[i] = icmp->nd_na_target.s6_addr[i];
                 }
@@ -274,7 +295,11 @@ void Icmpv6Handler::SendIcmpv6Response(uint32_t ifindex, uint32_t vrfindex,
 
     char *buff = (char *)pkt_info_->pkt;
     uint16_t buff_len = pkt_info_->packet_buffer()->data_len();
+#ifndef _WINDOWS
     char icmpv6_payload[icmp_len_];
+#else
+	char *icmpv6_payload = new char[icmp_len_];
+#endif
     memcpy(icmpv6_payload,icmp_,icmp_len_);
     uint16_t eth_len = EthHdr(buff, buff_len, ifindex, agent()->vrrp_mac(),
                               dest_mac, ETHERTYPE_IPV6);
@@ -287,6 +312,9 @@ void Icmpv6Handler::SendIcmpv6Response(uint32_t ifindex, uint32_t vrfindex,
         (pkt_info_->agent_hdr.cmd == AgentHdr::TRAP_TOR_CONTROL_PKT) ?
         (uint16_t)AgentHdr::TX_ROUTE : AgentHdr::TX_SWITCH;
     Send(ifindex, vrfindex, command, PktHandler::ICMPV6);
+#ifdef _WINDOWS
+	delete[] icmpv6_payload;
+#endif
 }
 
 uint16_t Icmpv6Handler::FillNeighborSolicit(uint8_t *buf,
@@ -348,11 +376,11 @@ void Icmpv6Handler::SolicitedMulticastIpAndMac(const Ip6Address &dip,
     /* The ethernet address for IPv6 multicast address is 0x33-33-mm-mm-mm-mm,
      * where mm-mm-mm-mm is a direct mapping of the last 32 bits of the
      * IPv6 multicast address */
-    mac[0] = mac[1] = 0x33;
-    mac[2] = ip[12];
-    mac[3] = ip[13];
-    mac[4] = ip[14];
-    mac[5] = ip[15];
+    mac[(size_t)0] = mac[(size_t)1] = 0x33;
+    mac[(size_t)2] = ip[12];
+    mac[(size_t)3] = ip[13];
+    mac[(size_t)4] = ip[14];
+    mac[(size_t)5] = ip[15];
 }
 
 void Icmpv6Handler::SendNeighborSolicit(const Ip6Address &sip,

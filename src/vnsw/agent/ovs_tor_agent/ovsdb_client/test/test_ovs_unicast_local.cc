@@ -132,7 +132,7 @@ protected:
 TEST_F(UnicastLocalRouteTest, UnicastLocalBasic) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -162,7 +162,7 @@ TEST_F(UnicastLocalRouteTest, UnicastLocalBasic) {
 TEST_F(UnicastLocalRouteTest, UnicastLocalDelayLogicalSwitchDelete) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -199,7 +199,7 @@ TEST_F(UnicastLocalRouteTest, UnicastLocalDelayLogicalSwitchDelete) {
 TEST_F(UnicastLocalRouteTest, UnicastLocalDelayLogicalSwitchDeleteAndRenew) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -242,7 +242,7 @@ TEST_F(UnicastLocalRouteTest, UnicastLocalDelayLogicalSwitchDeleteAndRenew) {
 TEST_F(UnicastLocalRouteTest, ConnectionCloseWhileUnicastLocalPresent) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -272,7 +272,7 @@ TEST_F(UnicastLocalRouteTest, ConnectionCloseWhileUnicastLocalPresent) {
     client->WaitForIdle();
 
     table = tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key1(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key1(table, UUIDToString(MakeUuid(1)));
     entry = static_cast<LogicalSwitchEntry *> (table->Find(&key1));
     EXPECT_TRUE((entry != NULL));
     if (entry != NULL) {

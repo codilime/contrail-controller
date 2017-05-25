@@ -34,6 +34,8 @@
 #include <assert.h>
 #include <controller/controller_route_path.h>
 #include <cfg/discovery_agent.h>
+#include "winutils.h"
+#include "WinSock2.h"
 
 using namespace boost::asio;
 using namespace autogen;
@@ -184,7 +186,7 @@ void AgentXmppChannel::ReceiveEvpnUpdate(XmlPugi *pugi) {
                 CONTROLLER_INFO_TRACE(Trace, GetBgpPeerName(), vrf_name,
                                             "EVPN Delete Node id:" + id);
 
-                char buff[id.length() + 1];
+                char * buff = new char[id.length() + 1];
                 strcpy(buff, id.c_str());
 
                 // retract does not have nlri. Need to decode key fields from
@@ -259,6 +261,7 @@ void AgentXmppChannel::ReceiveEvpnUpdate(XmlPugi *pugi) {
                                         ip_addr, ethernet_tag,
                                         new ControllerVmRoute(bgp_peer_id()));
                 }
+				delete[] buff;
             }
         }
         return;
@@ -389,8 +392,7 @@ void AgentXmppChannel::ReceiveMulticastUpdate(XmlPugi *pugi) {
                     return;
                 }
 
-                IpAddress s_addr =
-                    IpAddress::from_string(source, ec);
+                IpAddress s_address =  IpAddress::from_string(source, ec);
                 if (ec.value() != 0) {
                     CONTROLLER_TRACE(Trace, GetBgpPeerName(), vrf_name,
                             "Error parsing multicast source address");
@@ -401,7 +403,7 @@ void AgentXmppChannel::ReceiveMulticastUpdate(XmlPugi *pugi) {
                 agent_->oper_db()->multicast()->
                     ModifyFabricMembers(agent_->multicast_tree_builder_peer(),
                                         vrf, g_addr.to_v4(),
-                                        s_addr.to_v4(), 0, olist,
+                                        s_address.to_v4(), 0, olist,
                                         ControllerPeerPath::kInvalidPeerIdentifier);
             }
         }
@@ -448,7 +450,7 @@ void AgentXmppChannel::ReceiveMulticastUpdate(XmlPugi *pugi) {
             return;
         }
 
-        IpAddress s_addr =
+        IpAddress s_address =
             IpAddress::from_string(item->entry.nlri.source, ec);
         if (ec.value() != 0) {
             CONTROLLER_TRACE(Trace, GetBgpPeerName(), vrf_name,
@@ -479,7 +481,7 @@ void AgentXmppChannel::ReceiveMulticastUpdate(XmlPugi *pugi) {
 
         agent_->oper_db()->multicast()->ModifyFabricMembers(
                 agent_->multicast_tree_builder_peer(),
-                vrf, g_addr.to_v4(), s_addr.to_v4(),
+                vrf, g_addr.to_v4(), s_address.to_v4(),
                 item->entry.nlri.source_label, olist,
                 agent_->controller()->multicast_sequence_number());
     }

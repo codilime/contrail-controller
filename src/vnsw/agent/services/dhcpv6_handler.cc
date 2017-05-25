@@ -2,6 +2,7 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
+
 #include <stdint.h>
 #include "base/os.h"
 #include "vr_defs.h"
@@ -18,6 +19,13 @@
 #include "bind/xmpp_dns_agent.h"
 
 #include <boost/assign/list_of.hpp>
+#ifdef _WINDOWS
+#include "winutils.h"
+#include <netinet/ip6.h>
+#include <netinet/udp.h>
+#endif
+
+
 using namespace boost::assign;
 
 // since the DHCPv4 and DHCPv6 option codes mean different things
@@ -531,11 +539,18 @@ uint16_t Dhcpv6Handler::AddDomainNameOption(uint16_t opt_len) {
     if (ipam_type_.ipam_dns_method == "virtual-dns-server") {
         if (is_dns_enabled() && config_.domain_name_.size()) {
             // encode the domain name in the dns encoding format
+#ifndef _WINDOWS
             uint8_t domain_name[config_.domain_name_.size() * 2 + 2];
+#else
+			uint8_t *domain_name = new uint8_t[config_.domain_name_.size() * 2 + 2];
+#endif
             uint16_t len = 0;
             BindUtil::AddName(domain_name, config_.domain_name_, 0, 0, len);
             option_->WriteData(DHCPV6_OPTION_DOMAIN_LIST, len,
                                domain_name, &opt_len);
+#ifndef _WINDOWS
+			delete[] domain_name;
+#endif
         }
     }
     return opt_len;

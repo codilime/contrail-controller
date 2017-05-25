@@ -93,7 +93,7 @@ bool SgTable::ChangeHandler(DBEntry *entry, const DBRequest *req) {
 
 bool SgTable::OperDBDelete(DBEntry *entry, const DBRequest *req) {
     SgEntry *sg = static_cast<SgEntry *>(entry);
-    sg->SendObjectLog(GetOperDBTraceBuf(), AgentLogEvent::DELETE);
+    sg->SendObjectLog(GetOperDBTraceBuf(), AgentLogEvent::DEL);
     return true;
 }
 
@@ -145,7 +145,7 @@ bool SgTable::ProcessConfig(IFMapNode *node, DBRequest &req,
     uint32_t sg_id;
     stringToInteger(cfg->id(), sg_id);
     if (sg_id == SgTable::kInvalidSgId) {
-        OPER_TRACE(Sg, "Ignore SG id 0", UuidToString(u));
+        OPER_TRACE(Sg, "Ignore SG id 0", UUIDToString(u));
         return false;
     }
 
@@ -184,7 +184,7 @@ bool SgTable::ProcessConfig(IFMapNode *node, DBRequest &req,
 
 bool SgEntry::DBEntrySandesh(Sandesh *sresp, std::string &name)  const {
     SgListResp *resp = static_cast<SgListResp *>(sresp);
-    std::string str_uuid = UuidToString(GetSgUuid());
+    std::string str_uuid = UUIDToString(GetSgUuid());
     if (name.empty() ||
         (str_uuid == name) ||
         (integerToString(GetSgId()) == name)) {
@@ -193,10 +193,10 @@ bool SgEntry::DBEntrySandesh(Sandesh *sresp, std::string &name)  const {
         data.set_sg_uuid(str_uuid);
         data.set_sg_id(GetSgId());
         if (GetEgressAcl()) {
-            data.set_egress_acl_uuid(UuidToString(GetEgressAcl()->GetUuid()));
+            data.set_egress_acl_uuid(UUIDToString(GetEgressAcl()->GetUuid()));
         }
         if (GetIngressAcl()) {
-            data.set_ingress_acl_uuid(UuidToString(GetIngressAcl()->GetUuid()));
+            data.set_ingress_acl_uuid(UUIDToString(GetIngressAcl()->GetUuid()));
         }
         std::vector<SgSandeshData> &list =
                 const_cast<std::vector<SgSandeshData>&>(resp->get_sg_list());
@@ -215,7 +215,7 @@ void SgEntry::SendObjectLog(SandeshTraceBufferPtr buf,
         case AgentLogEvent::ADD:
             str.assign("Addition");
             break;
-        case AgentLogEvent::DELETE:
+        case AgentLogEvent::DEL:
             str.assign("Deletion");
             break;
         case AgentLogEvent::CHANGE:
@@ -227,14 +227,14 @@ void SgEntry::SendObjectLog(SandeshTraceBufferPtr buf,
     }
     info.set_event(str);
 
-    string sg_uuid = UuidToString(GetSgUuid());
+    string sg_uuid = UUIDToString(GetSgUuid());
     info.set_uuid(sg_uuid);
     info.set_id(GetSgId());
     if (GetEgressAcl()) {
-        info.set_egress_acl_uuid(UuidToString(GetEgressAcl()->GetUuid()));
+        info.set_egress_acl_uuid(UUIDToString(GetEgressAcl()->GetUuid()));
     }
     if (GetIngressAcl()) {
-        info.set_ingress_acl_uuid(UuidToString(GetIngressAcl()->GetUuid()));
+        info.set_ingress_acl_uuid(UUIDToString(GetIngressAcl()->GetUuid()));
     }
     info.set_ref_count(GetRefCount());
     SG_OBJECT_LOG_LOG("AgentSg", SandeshLevel::SYS_INFO, info);

@@ -35,7 +35,7 @@ bool VmEntry::IsLess(const DBEntry &rhs) const {
 }
 
 string VmEntry::ToString() const {
-    return UuidToString(GetUuid());
+    return UUIDToString(GetUuid());
 }
 
 DBEntryBase::KeyPtr VmEntry::GetDBRequestKey() const {
@@ -51,7 +51,7 @@ void VmEntry::SetKey(const DBRequestKey *key) {
 bool VmEntry::DBEntrySandesh(Sandesh *sresp, std::string &name) const {
     VmListResp *resp = static_cast<VmListResp *>(sresp);
 
-    std::string str_uuid = UuidToString(GetUuid());
+    std::string str_uuid = UUIDToString(GetUuid());
     if (name.empty() || str_uuid == name) {
         VmSandeshData data;
         data.set_uuid(str_uuid);
@@ -111,14 +111,14 @@ void VmEntry::SetInterfacesDropNewFlows(bool drop_new_flows) const {
 void VmEntry::SendObjectLog(AgentLogEvent::type event) const {
     VmObjectLogInfo info;
     string str;
-    string str_uuid = UuidToString(GetUuid());
+    string str_uuid = UUIDToString(GetUuid());
     vector<string> sg_list;
 
     switch (event) {
         case AgentLogEvent::ADD:
             str.assign("Addition ");
             break;
-        case AgentLogEvent::DELETE:
+        case AgentLogEvent::DEL:
             str.assign("Deletion ");
             break;
         case AgentLogEvent::CHANGE:
@@ -130,7 +130,7 @@ void VmEntry::SendObjectLog(AgentLogEvent::type event) const {
     }
     info.set_event(str);
     info.set_uuid(str_uuid);
-    if (event != AgentLogEvent::DELETE && sg_list.size()) {
+    if (event != AgentLogEvent::DEL && sg_list.size()) {
         info.set_sg_uuid_list(sg_list);
     }
     info.set_ref_count(GetRefCount());
@@ -161,7 +161,7 @@ bool VmTable::OperDBOnChange(DBEntry *entry, const DBRequest *req) {
 
 bool VmTable::OperDBDelete(DBEntry *entry, const DBRequest *req) {
     VmEntry *vm = static_cast<VmEntry *>(entry);
-    vm->SendObjectLog(AgentLogEvent::DELETE);
+    vm->SendObjectLog(AgentLogEvent::DEL);
     return true;
 }
 

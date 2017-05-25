@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <assert.h>
 #include <fstream>
 #include <map>
@@ -836,7 +837,7 @@ int TaskScheduler::CountThreadsPerPid(pid_t pid) {
     }
     file.close();
 #else
-#error "TaskScheduler::CountThreadsPerPid() - unsupported platform."
+//WINDOWS-TEMP#error "TaskScheduler::CountThreadsPerPid() - unsupported platform."
 #endif
 
     return threads;

@@ -12,6 +12,7 @@
 #include <tbb/atomic.h>
 
 #include "base/util.h"
+#include "winutils.h"
 
 class DB;
 class DBClient;

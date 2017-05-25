@@ -15,6 +15,10 @@
 #include "oper/operdb_init.h"
 #include "oper/global_vrouter.h"
 #include "oper/vn.h"
+#ifdef _WINDOWS
+#include <netinet/udp.h>
+#include <netinet/ip6.h>
+#endif
 
 DnsHandler::DnsHandler(Agent *agent, boost::shared_ptr<PktInfo> info,
                        boost::asio::io_service &io)

@@ -4,77 +4,47 @@ import os
 import re
 import subprocess
 import sys
+import glob
+import shutil
 
-vpath = '#/third_party/tbb40_20111130oss'
+print 'building windows tbb'
+
+vpath = '#/third_party/tbb2017_20160916oss'
 
 env = DefaultEnvironment()
+arch = 'ia32'
+vcversion = 'vc14'
+bindir = r'\build\windows_' + arch + '_cl_' + vcversion +'_debug'#debug is default for now
+abs_vpath = Dir(vpath).abspath
 
-#make =  env['ENV']['DEVELOPER_BIN_DIR'] + '/make'
-if sys.platform.startswith('freebsd'):
-    make = 'gmake'
-else:
-    make = 'make'
-
-cmd = make + ' -f ' + '$SOURCE'
-
-BUILD_ENV = {'PATH': env['ENV']['PATH'],
-              'tbb_build_dir': Dir('.').abspath,
-              'tbb_root': Dir(vpath).abspath,
-#             'INCLUDES' :
-#                 '-I' + env['ENV']['SDKROOT'] + '/usr/include ' +
-#                 '-I' + env['ENV']['SDKROOT'] + '/usr/include/c++/4.2.1',
+def build_tbb_for_windows(target,source,env):
+     BUILD_ENV = {'PATH': env['ENV']['PATH'],
+              'tbb_build_dir': Dir('.').abspath,'tbb_root': Dir(vpath).abspath,'runtime':'vc14'
             }
+     cwd = os.getcwd()
+     os.chdir(abs_vpath)
+     print os.getcwd()
+#     proc = subprocess.Popen("make info",stdout = subprocess.PIPE)
+#     (output, _) = proc.communicate()
+#     print output
+     subprocess.call("make tbb", shell=True)
+     cmd = 'copy /Y ' +  abs_vpath + bindir + r'\*.dll ' + env.Dir(env['TOP_BIN']).abspath 
+     print cmd
+     subprocess.call(cmd, shell=True)
+     cmd = 'copy /Y ' + abs_vpath + bindir + r'\*.lib ' + env.Dir(env['TOP_LIB']).abspath
+     print cmd
+     subprocess.call(cmd, shell=True)
+     os.chdir(cwd)
 
-proc = subprocess.Popen([make, '-f', Dir(vpath).abspath + '/Makefile', 'info'],
-                        stdout = subprocess.PIPE,
-                        env = BUILD_ENV)
-(output, _) = proc.communicate()
+#shutil.copytree()
 
-for line in output.split('\n'):
-    m = re.match('tbb_build_prefix=(.*)$', line)
-    if m:
-        tbb_build_prefix = m.group(1)
+srcdir = Dir(vpath +'/include/tbb').abspath
+destdir = Dir('#/build/include/tbb').abspath
 
-def MapPrefix(prefix, list):
-    return map(lambda x: prefix + x, list)
+if not os.path.exists(destdir):
+  shutil.copytree(srcdir, destdir)
 
-targets = MapPrefix('#/' + Dir('.').path + '/' + tbb_build_prefix,
-                    ['_debug/libtbb_debug' + env['SHLIBSUFFIX'],
-                     '_release/libtbb' + env['SHLIBSUFFIX']])
+#os.symcopy(Dir(vpath + '/include/tbb').abspath, Dir('#/build/include/tbb').abspath)
+env.Command('#build/lib/tbb_debug.lib', str(Dir(vpath)) , build_tbb_for_windows)
 
-version = '2'
-
-if sys.platform != 'darwin' and not sys.platform.startswith('freebsd'):
-    impl = []
-    for tgt in targets:
-        dot2 = tgt + '.' + version
-        impl.append(dot2)
-        libname = tgt.rsplit('/', 1)[1]
-        env.Depends('#/build/lib/' + libname,
-                    '#/build/lib/' + libname + '.' + version)
-    targets.extend(impl)
-
-libtask = env.Command(targets,
-                      vpath + '/Makefile',
-                      cmd,
-                      ENV = BUILD_ENV)
-
-for tgt in targets:
-    env.Install('#/build/lib', tgt)
-    if tgt.endswith(env['SHLIBSUFFIX'] + '.' + version):
-        env.Alias('install', env.Install(env['INSTALL_LIB'], tgt))
-
-def Symlink(target, source):
-    parent = os.path.dirname(target[0].abspath)
-    if not os.path.exists(parent):
-        os.makedirs(parent)
-
-    if not os.path.exists(target[0].abspath):
-        os.symlink(source[0].abspath, target[0].abspath)
-
-libpath = Dir(vpath).abspath
-if not os.path.exists(libpath):
-    print '%s not present' % libpath
-    sys.exit(1)
-
-Symlink([Dir('#/build/include/tbb')], [Dir(vpath + '/include/tbb')])
+     

@@ -29,7 +29,7 @@ extern SandeshTraceBufferPtr VnswIfTraceBuf;
         VnswIfInfoTrace::TraceMsg(VnswIfTraceBuf, __FILE__, __LINE__, ##__VA_ARGS__); \
 } while (0);
 
-namespace local = boost::asio::local;
+//WINDOWS namespace local = boost::asio::local;
 
 class VnswInterfaceListenerBase {
 public:
@@ -159,7 +159,7 @@ protected:
     uint8_t tx_buf_[kMaxBufferSize];
 
     int sock_fd_;
-    local::datagram_protocol::socket sock_;
+    //WINDOWS-TEMP local::datagram_protocol::socket sock_;
     DBTableBase::ListenerId intf_listener_id_;
     DBTableBase::ListenerId fabric_listener_id_;
     int seqno_;

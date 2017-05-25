@@ -117,12 +117,12 @@ DBEntry *CfgIntTable::Add(const DBRequest *req) {
     uuid_tree_[vn_port_key] = cfg_int;
 
     CFG_TRACE(IntfTrace, cfg_int->GetIfname(), 
-              cfg_int->vm_name(), UuidToString(cfg_int->GetVmUuid()),
-              UuidToString(cfg_int->GetVnUuid()),
+              cfg_int->vm_name(), UUIDToString(cfg_int->GetVmUuid()),
+              UUIDToString(cfg_int->GetVnUuid()),
               cfg_int->ip_addr().to_string(), "ADD", 
               cfg_int->GetVersion(), cfg_int->tx_vlan_id(),
               cfg_int->rx_vlan_id(),
-              UuidToString(cfg_int->vm_project_uuid()),
+              UUIDToString(cfg_int->vm_project_uuid()),
               cfg_int->CfgIntTypeToString(cfg_int->port_type()),
               cfg_int->ip6_addr().to_string());
     return cfg_int;
@@ -132,12 +132,12 @@ bool CfgIntTable::Delete(DBEntry *entry, const DBRequest *req) {
     CfgIntEntry *cfg = static_cast<CfgIntEntry *>(entry);
 
     CFG_TRACE(IntfTrace, cfg->GetIfname(), 
-              cfg->vm_name(), UuidToString(cfg->GetVmUuid()),
-              UuidToString(cfg->GetVnUuid()),
+              cfg->vm_name(), UUIDToString(cfg->GetVmUuid()),
+              UUIDToString(cfg->GetVnUuid()),
               cfg->ip_addr().to_string(), "DELETE",
               cfg->GetVersion(), cfg->tx_vlan_id(),
               cfg->rx_vlan_id(),
-              UuidToString(cfg->vm_project_uuid()),
+              UUIDToString(cfg->vm_project_uuid()),
               cfg->CfgIntTypeToString(cfg->port_type()),
               cfg->ip6_addr().to_string());
 

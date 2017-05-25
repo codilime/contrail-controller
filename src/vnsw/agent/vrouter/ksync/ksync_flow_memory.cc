@@ -11,9 +11,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <asm/types.h>
+//WINDOWS #include <sys/ipc.h>
+//WINDOWS #include <sys/shm.h>
+//WINDOWS #include <asm/types.h>
 #include <boost/asio.hpp>
 
 #include <base/timer.h>
@@ -93,11 +93,11 @@ void KSyncFlowMemory::InitFlowMem() {
     int encode_len, error, ret;
 
     assert((cl = nl_register_client()) != NULL);
-    assert(nl_socket(cl, AF_NETLINK, SOCK_DGRAM, NETLINK_GENERIC) > 0);
+    //WINDOWSFIX assert(nl_socket(cl, AF_NETLINK, SOCK_DGRAM, NETLINK_GENERIC) > 0);
     assert(nl_connect(cl, 0, 0) == 0);
     assert(vrouter_get_family_id(cl) > 0);
 
-    assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
+    //WINDOWSFIX assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
     assert(nl_build_genlh(cl, SANDESH_REQUEST, 0) == 0);
 
     attr_len = nl_get_attr_hdr_size();
@@ -125,7 +125,8 @@ void KSyncFlowMemory::InitFlowMem() {
     nl_free_client(cl);
 
     // Remove the existing /dev/flow file first. We will add it again below
-#if !defined(__FreeBSD__)
+	//WINDOWSFIX
+#if 0 //WINDOWSFIX !defined(__FreeBSD__)
     if (unlink("/dev/flow") != 0) {
         if (errno != ENOENT) {
             LOG(DEBUG, "Error deleting </dev/flow>. Error <" << errno
@@ -145,6 +146,7 @@ void KSyncFlowMemory::InitFlowMem() {
     }
 #endif
 
+#if 0 //WINDOWSFIX
     int fd;
     if ((fd = open("/dev/flow", O_RDONLY | O_SYNC)) < 0) {
         LOG(DEBUG, "Error opening device </dev/flow>. Error <" << errno
@@ -162,6 +164,7 @@ void KSyncFlowMemory::InitFlowMem() {
 
     flow_table_entries_count_ = flow_table_size_ / sizeof(vr_flow_entry);
     ksync_->agent()->set_flow_table_size(flow_table_entries_count_);
+#endif
     return;
 }
 
@@ -323,6 +326,7 @@ bool KSyncFlowMemory::AuditProcess() {
 }
 
 void KSyncFlowMemory::GetFlowTableSize() {
+#if 0 //WINDOWSFIX
     struct nl_client *cl;
     vr_flow_req req;
     int attr_len;
@@ -330,7 +334,7 @@ void KSyncFlowMemory::GetFlowTableSize() {
 
     assert((cl = nl_register_client()) != NULL);
     cl->cl_genl_family_id = KSyncSock::GetNetlinkFamilyId();
-    assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
+    //WINDOWSFIX assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
     assert(nl_build_genlh(cl, SANDESH_REQUEST, 0) == 0);
 
     attr_len = nl_get_attr_hdr_size();
@@ -378,9 +382,11 @@ void KSyncFlowMemory::GetFlowTableSize() {
     KSyncSockNetlink::NetlinkDecoder(cl->cl_buf,
                                      KSyncSock::GetAgentSandeshContext());
     nl_free_client(cl);
+#endif
 }
 
 void KSyncFlowMemory::MapSharedMemory() {
+#if 0 //WINDOWSFIX
     GetFlowTableSize();
 
     int fd;
@@ -401,6 +407,7 @@ void KSyncFlowMemory::MapSharedMemory() {
 
     flow_table_entries_count_ = flow_table_size_ / sizeof(vr_flow_entry);
     ksync_->agent()->set_flow_table_size(flow_table_entries_count_);
+#endif
 }
 
 void vr_flow_req::Process(SandeshContext *context) {

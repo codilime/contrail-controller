@@ -82,7 +82,7 @@ bool AgentUtXmlLogicalSwitchValidate::ReadXml() {
 
 bool AgentUtXmlLogicalSwitchValidate::Validate() {
     LogicalSwitchTable *table = ovs_test_session->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(id_));
+    LogicalSwitchEntry key(table, UUIDToString(id_));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     if (present()) {
@@ -128,7 +128,7 @@ bool AgentUtXmlOvsdbVrfValidate::ReadXml() {
 
 bool AgentUtXmlOvsdbVrfValidate::Validate() {
     VrfOvsdbObject *table = ovs_test_session->client_idl()->vrf_ovsdb();
-    VrfOvsdbEntry vrf_key(table, UuidToString(vn_uuid_));
+    VrfOvsdbEntry vrf_key(table, UUIDToString(vn_uuid_));
     VrfOvsdbEntry *vrf_entry =
         static_cast<VrfOvsdbEntry *>(table->Find(&vrf_key));
     if (present()) {
@@ -178,7 +178,7 @@ bool AgentUtXmlUnicastRemoteValidate::ReadXml() {
 
 bool AgentUtXmlUnicastRemoteValidate::Validate() {
     VrfOvsdbObject *table = ovs_test_session->client_idl()->vrf_ovsdb();
-    VrfOvsdbEntry vrf_key(table, UuidToString(vn_uuid_));
+    VrfOvsdbEntry vrf_key(table, UUIDToString(vn_uuid_));
     VrfOvsdbEntry *vrf_entry =
         static_cast<VrfOvsdbEntry *>(table->Find(&vrf_key));
     if (vrf_entry == NULL) {
@@ -234,7 +234,7 @@ bool AgentUtXmlVlanPortBindingValidate::ReadXml() {
         cout << "Attribute Parsing failed " << endl;
         return false;
     }
-    logical_switch_name_ = UuidToString(MakeUuid(id));
+    logical_switch_name_ = UUIDToString(MakeUuid(id));
 
     std::string str;
     if (GetStringAttribute(node(), "stale", &str)) {

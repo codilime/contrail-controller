@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include "xmpp/xmpp_proto.h"
 #include <iostream>
 #include <string>
@@ -103,7 +104,7 @@ int XmppProto::EncodeIq(const XmppStanza::XmppMessageIq *iq,
         case XmppStanza::XmppMessageIq::RESULT: 
             send_doc_->AddAttribute("type", "result");
             break;
-        case XmppStanza::XmppMessageIq::ERROR: 
+        case XmppStanza::XmppMessageIq::ERR: 
             send_doc_->AddAttribute("type", "error");
             break;
         default:

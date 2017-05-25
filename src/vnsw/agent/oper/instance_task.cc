@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2014 Juniper Networks, Inc. All right reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <tbb/tbb.h>
 #include "oper/instance_task.h"
@@ -14,7 +16,9 @@ InstanceTask::InstanceTask()
 InstanceTaskExecvp::InstanceTaskExecvp(const std::string &name,
                                        const std::string &cmd,
                                        int cmd_type, EventManager *evm) :
-        name_(name), cmd_(cmd), input_(*(evm->io_service())),
+        name_(name), cmd_(cmd), 
+	//WINDOWS-TEMP input_(*(evm->io_service())),
+
         setup_done_(false), pid_(0), cmd_type_(cmd_type), pipe_stdout_(false) {
 }
 
@@ -29,7 +33,7 @@ void InstanceTaskExecvp::ReadData(const boost::system::error_code &ec,
 
     if (ec) {
         boost::system::error_code close_ec;
-        input_.close(close_ec);
+   //WINDOWS-TEMP     input_.close(close_ec);
 
         if (!on_exit_cb_.empty()) {
             on_exit_cb_(this, ec);
@@ -37,21 +41,21 @@ void InstanceTaskExecvp::ReadData(const boost::system::error_code &ec,
         return;
     }
 
-    bzero(rx_buff_, sizeof(rx_buff_));
-    input_.async_read_some(boost::asio::buffer(rx_buff_, kBufLen),
-                    boost::bind(&InstanceTaskExecvp::ReadData,
-                                this, boost::asio::placeholders::error,
-                                boost::asio::placeholders::bytes_transferred));
+    bzero((unsigned char*)rx_buff_, sizeof(rx_buff_));
+   //WINDOWS-TEMP input_.async_read_some(boost::asio::buffer(rx_buff_, kBufLen),
+   //WINDOWS-TEMP                 boost::bind(&InstanceTaskExecvp::ReadData,
+   //WINDOWS-TEMP                           this, boost::asio::placeholders::error,
+   //WINDOWS-TEMP                          boost::asio::placeholders::bytes_transferred));
 }
 
 void InstanceTaskExecvp::Stop() {
     assert(pid_);
-    kill(pid_, SIGTERM);
+	//WINDOWS-TEMP kill(pid_, SIGTERM);
 }
 
 void InstanceTaskExecvp::Terminate() {
     assert(pid_);
-    kill(pid_, SIGKILL);
+	//WINDOWS-TEMP  kill(pid_, SIGKILL);
 }
 
 bool InstanceTaskExecvp::IsSetup() {
@@ -78,11 +82,12 @@ bool InstanceTaskExecvp::Run() {
     }
 
     int err[2];
-    if (pipe(err) < 0) {
-        return is_running_ = false;
-    }
+	//WINDOWS-TEMP if (pipe(err) < 0) {
+	//WINDOWS-TEMP   return is_running_ = false;
+	//WINDOWS-TEMP}
 
-    pid_ = vfork();
+	//WINDOWS-TEMP  pid_ = vfork();
+#if 0 //WINDOWS-TEMP
     if (pid_ == 0) {
         close(err[0]);
         if (pipe_stdout_) {
@@ -99,16 +104,16 @@ bool InstanceTaskExecvp::Run() {
 
         /* Close all the open fds before execvp */
         CloseTaskFds();
-        execvp(c_argv[0], (char **) c_argv.data());
-        perror("execvp");
+		//WINDOWS-TEMP   execvp(c_argv[0], (char **) c_argv.data());
+		//WINDOWS-TEMP   perror("execvp");
 
         _exit(127);
     }
-
+#endif
     close(err[1]);
 
     start_time_ = time(NULL);
-
+#if 0 //WINDOWS-TEMP
     int fd = ::dup(err[0]);
     close(err[0]);
     if (fd == -1) {
@@ -128,12 +133,12 @@ bool InstanceTaskExecvp::Run() {
         return false;
     }
     setup_done_ = true;
-
-    bzero(rx_buff_, sizeof(rx_buff_));
-    input_.async_read_some(boost::asio::buffer(rx_buff_, kBufLen),
-            boost::bind(&InstanceTaskExecvp::ReadData,
-                        this, boost::asio::placeholders::error,
-                        boost::asio::placeholders::bytes_transferred));
+#endif
+    bzero((unsigned char*)rx_buff_, sizeof(rx_buff_));
+	//WINDOWS-TEMP   input_.async_read_some(boost::asio::buffer(rx_buff_, kBufLen),
+	//WINDOWS-TEMP         boost::bind(&InstanceTaskExecvp::ReadData,
+	//WINDOWS-TEMP                    this, boost::asio::placeholders::error,
+	//WINDOWS-TEMP                  boost::asio::placeholders::bytes_transferred));
     return true;
 
 }

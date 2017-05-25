@@ -1,10 +1,18 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <vrouter/ksync/interface_scan.h>
 #include <oper/interface_common.h>
 #include <oper/mirror_table.h>
+//WINDOWSFIX move to header
+#define  IF_NAMESIZE	32
+
+#ifdef _WINDOWS
+#include <Iphlpapi.h>
+#endif
 
 InterfaceKScan::InterfaceKScan(Agent *agent) 
     : agent_(agent), timer_(NULL) {

@@ -34,8 +34,13 @@ protected:
     std::string name_;
     int tap_fd_;
     unsigned char mac_address_[ETHER_ADDR_LEN];
+#ifndef _WINDOWS
     boost::asio::posix::stream_descriptor input_;
-    
+#else
+	typedef boost::asio::windows::stream_handle stream_descriptor;
+		stream_descriptor input_;
+#endif
+
     uint8_t *read_buff_;
     PktHandler *pkt_handler_;
     DISALLOW_COPY_AND_ASSIGN(Pkt0Interface);
@@ -77,7 +82,11 @@ private:
     void StartConnectTimer();
     bool OnTimeout();
     bool connected_;
-    boost::asio::local::datagram_protocol::socket socket_;
+#ifndef _WINDOWS
+	boost::asio::local::datagram_protocol::socket socket_;
+#else
+	//windows boost::asio::generic::datagram_protocol::socket socket_;
+#endif
     boost::scoped_ptr<Timer> timer_;
     uint8_t *read_buff_;
     PktHandler *pkt_handler_;

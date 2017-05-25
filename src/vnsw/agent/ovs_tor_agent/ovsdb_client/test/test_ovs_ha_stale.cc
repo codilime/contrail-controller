@@ -128,7 +128,7 @@ protected:
 TEST_F(HaStaleRouteTest, ConnectionCloseWhileUnicastLocalPresent) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -199,7 +199,7 @@ TEST_F(HaStaleRouteTest, ConnectionCloseWhileUnicastLocalPresent) {
     client->WaitForIdle();
 
     table = tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key1(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key1(table, UUIDToString(MakeUuid(1)));
     entry = static_cast<LogicalSwitchEntry *> (table->Find(&key1));
     EXPECT_TRUE((entry != NULL));
     if (entry != NULL) {
@@ -215,7 +215,7 @@ TEST_F(HaStaleRouteTest, ConnectionCloseWhileUnicastLocalPresent) {
 TEST_F(HaStaleRouteTest, ToRRouteAddDelonBackupToRAgent) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -236,7 +236,7 @@ TEST_F(HaStaleRouteTest, ToRRouteAddDelonBackupToRAgent) {
         // after connection close add route to ovsdb-server
         // and simulate route addition via BGP to backup ToR
         WAIT_FOR(10, 10000,
-                 (true == add_ucast_mac_local(UuidToString(MakeUuid(1)),
+                 (true == add_ucast_mac_local(UUIDToString(MakeUuid(1)),
                                               "00:00:00:00:01:01",
                                               "111.111.111.111")));
 
@@ -272,7 +272,7 @@ TEST_F(HaStaleRouteTest, ToRRouteAddDelonBackupToRAgent) {
     client->WaitForIdle();
 
     table = tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key1(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key1(table, UUIDToString(MakeUuid(1)));
     entry = static_cast<LogicalSwitchEntry *> (table->Find(&key1));
     EXPECT_TRUE((entry != NULL));
     if (entry != NULL) {
@@ -285,7 +285,7 @@ TEST_F(HaStaleRouteTest, ToRRouteAddDelonBackupToRAgent) {
 TEST_F(HaStaleRouteTest, HaStaleRouteDeleteOnVxLanIdChange) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -354,7 +354,7 @@ TEST_F(HaStaleRouteTest, HaStaleRouteDeleteOnVxLanIdChange) {
 TEST_F(HaStaleRouteTest, HaStaleRouteDeleteToRIPChange) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -439,7 +439,7 @@ TEST_F(HaStaleRouteTest, HaStaleRouteDeleteToRIPChange) {
 TEST_F(HaStaleRouteTest, HaStaleRouteDeleteMACMove) {
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));

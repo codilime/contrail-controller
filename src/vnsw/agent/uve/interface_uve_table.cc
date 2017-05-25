@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
+#include "l4_port_bitmap.h"
 #include <oper/interface_common.h>
 #include <oper/health_check.h>
 #include <uve/interface_uve_table.h>

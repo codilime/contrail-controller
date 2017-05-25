@@ -37,7 +37,11 @@ typedef struct _SockInfo
 class CurlErrorCategory : public boost::system::error_category
 {
  public:
-    virtual const char *name() const { return "http_curl"; }
+#ifdef _WINDOWS
+     virtual const char *name()  const noexcept { return "http_curl"; } 
+#else
+	 virtual const char *name()  const { return "http_curl"; }
+#endif
     virtual std::string message( int ev ) const {
         return curl_easy_strerror((CURLcode)ev);
     }

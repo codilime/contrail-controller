@@ -6,14 +6,16 @@ import sys
 import re
 import time
 import subprocess
+import os
 
 Import('AgentEnv')
 env = AgentEnv.Clone()
+if os.name == 'nt':
+    env.Append(CPPPATH = ['#windows'])
 
 cflags = env['CCFLAGS']
-cflags.append('-Wno-return-type')
+cflags.append('/w')
 cflags.append('-fexceptions')
-cflags.append('-Wno-unused-variable')
 
 
 ##########################################################################
@@ -22,14 +24,14 @@ cflags.append('-Wno-unused-variable')
 
 # Dependencies on external libraries first
 buildinfo_dep_libs = [
-    '#build/lib/libthrift.a',
-    '#build/lib/libthriftasio.a',
-    '#build/lib/libhttp.a',
-    '#build/lib/libhttp_parser.a',
-    '#build/lib/libpugixml.a',
-    '#build/lib/libsandesh.a',
-    '#build/lib/libsandeshflow.a',
-    '#build/lib/libsandeshvns.a'
+    '#build/lib/thrift.lib',
+    '#build/lib/thriftnb.lib',
+    '#build/lib/http.lib',
+    '#build/lib/http_parser.lib',
+    '#build/lib/pugixml.lib',
+    '#build/lib/sandesh.lib',
+    '#build/lib/sandeshflow.lib',
+    '#build/lib/sandeshvns.lib'
 ]
 
 def MapBuildCmnLib(list):
@@ -37,44 +39,45 @@ def MapBuildCmnLib(list):
 
 # Common contrail libraries
 buildinfo_dep_libs += MapBuildCmnLib([
-    'base/libbase.a',
-    'base/libcpuinfo.a',
-    'db/libdb.a',
-    'dns/bind/libbind_interface.a',
-    'ifmap/libifmap_agent.a',
-    'ifmap/libifmap_common.a',
-    'io/libio.a',
-    'ksync/libksync.a',
-    'net/libnet.a',
-    'route/libroute.a',
-    'schema/libbgp_schema.a',
-    'schema/libifmap_vnc.a',
-    'schema/libxmpp_unicast.a',
-    'schema/libxmpp_multicast.a',
-    'vrouter/utils/libvrutil.a',
-    'xml/libxml.a',
-    'xmpp/libxmpp.a'
-     ])
+    'base/base.lib',
+    'base/cpuinfo.lib',
+    'db/db.lib',
+    'dns/bind/bind_interface.lib',
+    'dns/cmn/cmn.lib',
+    'ifmap/ifmap_agent.lib',
+    'ifmap/ifmap_common.lib',
+    'io/io.lib',
+    'ksync/ksync.lib',
+    'net/net.lib',
+    'route/route.lib',
+    'schema/bgp_schema.lib',
+    'schema/ifmap_vnc.lib',
+    'schema/xmpp_unicast.lib',
+    'schema/xmpp_multicast.lib',
+    'vrouter/utils/vrutil.lib',
+    'xml/xml.lib',
+    'xmpp/xmpp.lib',
+	 ])
 
 def MapBuildAgentLib(list):
     return map(lambda x: File('../' + x).abspath, list)
 
 # agent libraries
 buildinfo_dep_libs += MapBuildAgentLib([
-    'cfg/libcfg.a',
-    'cmn/libvnswcmn.a',
-    'controller/libvnswctrl.a',
-    'filter/libfilter.a',
-    'kstate/libkstate.a',
-    'vrouter/ksync/libvnswksync.a',
-    'openstack/libnova_ins.a',
-    'openstack/libnova_ins_thrift.a',
-    'port_ipc/libport_ipc.a',
-    'oper/libvnswoperdb.a',
-    'pkt/libpkt.a', 'diag/libdiag.a',
-    'services/libagent_services.a', 'uve/libuve.a',
-    'uve/libstatsuve.a', 'vrouter/flow_stats/libflowstats.a',
-    'vrouter/stats_collector/libstatscollector.a'
+    'cfg/cfg.lib',
+    'cmn/vnswcmn.lib',
+    'controller/vnswctrl.lib',
+    'filter/filter.lib',
+    'kstate/kstate.lib',
+    'vrouter/ksync/vnswksync.lib',
+    'openstack/nova_ins.lib',
+    'openstack/nova_ins_thrift.lib',
+    'port_ipc/port_ipc.lib',
+    'oper/vnswoperdb.lib',
+    'pkt/pkt.lib', 'diag/diag.lib',
+    'services/agent_services.lib', 'uve/uve.lib',
+    'uve/statsuve.lib', 'vrouter/flow_stats/flowstats.lib',
+    'vrouter/stats_collector/statscollector.lib'
 ])
 
 env.GenerateBuildInfoCode(
@@ -82,6 +85,7 @@ env.GenerateBuildInfoCode(
     source = buildinfo_dep_libs + ['main.cc'],
     path=str(Dir('.').abspath))
 env.Depends('main.o', 'buildinfo.cc')
+#env['LINKFLAGS'].remove('/DEBUG')
 
 # Add contrail-vrouter-agent specific libraries
 env.Prepend(LIBS = AgentEnv['CONTRAIL_LIBS'])
@@ -90,15 +94,17 @@ env.Prepend(LIBS = AgentEnv['CONTRAIL_LIBS'])
 # even though there may not be any calls requiring its presence. We need this
 # for kstate library so that the HTML file for kstate  is listed in agent
 # introspect page
-env.Prepend(LINKFLAGS = ['-Wl,--whole-archive', '-rdynamic', '-lkstate', '-ldiag',
-                         '-Wl,--no-whole-archive'])
-
+#env.Prepend(LINKFLAGS = ['-Wl,--whole-archive', '-rdynamic', '-lkstate', '-ldiag',
+#                         '-Wl,--no-whole-archive'])
+env.Prepend(LINKFLAGS = 'Iphlpapi.lib')
 #Add -Wno-return-type to ignore errors from thrift generated code in
 #InstanceService.h
 if sys.platform.startswith('freebsd'):
     platform_dependent = 'freebsd/pkt0_interface.cc'
 elif sys.platform.startswith('linux'):
     platform_dependent = 'linux/pkt0_interface.cc'
+elif sys.platform.startswith('win'):
+    platform_dependent = 'windows/pkt0_interface.cc'
 
 
 contrail_vrouter_agent = env.Program(target = 'contrail-vrouter-agent',

@@ -1,6 +1,10 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#ifdef _WINDOWS
+#include <boost/asio.hpp>
+#include <windows.h>
+#endif
 
 #include <boost/filesystem.hpp>
 #include "base/timer.h"
@@ -233,7 +237,7 @@ DhcpLeaseDb *DhcpProto::GetLeaseDb(Interface *interface) {
 
 std::string DhcpProto::GetLeaseFileName(const VmInterface *vmi) {
     if (!run_with_vrouter_)
-        return "./dhcp." + UuidToString(vmi->GetUuid()) + ".leases";
+        return "./dhcp." + UUIDToString(vmi->GetUuid()) + ".leases";
 
     boost::filesystem::path dir(agent()->params()->agent_base_dir() + "/dhcp");
     boost::system::error_code ec;
@@ -246,7 +250,7 @@ std::string DhcpProto::GetLeaseFileName(const VmInterface *vmi) {
         }
     }
 
-    return dir.string() + "/dhcp." + UuidToString(vmi->GetUuid()) + ".leases";
+    return dir.string() + "/dhcp." + UUIDToString(vmi->GetUuid()) + ".leases";
 }
 
 void DhcpProto::StartLeaseFileCleanupTimer() {

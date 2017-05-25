@@ -6,8 +6,11 @@
 Import('BuildEnv')
 
 import sys
+import os
 
 env = BuildEnv.Clone()
+if os.name == 'nt':
+   env.Append(CPPPATH = ['#windows'])
 
 AddOption('--with-libvirt', dest='with_libvirt', action='store_true',
           default=False, help='whether compile with libvirt or not')

@@ -13,6 +13,13 @@
 #include <services/icmp_error_proto.h>
 #include <services/icmp_error_handler.h>
 
+#ifdef _WINDOWS
+#include <netinet/icmp.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
+#endif
+
+
 IcmpErrorHandler::IcmpErrorHandler(Agent *agent, IcmpErrorProto *proto,
                                    boost::shared_ptr<PktInfo> info,
                                    boost::asio::io_service *io) :

@@ -41,7 +41,7 @@ PhysicalDevice *LogicalInterface::physical_device() const {
 }
 
 string LogicalInterface::ToString() const {
-    return UuidToString(uuid_);
+    return UUIDToString(uuid_);
 }
 
 bool LogicalInterface::CmpInterface(const DBEntry &rhs) const {
@@ -303,7 +303,7 @@ static LogicalInterfaceData *BuildData(Agent *agent, IFMapNode *node,
     if (port->IsPropertySet(autogen::LogicalInterface::VLAN_TAG) == false) {
         OperConfigInfo t;
         t.set_name(node->name());
-        t.set_uuid(UuidToString(u));
+        t.set_uuid(UUIDToString(u));
         t.set_message("VLAN-Tag property not set. Ignoring node");
 
         OPER_IFMAP_TRACE(Config, t);

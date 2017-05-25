@@ -460,7 +460,7 @@ void PeerCloseManager::MembershipRequest(Event *evnet) {
     BOOST_FOREACH(BgpTable *table, tables) {
         membership_req_pending_++;
         if (IsRegistered(table)) {
-            if (state_ == PeerCloseManager::DELETE) {
+            if (state_ == PeerCloseManager::DEL) {
                 PEER_CLOSE_MANAGER_TABLE_LOG(
                     "MembershipManager::Unregister");
                 Unregister(table);
@@ -474,7 +474,7 @@ void PeerCloseManager::MembershipRequest(Event *evnet) {
             }
         } else {
             assert(IsRibInRegistered(table));
-            if (state_ == PeerCloseManager::DELETE) {
+            if (state_ == PeerCloseManager::DEL) {
                 PEER_CLOSE_MANAGER_TABLE_LOG(
                     "MembershipManager::UnregisterRibIn");
                 UnregisterRibIn(table);

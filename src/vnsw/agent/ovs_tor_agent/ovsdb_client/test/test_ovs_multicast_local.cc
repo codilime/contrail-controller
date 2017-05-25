@@ -122,7 +122,7 @@ TEST_F(MulticastLocalRouteTest, MulticastLocalBasic) {
 
     LogicalSwitchTable *table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key(table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key(table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry = static_cast<LogicalSwitchEntry *>
         (table->Find(&key));
     EXPECT_TRUE((entry != NULL));
@@ -214,7 +214,7 @@ TEST_F(MulticastLocalRouteTest, MulticastLocal_add_mcroute_without_vrf_vn_link_p
     VxLanNetworkIdentifierMode(true);
     TestClient::WaitForIdle();
 
-    std::string ls_name = UuidToString(MakeUuid(1));
+    std::string ls_name = UUIDToString(MakeUuid(1));
     WAIT_FOR(100, 10000,
              (true == add_mcast_mac_local(ls_name, "unknow-dst",
                                           "11.11.11.11")));
@@ -271,7 +271,7 @@ TEST_F(MulticastLocalRouteTest, MulticastLocal_on_del_vrf_del_mcast) {
     AddPhysicalDeviceVn(agent_, 1, 1, true);
     TestClient::WaitForIdle();
 
-    std::string ls_name = UuidToString(MakeUuid(1));
+    std::string ls_name = UUIDToString(MakeUuid(1));
     WAIT_FOR(100, 10000,
              (true == add_mcast_mac_local(ls_name, "unknow-dst",
                                           "11.11.11.11")));
@@ -335,7 +335,7 @@ TEST_F(MulticastLocalRouteTest, MulticastLocal_on_del_vrf_vn_link) {
     AddPhysicalDeviceVn(agent_, 1, 1, true);
     TestClient::WaitForIdle();
 
-    std::string ls_name = UuidToString(MakeUuid(1));
+    std::string ls_name = UUIDToString(MakeUuid(1));
     WAIT_FOR(100, 10000,
              (true == add_mcast_mac_local(ls_name, "unknow-dst",
                                           "11.11.11.11")));

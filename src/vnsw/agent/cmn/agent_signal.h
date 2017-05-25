@@ -8,6 +8,9 @@
 #include <boost/function.hpp>
 #include <boost/asio.hpp>
 #include <signal.h>
+#ifdef _WINDOWS
+typedef UINT32 pid_t;
+#endif
 
 class EventManager;
 
@@ -18,7 +21,8 @@ class AgentSignal {
 
     typedef boost::function<
                     void(const boost::system::error_code& error, int sig,
-                         pid_t pid, int status)> SignalChildHandler;
+                        pid_t pid, int status)> SignalChildHandler;
+	// typedef boost::function<void (int x, int sig,  pid_t pid, int status)> SignalChildHandler;
     typedef boost::function<
                     void(const boost::system::error_code& error, int sig)> SignalHandler;
 

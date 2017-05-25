@@ -6,12 +6,15 @@
 # services directory
 
 import sys
+import os
 if sys.platform == 'darwin':
     Return()
 
 Import('AgentEnv')
 env = AgentEnv.Clone()
 
+if os.name == 'nt':
+  env.Append(CPPPATH = ['#windows'])
 except_env = env.Clone()
 cflags = except_env['CCFLAGS']
 if '-fno-exceptions' in cflags:

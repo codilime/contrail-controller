@@ -1,10 +1,14 @@
 #
 # Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
 #
-
+import os
 SConscript(dirs=['lib', 'src'])
 
-env = DefaultEnvironment()
+env = DefaultEnvironment(TARGET_ARCH='x86')
+if os.name == 'nt':
+ env.Append(CPPPATH = ['#windows'])
+
+env.Append(CPPPATH = '#third_party\OpenSSLWin32\include')
 env.Alias('controller/test', [
     'controller/src/agent:test',
     'controller/src/analytics:test',
@@ -45,6 +49,8 @@ env.Alias('controller/flaky-test', [
     'controller/src/xmpp:flaky-test',
     'controller/src/config/device-manager:flaky-test',
 ])
+
+
 
 env.Alias('test', [ 'controller/test' ])
 env.Alias('flaky-test', [ 'controller/flaky-test' ])

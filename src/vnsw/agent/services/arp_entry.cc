@@ -1,6 +1,10 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#ifdef _WINDOWS
+#include <boost/asio.hpp>
+#include <windows.h>
+#endif
 
 #include "base/os.h"
 #include "services/arp_proto.h"

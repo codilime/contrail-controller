@@ -1,40 +1,43 @@
 # -*- mode: python; -*-
-
+print 'building gunit'
 import platform
+import os
+import subprocess
 
 default = DefaultEnvironment()
 env = default.Clone()
 
-(distname, version, _) = platform.dist()
-if distname != 'Ubuntu' or float(version) < 14.04:
-    gtest_path = '#/third_party/gtest-1.6.0'
-    gmock_path = '#/third_party/gmock-1.6.0'
+gtest_path = '#/third_party/googletest-release-1.8.0/googletest'
+gmock_path = '#/third_party/googletest-release-1.8.0/googlemock'
 
-    gtest_dir = env.Install('#/build/include', gtest_path + '/include/gtest')
-    gmock_dir = env.Install('#/build/include', gmock_path + '/include/gmock')
-    gunit_h = env.Install('#/build/include/testing', 'gunit.h')
-    env.Depends(gunit_h, [gtest_dir, gmock_dir])
-else:
-    gtest_path = '/usr/src/gmock/gtest'
-    gmock_path = '/usr/src/gmock'
+#gtest_dir = env.Install('#/build/include', gtest_path + '/include/gtest')
+#gmock_dir = env.Install('#/build/include', gmock_path + '/include/gmock')
+#gunit_h = env.Install('#/build/include/testing', 'gunit.h')
+#env.Depends(gunit_h, [gtest_dir, gmock_dir])
 
-    gtest_dir = env.Install('#/build/include', gtest_path + '/include/gtest')
-    gunit_h = env.InstallAs('#/build/include/testing/gunit.h', 'gunit_nowarn.h')
-    env.Depends(gunit_h, [gtest_dir])
-# endif
 
 include = [
     gtest_path, gtest_path + '/include',
     gmock_path, gmock_path + '/include'
 ]
 
-env.VariantDir(Dir('.').abspath + '/gtest', gtest_path + '/src')
-env.VariantDir(Dir('.').abspath + '/gmock', gmock_path + '/src')
-env.Append(CPPPATH = include)
+#env.VariantDir(Dir('.').abspath + '/gtest', gtest_path + '/src')
+#env.VariantDir(Dir('.').abspath + '/gmock', gmock_path + '/src')
+#cmd = 'copy ' + Dir('.').srcnode().abspath + '\msvc15\* ' + Dir(gtest_path).abspath + '\msvc /y'
+#print Dir('.').abspath
+#print cmd
+#subprocess.call(cmd, shell=True)
+#build googletest
+#os.chdir(Dir(gtest_path).abspath+ '\\msvc')
+#assert os.path.isdir(Dir(gtest_path).abspath+'\\msvc')
+#print os.getcwd()
+#subprocess.call("devenv gtest.sln /Build", shell=True)
 
-lib = env.Library('gunit',
-                  [Dir('.').abspath + '/gtest/gtest-all.cc',
-                   Dir('.').abspath + '/gmock/gmock-all.cc'])
+#build googlemock
+#os.chdir(Dir(gmock_path).abspath+ '/msvc/2015')
+#print os.getcwd()
+#subprocess.call("devenv gmock.sln /Build", shell=True)
 
-env.Install('#/build/lib', lib)
 
+
+print 'done building gunit'

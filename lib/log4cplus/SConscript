@@ -1,26 +1,64 @@
-# -*- mode: python; -*-
+import subprocess
+import os
+import shutil
 
-vpath = '#/third_party/log4cplus-1.1.1'
+# -*- mode: python; -*-
+print 'installing log4cplus'
+vpath = '#/third_party/log4cplus-1.1.3-rc7'
 
 env = DefaultEnvironment()
+abs_vpath = Dir(vpath).abspath
+abs_toppath = Dir('#').abspath
 
-config_opts = '--prefix=' + str(Dir('#/build'))
+loglibs = [ str(File('#/build/lib/log4cplus.lib')) ]
+logshlibs = [ str(File('#/build/lib/log4cplusD.dll')) ]
+logproducts = loglibs + logshlibs #+ [ str(File('#/build/include/log4cplus/logger.h')) ]
 
-cmd = ('(cd ' + Dir('.').abspath + '; ' + str(Dir(vpath)) +
-       '/configure' + ' ' + config_opts + '; make clean; make; make install)')
+def Symlink(target, source):
+    print 'target =', target[0]
+    print 'source = ' , source[0]
+    parent = os.path.dirname(target[0].abspath)
+    if not os.path.exists(parent):
+        os.makedirs(parent)
 
-version = '.7.0.0'
-libs = [ str(File('#/build/lib/liblog4cplus' + env['LIBSUFFIX'])) ]
-shlibs = [ str(File('#/build/lib/liblog4cplus-1.1' + env['SHLIBSUFFIX'] +
-                    version)) ]
-products = libs + shlibs + [ str(File('#/build/include/log4cplus/logger.h')) ]
+    if not os.path.exists(target[0].abspath):
+        os.symlink(source[0].abspath, target[0].abspath)
 
-log4cplus_cfg = env.Command('config.status', str(Dir(vpath)), cmd)
+libpath = Dir(vpath).abspath
+if not os.path.exists(libpath):
+    print '%s not present' % libpath
+    sys.exit(1)
 
-env.SideEffect(products, log4cplus_cfg)
+def build_log4cplus_for_windows(target,source,env):
+    cmd = 'xcopy ' + abs_toppath + '\controller\lib\log4cplus\msvc15\* ' + Dir(vpath).abspath + '\msvc10 /e /y'
+    print cmd
+    subprocess.call(cmd, shell=True)
+    curdir = os.getcwd()
+    os.chdir(Dir(vpath).abspath+ '\\msvc10')
+    subprocess.call("msbuild log4cplus.sln", shell=True)
+    cmd = 'xcopy /Y ' + Dir(vpath).abspath + r'\msvc10\win32\bin.Debug\*.lib ' + Dir('#/build/lib/*').abspath
+    print cmd
+    subprocess.call(cmd, shell=True)
+    cmd = 'xcopy /Y ' + Dir(vpath).abspath + r'\msvc10\win32\bin.Debug\*.exe ' + Dir('#/build/bin/*').abspath
+    print cmd
+    subprocess.call(cmd, shell=True)
+    cmd = 'xcopy /Y ' + Dir(vpath).abspath + r'\msvc10\win32\bin.Debug\*.dll ' + Dir('#/build/bin/*').abspath
+    print cmd
+    subprocess.call(cmd, shell=True)
+    os.chdir(curdir)
+    print os.getcwd()
+    if not os.path.exists(Dir('#/build/lib').abspath+ r'\log4cplus.lib'):
+      print 'copying log4cplus.lib'
+      shutil.copyfile(abs_vpath +r'\msvc10\Win32\bin.Debug\log4CplusSD.lib', Dir('#/build/lib').abspath+ r'\log4cplus.lib')
 
-env.Alias('install', env.Install(env['INSTALL_LIB'], shlibs))
+srcdir = Dir(vpath + '/include/log4cplus').abspath
+destdir = Dir('#/build/include/log4cplus').abspath
 
-env.Alias('install',
-          env.Symlink(env['INSTALL_LIB'] + '/liblog4cplus-1.1.so' + '.7',
-                      env['INSTALL_LIB'] + '/liblog4cplus-1.1.so' + version))
+if not os.path.exists(destdir):
+  print 'copying to ' + destdir
+  shutil.copytree(srcdir, destdir)
+  
+env.Command('#/build/lib/log4cplus.lib', str(Dir(vpath)), build_log4cplus_for_windows)
+
+#env.InstallAs( , vpath +r'\msvc10\Win32\bin.Debug\log4CplusSD.lib')
+print 'done installing log4cplus'

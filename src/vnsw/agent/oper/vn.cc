@@ -232,9 +232,9 @@ std::string VnEntry::GetProject() const {
     // Currently, this info doesnt come to the agent
     std::string name(name_.c_str());
     char *saveptr;
-    if (strtok_r(const_cast<char *>(name.c_str()), ":", &saveptr) == NULL)
+    if (strtok_s(const_cast<char *>(name.c_str()), ":", &saveptr) == NULL)
         return "";
-    char *project = strtok_r(NULL, ":", &saveptr);
+    char *project = strtok_s(NULL, ":", &saveptr);
     return (project == NULL) ? "" : std::string(project);
 }
 
@@ -601,7 +601,7 @@ bool VnTable::OperDBDelete(DBEntry *entry, const DBRequest *req) {
     VnEntry *vn = static_cast<VnEntry *>(entry);
     DeleteAllIpamRoutes(vn);
     RebakeVxlan(vn, true);
-    vn->SendObjectLog(AgentLogEvent::DELETE);
+    vn->SendObjectLog(AgentLogEvent::DEL);
     return true;
 }
 
@@ -1134,12 +1134,12 @@ bool VnEntry::DBEntrySandesh(Sandesh *sresp, std::string &name)  const {
 
     VnSandeshData data;
     data.set_name(GetName());
-    data.set_uuid(UuidToString(GetUuid()));
+    data.set_uuid(UUIDToString(GetUuid()));
     data.set_vxlan_id(GetVxLanId());
     data.set_config_vxlan_id(vxlan_id_);
     data.set_vn_id(vnid_);
     if (GetAcl()) {
-        data.set_acl_uuid(UuidToString(GetAcl()->GetUuid()));
+        data.set_acl_uuid(UUIDToString(GetAcl()->GetUuid()));
     } else {
         data.set_acl_uuid("");
     }
@@ -1151,13 +1151,13 @@ bool VnEntry::DBEntrySandesh(Sandesh *sresp, std::string &name)  const {
     }
 
     if (GetMirrorAcl()) {
-        data.set_mirror_acl_uuid(UuidToString(GetMirrorAcl()->GetUuid()));
+        data.set_mirror_acl_uuid(UUIDToString(GetMirrorAcl()->GetUuid()));
     } else {
         data.set_mirror_acl_uuid("");
     }
 
     if (GetMirrorCfgAcl()) {
-        data.set_mirror_cfg_acl_uuid(UuidToString(GetMirrorCfgAcl()->GetUuid()));
+        data.set_mirror_cfg_acl_uuid(UUIDToString(GetMirrorCfgAcl()->GetUuid()));
     } else {
         data.set_mirror_cfg_acl_uuid("");
     }
@@ -1206,7 +1206,7 @@ bool VnEntry::DBEntrySandesh(Sandesh *sresp, std::string &name)  const {
 void VnEntry::SendObjectLog(AgentLogEvent::type event) const {
     VnObjectLogInfo info;
     string str;
-    string vn_uuid = UuidToString(GetUuid());
+    string vn_uuid = UUIDToString(GetUuid());
     const AclDBEntry *acl = GetAcl();
     const AclDBEntry *mirror_acl = GetMirrorAcl();
     const AclDBEntry *mirror_cfg_acl = GetMirrorCfgAcl();
@@ -1220,7 +1220,7 @@ void VnEntry::SendObjectLog(AgentLogEvent::type event) const {
         case AgentLogEvent::ADD:
             str.assign("Addition ");
             break;
-        case AgentLogEvent::DELETE:
+        case AgentLogEvent::DEL:
             str.assign("Deletion ");
             info.set_event(str);
             VN_OBJECT_LOG_LOG("AgentVn", SandeshLevel::SYS_INFO, info);
@@ -1235,15 +1235,15 @@ void VnEntry::SendObjectLog(AgentLogEvent::type event) const {
 
     info.set_event(str);
     if (acl) {
-        acl_uuid.assign(UuidToString(acl->GetUuid()));
+        acl_uuid.assign(UUIDToString(acl->GetUuid()));
         info.set_acl_uuid(acl_uuid);
     }
     if (mirror_acl) {
-        mirror_acl_uuid.assign(UuidToString(mirror_acl->GetUuid()));
+        mirror_acl_uuid.assign(UUIDToString(mirror_acl->GetUuid()));
         info.set_mirror_acl_uuid(mirror_acl_uuid);
     }
     if (mirror_cfg_acl) {
-        mirror_cfg_acl_uuid.assign(UuidToString(mirror_cfg_acl->GetUuid()));
+        mirror_cfg_acl_uuid.assign(UUIDToString(mirror_cfg_acl->GetUuid()));
         info.set_mirror_cfg_acl_uuid(mirror_cfg_acl_uuid);
     }
     VrfEntry *vrf = GetVrf();

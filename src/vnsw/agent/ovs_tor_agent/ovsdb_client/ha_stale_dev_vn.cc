@@ -390,7 +390,7 @@ OvsdbSandeshTask::FilterResp
 HaStaleDevVnSandeshTask::Filter(KSyncEntry *kentry) {
     if (!vn_uuid_.empty()) {
         HaStaleDevVnEntry *entry = static_cast<HaStaleDevVnEntry *>(kentry);
-        if (UuidToString(entry->vn_uuid()).find(vn_uuid_) != std::string::npos) {
+        if (UUIDToString(entry->vn_uuid()).find(vn_uuid_) != std::string::npos) {
             return FilterAllow;
         }
         return FilterDeny;
@@ -405,11 +405,11 @@ void HaStaleDevVnSandeshTask::UpdateResp(KSyncEntry *kentry,
     dentry.set_state(entry->StateString());
     dentry.set_dev_name(entry->dev_name());
     dentry.set_dev_ip(entry->dev_ip().to_string());
-    dentry.set_vn_uuid(UuidToString(entry->vn_uuid()));
+    dentry.set_vn_uuid(UUIDToString(entry->vn_uuid()));
     dentry.set_vn_name(entry->vn_name());
     dentry.set_vxlan_id(entry->vxlan_id());
     HaStaleL2RouteSandeshTask task("", entry->dev_name(),
-                                   UuidToString(entry->vn_uuid()), "");
+                                   UUIDToString(entry->vn_uuid()), "");
     dentry.set_l2_route_table(task.EncodeFirstPage());
 
     OvsdbHaStaleDevVnExportResp *d_resp =

@@ -72,7 +72,7 @@ libbase = env.Library('base',
                        timer,
                        taskinfo_sandesh_files_,
                        ]])
-env.Requires(libbase, '#/build/lib/liblog4cplus.a')
+env.Requires(libbase, '#/build/lib/liblog4cplus.lib')
 env.Requires(libbase, '#/build/include/boost')
 
 env.SConscript('test/SConscript', exports='BuildEnv', duplicate = 0)

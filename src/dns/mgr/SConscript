@@ -6,7 +6,7 @@
 import sys
 Import('DnsEnv')
 env = DnsEnv.Clone()
-
+env.Append(CPPPATH = '#third_party\OpenSSLWin32\include')
 dns_mgr = env.Library('mgr',
                       ['dns_mgr.cc',
                        'dns_oper.cc',

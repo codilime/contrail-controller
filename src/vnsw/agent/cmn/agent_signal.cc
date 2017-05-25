@@ -45,6 +45,7 @@ void AgentSignal::NotifyDefault(const boost::system::error_code &error,
 }
 
 void AgentSignal::HandleSig(const boost::system::error_code &error, int sig) {
+#if 0 //WINDOWSFIX
     if (!error) {
         int status = 0;
         pid_t pid = 0;
@@ -60,6 +61,7 @@ void AgentSignal::HandleSig(const boost::system::error_code &error, int sig) {
         }
         RegisterSigHandler();
     }
+#endif
 }
 
 void AgentSignal::RegisterSigHandler() {
@@ -68,7 +70,7 @@ void AgentSignal::RegisterSigHandler() {
 
 void AgentSignal::Initialize() {
     boost::system::error_code ec;
-
+#if 0 //WINDOWSFIX
     /*
      * FIX(safchain) currently only handling SIGCHLD
      */
@@ -77,6 +79,7 @@ void AgentSignal::Initialize() {
         LOG(ERROR, "SIGCHLD registration failed");
     }
     RegisterSigHandler();
+#endif
 }
 
 void AgentSignal::Terminate() {

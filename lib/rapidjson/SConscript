@@ -1,8 +1,10 @@
 import os
 import sys
+import shutil
 
+print 'install rapidjson'
 env = DefaultEnvironment()
-rapidjson_path = '#/third_party/rapidjson'
+rapidjson_path = '#/third_party/rapidjson-1.1.0'
 
 def Symlink(target, source):
     parent = os.path.dirname(target[0].abspath)
@@ -17,9 +19,11 @@ if not os.path.exists(libpath):
     print '%s not present' % libpath
     sys.exit(1)
 
-Symlink([Dir('#/build/include/rapidjson')],
-        [Dir(rapidjson_path + '/include/rapidjson')])
-
+if not os.path.exists(Dir('#/build/include/rapidjson').abspath):
+  shutil.copytree(Dir(rapidjson_path + '/include/rapidjson').abspath, Dir('#/build/include/rapidjson').abspath)
+#SymCopy([Dir('#/build/include/rapidjson')],
+ #       [Dir(rapidjson_path + '/include/rapidjson')])
+print 'done installing rapidjson'
 # Local Variables:
 # mode: python
 # End:

@@ -32,7 +32,7 @@ bool PhysicalDeviceVn::IsLess(const DBEntry &rhs) const {
 }
 
 string PhysicalDeviceVn::ToString() const {
-    return UuidToString(device_uuid_) + ":" + UuidToString(vn_uuid_);
+    return UUIDToString(device_uuid_) + ":" + UUIDToString(vn_uuid_);
 }
 
 DBEntryBase::KeyPtr PhysicalDeviceVn::GetDBRequestKey() const {
@@ -128,7 +128,7 @@ bool PhysicalDeviceVnTable::Resync(DBEntry *e, const DBRequest *req) {
 
 bool PhysicalDeviceVnTable::Delete(DBEntry *e, const DBRequest *req) {
     PhysicalDeviceVn *entry = static_cast<PhysicalDeviceVn *>(e);
-    entry->SendObjectLog(AgentLogEvent::DELETE);
+    entry->SendObjectLog(AgentLogEvent::DEL);
     return true;
 }
 
@@ -283,13 +283,13 @@ class AgentPhysicalDeviceVnSandesh : public AgentSandesh {
 
 static void SetPhysicalDeviceVnSandeshData(const PhysicalDeviceVn *entry,
                                            SandeshPhysicalDeviceVn *data) {
-    data->set_device_uuid(UuidToString(entry->device_uuid()));
+    data->set_device_uuid(UUIDToString(entry->device_uuid()));
     if (entry->device()) {
         data->set_device(entry->device()->name());
     } else {
         data->set_device("INVALID");
     }
-    data->set_vn_uuid(UuidToString(entry->vn_uuid()));
+    data->set_vn_uuid(UUIDToString(entry->vn_uuid()));
     if (entry->vn()) {
         data->set_vn(entry->vn()->GetName());
     } else {
@@ -334,7 +334,7 @@ void PhysicalDeviceVn::SendObjectLog(AgentLogEvent::type event) const {
         case AgentLogEvent::ADD:
             str.assign("Addition ");
             break;
-        case AgentLogEvent::DELETE:
+        case AgentLogEvent::DEL:
             str.assign("Deletion ");
             break;
         case AgentLogEvent::CHANGE:
@@ -346,13 +346,13 @@ void PhysicalDeviceVn::SendObjectLog(AgentLogEvent::type event) const {
     }
     info.set_event(str);
 
-    info.set_device_uuid(UuidToString(device_uuid_));
+    info.set_device_uuid(UUIDToString(device_uuid_));
     if (device_.get()) {
         info.set_device(device_->name());
     } else {
         info.set_device("INVALID");
     }
-    info.set_vn_uuid(UuidToString(vn_uuid_));
+    info.set_vn_uuid(UUIDToString(vn_uuid_));
     if (vn_) {
         info.set_vn(vn_->GetName());
     } else {
@@ -394,9 +394,9 @@ bool ConfigPhysicalDeviceVnSandesh::Run() {
         table_->config_tree().begin();
     while (it != table_->config_tree().end()){
         SandeshConfigPhysicalDeviceVn entry;
-        entry.set_device_uuid(UuidToString(it->dev_));
-        entry.set_vn_uuid(UuidToString(it->vn_));
-        entry.set_vmi_uuid(UuidToString(it->vmi_));
+        entry.set_device_uuid(UUIDToString(it->dev_));
+        entry.set_vn_uuid(UUIDToString(it->vn_));
+        entry.set_vmi_uuid(UUIDToString(it->vmi_));
         list.push_back(entry);
         it++;
     }

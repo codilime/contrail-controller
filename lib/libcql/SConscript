@@ -1,5 +1,5 @@
 # -*- mode: python; -*-
-
+print 'installing libcql'
 vpath = '#/third_party/cpp-driver'
 
 env = DefaultEnvironment()
@@ -13,3 +13,4 @@ libcql = env.Command('Makefile', str(Dir(vpath)), cmd)
 
 env.SideEffect(products, libcql)
 env.Requires(libcql, '#/build/include/boost')
+print 'done installing libcql'

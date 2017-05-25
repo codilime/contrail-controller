@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include "ifmap/ifmap_uuid_mapper.h"
 
@@ -25,7 +27,7 @@ void IFMapUuidMapper::SetUuid(uint64_t ms_long, uint64_t ls_long,
     }
 }
 
-std::string IFMapUuidMapper::UuidToString(const boost::uuids::uuid &id) {   
+std::string IFMapUuidMapper::UUIDToString(const boost::uuids::uuid &id) {   
     std::stringstream uuid_str;
     uuid_str << id;
     return uuid_str.str();
@@ -35,7 +37,7 @@ std::string IFMapUuidMapper::Add(uint64_t ms_long, uint64_t ls_long,
                                  IFMapNode *node) {
     boost::uuids::uuid uu_id;
     SetUuid(ms_long, ls_long, uu_id);
-    std::string uuid_str = UuidToString(uu_id);
+    std::string uuid_str = UUIDToString(uu_id);
     uuid_node_map_.insert(std::make_pair(uuid_str, node));
     return uuid_str;
 }

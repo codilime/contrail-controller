@@ -43,7 +43,7 @@ public:
 
     enum Trace {
         ADD,
-        DELETE,
+        DEL,
         ACTIVATED,
         DEACTIVATED,
         FLOATING_IP_CHANGE,

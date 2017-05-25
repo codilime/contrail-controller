@@ -5,14 +5,16 @@
 #include "base/backtrace.h"
 
 #include <boost/algorithm/string.hpp>
-#include <execinfo.h>
+//WINDOWSFIX #include <execinfo.h>
 #include <stdio.h>
 
 #include "base/logging.h"
 
 ssize_t BackTrace::ToString(void * const* callstack, int frames, char *buf,
                             size_t buf_len) {
-#ifdef DARWIN
+#ifdef _WINDOWS
+	return 0;
+#elif defined(DARWIN)
     return 0;
 #else
     buf[0] = '\0';
@@ -64,8 +66,12 @@ ssize_t BackTrace::ToString(void * const* callstack, int frames, char *buf,
 }
 
 int BackTrace::Get(void * const* &callstack) {
+#ifdef _WINDOWS
+	return 0;
+#else
     callstack = (void * const *) calloc(1024, sizeof(void *));
     return backtrace((void **) callstack, 1024);
+#endif
 }
 
 void BackTrace::Log(void * const* callstack, int frames,

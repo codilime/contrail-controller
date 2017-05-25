@@ -37,7 +37,7 @@ private:
     friend class ShowIFMapUuidToNodeMapping;
 
     void SetUuid(uint64_t ms_long, uint64_t ls_long, boost::uuids::uuid &uu_id);
-    std::string UuidToString(const boost::uuids::uuid &id);
+    std::string UUIDToString(const boost::uuids::uuid &id);
 
     UuidNodeMap uuid_node_map_;
 };

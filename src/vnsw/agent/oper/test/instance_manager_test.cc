@@ -480,8 +480,8 @@ TEST_F(InstanceManagerTest, InstanceStaleCleanup) {
 
     agent_->oper_db()->instance_manager()->SetNetNSCmd("/bin/true");
     boost::uuids::random_generator gen;
-    std::string vm_uuid = UuidToString(gen());
-    std::string lb_uuid = UuidToString(gen());
+    std::string vm_uuid = UUIDToString(gen());
+    std::string lb_uuid = UUIDToString(gen());
 
     boost::filesystem::path curr_dir (boost::filesystem::current_path());
     stringstream ss;

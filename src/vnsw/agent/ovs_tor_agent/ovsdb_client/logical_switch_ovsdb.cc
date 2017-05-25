@@ -41,7 +41,7 @@ LogicalSwitchEntry::LogicalSwitchEntry(OvsdbDBObject *table,
 
 LogicalSwitchEntry::LogicalSwitchEntry(OvsdbDBObject *table,
         const PhysicalDeviceVn *entry) : OvsdbDBEntry(table),
-    name_(UuidToString(entry->vn()->GetUuid())), mcast_local_row_list_(),
+    name_(UUIDToString(entry->vn()->GetUuid())), mcast_local_row_list_(),
     mcast_remote_row_(NULL), delete_ovs_(false),
     res_vxlan_id_(table->client_idl()->vxlan_table(), this), del_task_(NULL) {
     vxlan_id_ = entry->vxlan_id();

@@ -23,13 +23,15 @@ static int find_first_set64(uint64_t value) {
     int bit;
 
     int lower = value;
-    if ((bit = ffs(lower)) > 0)
+   
+#if 0 //WINDOWS-TEMP
+	if ((bit = ffs(lower)) > 0)
         return bit;
 
     int upper = value >> 32;
     if ((bit = ffs(upper)) > 0)
         return 32 + bit;
-
+#endif
     return 0;
 }
 

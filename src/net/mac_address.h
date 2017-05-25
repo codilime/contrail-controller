@@ -7,9 +7,9 @@
 
 #include <string>
 #include <boost/system/error_code.hpp>
-
 #include <net/ethernet.h>
 #include <sys/socket.h>
+
 
 class MacAddress {
 public:

@@ -5,7 +5,9 @@
 #ifndef vnsw_agent_nexthop_hpp
 #define vnsw_agent_nexthop_hpp
 
+#ifndef _WINDOWS
 #include <netinet/in.h>
+#endif
 #include <net/ethernet.h>
 
 #include <cmn/agent_cmn.h>
@@ -1444,7 +1446,7 @@ public:
     virtual bool Delete(DBEntry *entry, const DBRequest *req) {
         NextHop *nh = static_cast<NextHop *>(entry);
         nh->Delete(req);
-        nh->SendObjectLog(this, AgentLogEvent::DELETE);
+        nh->SendObjectLog(this, AgentLogEvent::DEL);
         return true;
     }
 

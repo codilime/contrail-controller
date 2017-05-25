@@ -24,7 +24,7 @@
 # SUCH DAMAGE.
 
 import sys
-
+print 'installing icu'
 env = DefaultEnvironment().Clone()
 
 src_path = Dir('#/third_party/icu/source').abspath
@@ -52,3 +52,5 @@ build_command = ';'.join([configure_command, make_command])
 
 configure = env.Command('source/config.status', src_path, build_command)
 env.SideEffect(targets, configure)
+
+print 'done installing icu'

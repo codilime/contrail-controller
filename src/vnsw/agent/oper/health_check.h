@@ -73,7 +73,7 @@ public:
     enum EventType {
         MESSAGE_READ = 0,
         TASK_EXIT,
-        EVENT_MAX
+        EVENT_MAXIMUM
     };
 
     HealthCheckInstanceEvent(HealthCheckInstance *inst, EventType type,

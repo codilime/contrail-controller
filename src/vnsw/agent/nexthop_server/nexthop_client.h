@@ -32,7 +32,7 @@ class NexthopDBClient
     typedef std::vector <NexthopDBEntry::NexthopPtr>::iterator
         NexthopListIterator;
 
-    NexthopDBClient(UnixDomainSocketSession *session, NexthopDBServer *server);
+    NexthopDBClient(WindowsDomainSocketSession *session, NexthopDBServer *server);
     ~NexthopDBClient();
 
     void AddNexthop(NexthopDBEntry::NexthopPtr nh);
@@ -42,14 +42,14 @@ class NexthopDBClient
     /*
      * Handle events from the underlying (unix socket) session to this client
      */
-    void EventHandler(UnixDomainSocketSession *,
-                      UnixDomainSocketSession::Event);
+    void EventHandler(WindowsDomainSocketSession *,
+                      WindowsDomainSocketSession::Event);
 
  protected:
     friend class NexthopDBServer;
 
  private:
-    UnixDomainSocketSession *session_;
+    WindowsDomainSocketSession *session_;
     NexthopDBServer *server_;
 
     /*

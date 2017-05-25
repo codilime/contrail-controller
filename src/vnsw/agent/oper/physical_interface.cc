@@ -5,7 +5,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <vnc_cfg_types.h>
 #include <cmn/agent_cmn.h>
-
+#include<net/if.h>
 #include <ifmap/ifmap_node.h>
 #include <cfg/cfg_init.h>
 #include <cfg/cfg_listener.h>

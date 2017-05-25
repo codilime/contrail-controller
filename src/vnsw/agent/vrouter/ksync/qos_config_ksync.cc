@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <base/logging.h>
 #include <ksync/ksync_index.h>
@@ -172,7 +174,7 @@ int QosConfigKSyncEntry::ChangeMsg(char *buf, int buf_len) {
 }
 
 int QosConfigKSyncEntry::DeleteMsg(char *buf, int buf_len) {
-    return Encode(sandesh_op::DELETE, buf, buf_len);
+    return Encode(sandesh_op::DEL, buf, buf_len);
 }
 
 KSyncEntry *QosConfigKSyncEntry::UnresolvedReference() {

@@ -9,14 +9,21 @@
 #include "vr_types.h"
 #include "vr_defs.h"
 #include "vr_mpls.h"
+#ifdef _WINDOWS
+#include "winutils.h"
+#endif
 
 // VrouterControlInterface is implementation of ControlInterface for platforms
 // using vrouter. This class assumes agent_hdr defined in
 // vrouter/include/vr_defs.h is prepended with control information
 class VrouterControlInterface : public ControlInterface {
 public:
-    static const uint32_t kAgentHdrLen =
-        (sizeof(ether_header) + sizeof(struct agent_hdr));
+	static const uint32_t kAgentHdrLen =
+#ifndef _WINDOWS
+	(sizeof(ether_header) + sizeof(struct agent_hdr));
+#else
+		0;
+#endif
 
     VrouterControlInterface() : ControlInterface() { }
     virtual ~VrouterControlInterface() {

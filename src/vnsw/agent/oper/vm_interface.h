@@ -8,7 +8,7 @@
 #include <oper/oper_dhcp_options.h>
 #include <oper/audit_list.h>
 #include <oper/ecmp_load_balance.h>
-
+#include "winutils.h"
 /////////////////////////////////////////////////////////////////////////////
 // Implementation of VM Port interfaces
 /////////////////////////////////////////////////////////////////////////////
@@ -471,7 +471,7 @@ public:
 
     enum Trace {
         ADD,
-        DELETE,
+        DEL,
         ACTIVATED_IPV4,
         ACTIVATED_IPV6,
         ACTIVATED_L2,

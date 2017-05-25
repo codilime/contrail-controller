@@ -1,7 +1,12 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
+#ifdef _WINDOWS
 
+#include <boost/asio.hpp>
+#include <windows.h>
+
+#endif
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/wait.h>

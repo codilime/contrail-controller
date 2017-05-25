@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <stdint.h>
 #include "ifmap/ifmap_server_parser.h"
@@ -19,7 +21,7 @@ IFMapServerParser::ModuleMap IFMapServerParser::module_map_;
 static const char *NodeName(const xml_node &node) {
     const char *name = node.name();
     // strip namespace
-    const char *dot = index(name, ':');
+    const char *dot = strchr(name, ':');
     if (dot != NULL) {
         name = dot + 1;
     }

@@ -40,7 +40,9 @@
 #include <tbb/task.h>
 #include <tbb/task_scheduler_init.h>
 #include "base/util.h"
-
+#ifdef _WINDOWS
+typedef UINT32 pid_t;
+#endif
 class TaskGroup;
 class TaskEntry;
 class SandeshTaskScheduler;

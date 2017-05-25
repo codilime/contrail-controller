@@ -95,14 +95,14 @@ env['QE_SANDESH_GEN_OBJS'] = SandeshGenObjs
 
 buildinfo_dep_libs = [
     '../../lib/libhiredis.a',
-    '../../lib/libhttp.a',
-    '../../lib/libhttp_parser.a',
-    '../../lib/libsandesh.a', 
-    '../../lib/libsandeshvns.a', 
-    '../base/libbase.a',
-    '../base/libcpuinfo.a',
-    '../../lib/libgendb.a',
-    '../io/libio.a',
+    '../../lib/http.lib',
+    '../../lib/http_parser.lib',
+    '../../lib/sandesh.lib', 
+    '../../lib/sandeshvns.lib', 
+    '../base/base.lib',
+    '../base/cpuinfo.lib',
+    '../../lib/gendb.lib',
+    '../io/io.lib',
 ]
 
 qed_sources = [
@@ -136,16 +136,8 @@ env.GenerateBuildInfoCode(
 
 build_obj = map(lambda x : env.Object(x), ['buildinfo.cc'])
 
-lib_cpuinfo = File('../base/libcpuinfo.a')
-lib_base = File('../base/libbase.a')
-if sys.platform != 'darwin':
-    env.Prepend(LINKFLAGS =
-                ['-Wl,--whole-archive',
-                 '-lbase', '-lcpuinfo',
-                 '-Wl,--no-whole-archive'])
-else:
-    env.Prepend(LINKFLAGS = ['-Wl,-force_load,' + lib_base.path])
-    env.Prepend(LINKFLAGS = ['-Wl,-force_load,' + lib_cpuinfo.path])
+lib_cpuinfo = File('../base/cpuinfo.lib')
+lib_base = File('../base/base.lib')
 
 qed = env.Program(
         target = 'qed', 

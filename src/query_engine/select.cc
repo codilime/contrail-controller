@@ -366,7 +366,7 @@ query_status_t SelectQuery::process_query() {
                 col_res_map.insert(std::make_pair(col_name, jt->value->at(0)));
             }
             if (!col_res_map.size()) {
-                QE_LOG(ERROR, "No entry for uuid: " << UuidToString(u) <<
+                QE_LOG(ERROR, "No entry for uuid: " << UUIDToString(u) <<
                        " in Analytics db");
                 continue;
             }
@@ -604,7 +604,7 @@ query_status_t SelectQuery::process_query() {
                     QE_LOG(ERROR, "Invalid rowkey/uuid");
                     QE_IO_ERROR_RETURN(0, QUERY_FAILURE);
                 }
-                QE_LOG(ERROR, "No entry for uuid: " << UuidToString(u) <<
+                QE_LOG(ERROR, "No entry for uuid: " << UUIDToString(u) <<
                        " in Analytics db");
                 continue;
             }

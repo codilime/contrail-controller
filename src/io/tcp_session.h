@@ -24,7 +24,15 @@
 #include "base/util.h"
 #include "base/task.h"
 #include "io/tcp_server.h"
+#if defined(_WINDOWS)
 
+#include <stdint.h>
+
+typedef uint8_t u_int8_t;
+typedef uint16_t u_int16_t;
+typedef uint32_t u_int32_t;
+
+#endif
 class EventManager;
 class TcpServer;
 class TcpSession;

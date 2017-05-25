@@ -3,16 +3,20 @@
 #
 
 # -*- mode: python; -*-
-
+import os
 import sys
 Import('AgentEnv')
 env = AgentEnv.Clone()
+
+if os.name == 'nt':
+  env.Append(CPPPATH = ['#windows'])
 
 except_files = [ 'agent_param.cc' ]
 except_objs = AgentEnv.BuildExceptionCcObj(env, except_files)
 
 sources = [ 'agent_init.cc' ] + except_objs
 libvnswinit = env.Library('vnswinit', sources)
+
 
 sources = [ 'agent_init.cc', 'contrail_init_common.cc' ] + except_objs
 libcontrail_init_common = env.Library('contrail_init_common', sources)

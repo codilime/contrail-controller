@@ -208,8 +208,8 @@ TEST_F(OvsBaseTest, PhysicalLocatorCreateWait) {
 
     LogicalSwitchTable *ls_table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key1(ls_table, UuidToString(MakeUuid(1)));
-    LogicalSwitchEntry key2(ls_table, UuidToString(MakeUuid(2)));
+    LogicalSwitchEntry key1(ls_table, UUIDToString(MakeUuid(1)));
+    LogicalSwitchEntry key2(ls_table, UUIDToString(MakeUuid(2)));
     LogicalSwitchEntry *entry;
     WAIT_FOR(100, 10000, ((entry = static_cast<LogicalSwitchEntry *>
                     (ls_table->Find(&key1))) != NULL &&
@@ -265,7 +265,7 @@ TEST_F(OvsBaseTest, RenewLogicalSwitchWithVxlanAcquireFailure) {
 
     LogicalSwitchTable *ls_table =
         tcp_session_->client_idl()->logical_switch_table();
-    LogicalSwitchEntry key1(ls_table, UuidToString(MakeUuid(1)));
+    LogicalSwitchEntry key1(ls_table, UUIDToString(MakeUuid(1)));
     LogicalSwitchEntry *entry;
     WAIT_FOR(100, 10000, ((entry = static_cast<LogicalSwitchEntry *>
                     (ls_table->Find(&key1))) != NULL &&

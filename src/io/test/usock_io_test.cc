@@ -19,7 +19,7 @@ public:
     }
 
     void EventHandler (UnixDomainSocketServer *server,
-                       UnixDomainSocketSession *session, Event event)
+                       WindowsDomainSocketSession *session, Event event)
     {
         if (event == NEW_SESSION) {
             LOG(DEBUG, "Session created");

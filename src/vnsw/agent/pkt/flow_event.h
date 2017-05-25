@@ -3,11 +3,14 @@
  */
 #ifndef __AGENT_FLOW_EVENT_H__
 #define __AGENT_FLOW_EVENT_H__
-
+#ifndef _WINDOWS
 #include <sys/resource.h>
+#endif
 #include <ksync/ksync_entry.h>
 #include "flow_table.h"
-
+#ifdef _WINDOWS
+#include <sys/resource.h>
+#endif
 class FlowTokenPool;
 
 ////////////////////////////////////////////////////////////////////////////

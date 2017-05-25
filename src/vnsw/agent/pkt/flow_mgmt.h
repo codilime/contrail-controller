@@ -317,7 +317,7 @@ private:
 };
 
 struct FlowMgmtKeyCmp {
-    bool operator()(const FlowMgmtKey *l, const FlowMgmtKey *r) {
+    bool operator()(const FlowMgmtKey *l, const FlowMgmtKey *r) const {
         return l->IsLess(r);
     }
 };

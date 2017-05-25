@@ -2,6 +2,9 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
+#include<time.h>
+#include "winutils.h"
+
 #include "Thrift.h"
 
 #include "io/event_manager.h"

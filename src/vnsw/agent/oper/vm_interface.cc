@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <sys/types.h>
 #include <net/ethernet.h>
@@ -676,11 +678,11 @@ static void BuildVn(VmInterfaceConfigData *data, IFMapNode *node,
     if (cfg_entry && (cfg_entry->GetVnUuid() != data->vn_uuid_)) {
         IFMAP_ERROR(InterfaceConfiguration, 
                     "Virtual-network UUID mismatch for interface:",
-                    UuidToString(u),
+                    UUIDToString(u),
                     "configuration VN uuid",
-                    UuidToString(data->vn_uuid_),
+                    UUIDToString(data->vn_uuid_),
                     "compute VN uuid",
-                    UuidToString(cfg_entry->GetVnUuid()));
+                    UUIDToString(cfg_entry->GetVnUuid()));
     }
 }
 
@@ -705,11 +707,11 @@ static void BuildVm(VmInterfaceConfigData *data, IFMapNode *node,
     if (cfg_entry && (cfg_entry->GetVmUuid() != data->vm_uuid_)) {
         IFMAP_ERROR(InterfaceConfiguration, 
                     "Virtual-machine UUID mismatch for interface:",
-                    UuidToString(u),
+                    UUIDToString(u),
                     "configuration VM UUID is",
-                    UuidToString(data->vm_uuid_),
+                    UUIDToString(data->vm_uuid_),
                     "compute VM uuid is",
-                    UuidToString(cfg_entry->GetVmUuid()));
+                    UUIDToString(cfg_entry->GetVmUuid()));
     }
 }
 
@@ -5421,7 +5423,7 @@ void VmInterface::SendTrace(const AgentDBTable *table, Trace event) const {
 
     intf_info.set_ip_address(primary_ip_addr_.to_string());
     if (vm_) {
-        intf_info.set_vm(UuidToString(vm_->GetUuid()));
+        intf_info.set_vm(UUIDToString(vm_->GetUuid()));
     }
     if (vn_) {
         intf_info.set_vn(vn_->GetName());
@@ -5429,7 +5431,7 @@ void VmInterface::SendTrace(const AgentDBTable *table, Trace event) const {
     if (vrf_) {
         intf_info.set_vrf(vrf_->GetName());
     }
-    intf_info.set_vm_project(UuidToString(vm_project_uuid_));
+    intf_info.set_vm_project(UUIDToString(vm_project_uuid_));
     OPER_TRACE_ENTRY(Interface,
                      table,
                      intf_info);

@@ -61,8 +61,10 @@ void LoggingInit(const std::string &filename, long maxFileSize, int maxBackupInd
 
     if (useSyslog) {
         helpers::Properties props;
-        std::string syslogident = boost::str(
-            boost::format("%1%[%2%]") % ident % getpid());
+		std::string syslogident;
+
+		//WINDOWS-TEMP syslogident = 	boost::str( boost::format("%1%[%2%]") % ident % getpid());
+
         props.setProperty(LOG4CPLUS_TEXT("facility"),
                           boost::starts_with(syslogFacility, "LOG_")
                         ? syslogFacility.substr(4)

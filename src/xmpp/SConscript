@@ -37,12 +37,12 @@ libxmpp = env.Library('xmpp',
                       'xmpp_connection_manager.cc',
                       'xmpp_factory.cc',
                       'xmpp_lifetime.cc',
-                      'xmpp_session',
+                      'xmpp_session.cc',
                       'xmpp_state_machine.cc',
                       'xmpp_server.cc',
                       'xmpp_client.cc',
                       'xmpp_proto.cc',
-                      'xmpp_init',
+                      'xmpp_init.cc',
                       'xmpp_channel_mux.cc',
                       ] + sandesh_files_ )
 
@@ -64,7 +64,7 @@ env.Append(CPPPATH=xmpp_include)
 env.Append(CPPPATH = [env['TOP'] + '/bgp'])
 env.Append(CPPPATH = [env['TOP'] + '/io'])
 env.Append(CPPPATH = [env['TOP'] + '/tools/sandesh/library/common'])
-
+env.Append(CPPPATH = '#/third_party/OpenSSLWin32/include')
 xmppd = env.Program(target = 'xmppd',
                    source = ['main.cc'])
 

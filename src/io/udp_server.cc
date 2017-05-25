@@ -4,9 +4,11 @@
 
 #include <boost/bind.hpp>
 #include <base/logging.h>
+#include<sys/wintypes.h>
 #include <io/udp_server.h>
 #include <io/io_log.h>
 #include <io/io_utils.h>
+
 
 using boost::asio::buffer_cast;
 using boost::asio::mutable_buffer;

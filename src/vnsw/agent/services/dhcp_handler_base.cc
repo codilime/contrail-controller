@@ -355,10 +355,17 @@ uint16_t DhcpHandlerBase::AddByteCompressedNameOption(uint32_t option,
 
 uint16_t DhcpHandlerBase::AddCompressedName(uint16_t opt_len,
                                             const std::string &input) {
+#ifndef _WINDOWS
     uint8_t name[input.size() * 2 + 2];
+#else
+	uint8_t *name = new uint8_t[input.size() * 2 + 2];
+#endif
     uint16_t len = 0;
     BindUtil::AddName(name, input, 0, 0, len);
     option_->AppendData(len, name, &opt_len);
+#ifdef _WINDOWS
+	delete[] name;
+#endif
     return opt_len;
 }
 

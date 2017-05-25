@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <libvirt/libvirt.h>
 #include <libvirt/virterror.h>
+#include<WinSock2.h> 
 #include <net/if.h>
 #include <linux/if_tun.h>
 #include <boost/lexical_cast.hpp>

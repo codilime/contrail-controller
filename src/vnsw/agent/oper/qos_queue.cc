@@ -34,7 +34,7 @@ std::string QosQueue::ToString() const {
 bool QosQueue::DBEntrySandesh(Sandesh *sresp, std::string &name) const {
     QosQueueSandeshResp *resp = static_cast<QosQueueSandeshResp *>(sresp);
     QosQueueSandeshData data;
-    data.set_uuid(UuidToString(uuid_));
+    data.set_uuid(UUIDToString(uuid_));
     data.set_id(id_);
     data.set_name(name_);
 

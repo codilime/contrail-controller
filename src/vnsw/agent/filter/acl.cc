@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <vector>
 #include <boost/uuid/uuid_io.hpp>
@@ -35,6 +37,38 @@
 static AclTable *acl_table_;
 
 using namespace autogen;
+int clock_gettime(int, struct timespec * ts)
+{
+	return 0;
+
+}
+u_int32_t custom_htonl(u_int32_t x)
+{
+	//#if BYTE_ORDER == LITTLE_ENDIAN
+	u_char *s = (u_char *)&x;
+	return (u_int32_t)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
+	//else
+	//	return x;
+	//#endif
+}
+unsigned int  sleep(unsigned int) { return 0; }
+void  bzero(unsigned char *, int) { }
+int  usleep(unsigned int) { return 0; }
+int  getrlimit(int, struct rlimit *) { return 0; }
+int  getrusage(int, struct rusage *) { return 0; }
+int  close(int) { return 0; }
+int  setrlimit(int, struct rlimit const *) { return 0; }
+void  WindowsCloseTaskFiles(void) {}
+char * gettempdirectory(void) { return 0; }
+unsigned long  getppid(void) { return 0; }
+char *  strptime(char const *, char const *, struct tm *) {return nullptr;}
+__int64  timegm(struct tm *) { return 0; }
+struct tm *  gmtime_r(__int64 const *, struct tm *){return nullptr;} 
+int ioctl(int fd, unsigned long request, ...) { return 0; }
+unsigned int  if_nametoindex(char const *) { return 0; }
+void  if_freenameindex(struct if_nameindex *) { return ; }
+struct if_nameindex *  if_nameindex(void) { return 0; }
+struct ether_addr *  ether_aton(char const *) { return 0; }
 
 SandeshTraceBufferPtr AclTraceBuf(SandeshTraceBufferCreate("Acl", 32000));
 
@@ -67,7 +101,7 @@ void AclDBEntry::SetKey(const DBRequestKey *key) {
 bool AclDBEntry::DBEntrySandesh(Sandesh *sresp, std::string &uuid) const {
     AclResp *resp = static_cast<AclResp *>(sresp);
 
-    std::string str_uuid = UuidToString(GetUuid());
+    std::string str_uuid = UUIDToString(GetUuid());
 
     // request uuid is null, then display upto size given by sandesh req
     // request uuid is not null, then disply the ACL that matches the uuid.
@@ -76,7 +110,7 @@ bool AclDBEntry::DBEntrySandesh(Sandesh *sresp, std::string &uuid) const {
         SetAclSandeshData(data);
         std::vector<AclSandeshData> &list =
                 const_cast<std::vector<AclSandeshData>&>(resp->get_acl_list());
-        data.uuid = UuidToString(GetUuid());
+        data.uuid = UUIDToString(GetUuid());
         data.set_dynamic_acl(GetDynamicAcl());
         data.name = name_;
         list.push_back(data);
@@ -192,7 +226,7 @@ bool AclTable::OperDBResync(DBEntry *entry, const DBRequest *req) {
 
 bool AclTable::OperDBDelete(DBEntry *entry, const DBRequest *req) {
     AclDBEntry *acl = static_cast<AclDBEntry *>(entry);
-    ACL_TRACE(Info, "Delete " + UuidToString(acl->GetUuid()));
+    ACL_TRACE(Info, "Delete " + UUIDToString(acl->GetUuid()));
     DeleteUnresolvedEntry(acl);
     acl->DeleteAllAclEntries();
     return true;
@@ -359,7 +393,7 @@ static void AclEntryObjectTrace(AclEntrySandeshData &ace_sandesh, AclEntrySpec &
 static void AclObjectTrace(AgentLogEvent::type event, AclSpec &acl_spec)
 {
     AclSandeshData acl;
-    acl.set_uuid(UuidToString(acl_spec.acl_id));
+    acl.set_uuid(UUIDToString(acl_spec.acl_id));
     acl.set_dynamic_acl(acl_spec.dynamic_acl);
     if (event == AgentLogEvent::ADD || event == AgentLogEvent::CHANGE) {
         std::vector<AclEntrySpec>::iterator it;
@@ -373,14 +407,14 @@ static void AclObjectTrace(AgentLogEvent::type event, AclSpec &acl_spec)
         }
         acl.set_entries(acl_entries);
         ACL_TRACE(AclTrace, "Add", "", acl);
-    } else if (event == AgentLogEvent::DELETE) {
-        ACL_TRACE(AclTrace, "Delete", UuidToString(acl_spec.acl_id), acl);
+    } else if (event == AgentLogEvent::DEL) {
+        ACL_TRACE(AclTrace, "Delete", UUIDToString(acl_spec.acl_id), acl);
     }
     switch (event) {
         case AgentLogEvent::ADD:
         case AgentLogEvent::CHANGE:
             break;
-        case AgentLogEvent::DELETE:
+        case AgentLogEvent::DEL:
             break;
         default:
             break;
@@ -408,7 +442,7 @@ bool AclTable::IFNodeToReq(IFMapNode *node, DBRequest &req,
         req.data.reset(NULL);
         Agent::GetInstance()->acl_table()->Enqueue(&req);
         acl_spec.acl_id = u;
-        AclObjectTrace(AgentLogEvent::DELETE, acl_spec);
+        AclObjectTrace(AgentLogEvent::DEL, acl_spec);
         return false;
     }
 

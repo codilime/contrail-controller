@@ -1,13 +1,14 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <fstream>
 #include <sstream>
 #include <stdlib.h> 
 #include <base/misc_utils.h>
 #include <base/logging.h>
-#include <netdb.h>
+//WINDOWSFIX #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "boost/filesystem/operations.hpp"
@@ -76,18 +77,18 @@ void MiscUtils::GetCoreFileList(string prog, vector<string> &list) {
 
 bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
                                        string &build_num) {
-    FILE *fp;
+    FILE *fp=NULL;
     char line[512];
-    fp = popen(cmd.c_str(), "r");
+   //WINDOWS-TEMP fp = popen(cmd.c_str(), "r");
     if (fp == NULL) {
         return false;
     }
     char *ptr = fgets(line, sizeof(line), fp);
     if (ptr == NULL) {
-        pclose(fp);
+  //WINDOWS-TEMP      pclose(fp);
         return false;
     }
-    pclose(fp);
+    //WINDOWS-TEMP pclose(fp);
     ptr = strchr(line, '\n');
     if (ptr != NULL) {
         *ptr = '\0';
@@ -143,10 +144,12 @@ bool MiscUtils::GetBuildInfo(BuildModule id, const string &build_info,
         result = build_info;
         return false;
     }
-    fields[0u].AddMember("build-id", const_cast<char *>(rpm_version.c_str()), 
-                         d.GetAllocator());
-    fields[0u].AddMember("build-number", const_cast<char *>(build_num.c_str()), 
-                         d.GetAllocator());
+	//WINDOWS-TEMP
+	rapidjson::Value str1("build-id"), str2("build-number");
+	rapidjson::Value str11(rpm_version.c_str(), d.GetAllocator()), str22(build_num.c_str(), d.GetAllocator());
+
+    fields[0u].AddMember(str1, str11, d.GetAllocator());
+    fields[0u].AddMember(str2, str22, d.GetAllocator());
 
     rapidjson::StringBuffer strbuf;
     rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
@@ -156,9 +159,9 @@ bool MiscUtils::GetBuildInfo(BuildModule id, const string &build_info,
 }
 
 bool MiscUtils::GetPlatformInfo(std::string &distro, std::string &code_name) {
-    FILE *fp;
+    FILE *fp=NULL;
     char line[512];
-    fp = popen("cat /etc/*release", "r");
+    //WINDOWS-TEMP fp = popen("cat /etc/*release", "r");
     if (fp == NULL) {
         return false;
     }

@@ -97,7 +97,7 @@ bool MplsTable::ChangeHandler(MplsLabel *mpls, const DBRequest *req) {
 
 bool MplsTable::Delete(DBEntry *entry, const DBRequest *req) {
     MplsLabel *mpls = static_cast<MplsLabel *>(entry);
-    mpls->SendObjectLog(this, AgentLogEvent::DELETE);
+    mpls->SendObjectLog(this, AgentLogEvent::DEL);
     return true;
 }
 
@@ -297,7 +297,7 @@ void MplsLabel::SendObjectLog(const AgentDBTable *table,
     case AgentLogEvent::ADD:
         str.assign("Addition ");
         break;
-    case AgentLogEvent::DELETE:
+    case AgentLogEvent::DEL:
         str.assign("Deletion ");
         info.set_event(str);
         OPER_TRACE_ENTRY(Mpls, table, info);
@@ -356,7 +356,7 @@ void MplsLabel::SendObjectLog(const AgentDBTable *table,
             break;
         }
         info.set_intf_type(if_type_str);
-        info.set_intf_uuid(UuidToString(intf->GetUuid()));
+        info.set_intf_uuid(UUIDToString(intf->GetUuid()));
         info.set_intf_name(intf->name());
     }
     OPER_TRACE_ENTRY(Mpls, table, info);

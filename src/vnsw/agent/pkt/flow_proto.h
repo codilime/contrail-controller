@@ -5,7 +5,11 @@
 #ifndef vnsw_agent_flow_proto_hpp
 #define vnsw_agent_flow_proto_hpp
 
+#ifndef _WINDOWS
+
 #include <net/if.h>
+#endif
+
 #include "cmn/agent_cmn.h"
 #include "base/queue_task.h"
 #include "proto.h"

@@ -365,7 +365,7 @@ void MirrorCfgTable::SetMirrorCfgVnSandeshData(std::string &vn_name,
         }
         VnAclInfo vn_acl_info;
         vn_acl_info.set_vn_name(it->first);
-        vn_acl_info.set_dyn_acl_uuid(UuidToString(it->second.id));
+        vn_acl_info.set_dyn_acl_uuid(UUIDToString(it->second.id));
         vn_acl_info.set_num_of_entries(it->second.num_of_entries);
         vn_l.push_back(vn_acl_info);
     }
@@ -578,7 +578,7 @@ void IntfMirrorCfgTable::SetIntfMirrorCfgSandeshData(std::string &handle,
         }
         IntfMirrorCfgSandesh mc_s;
         mc_s.set_handle(mc_entry->key.handle);
-        mc_s.set_intf_uuid(UuidToString(mc_entry->data.intf_id));
+        mc_s.set_intf_uuid(UUIDToString(mc_entry->data.intf_id));
         mc_s.set_intf_name(mc_entry->data.intf_name);
         mc_s.set_ip(mc_entry->data.mirror_dest.dip.to_string());
         mc_s.set_udp_port(mc_entry->data.mirror_dest.dport);

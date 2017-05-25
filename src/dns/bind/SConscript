@@ -6,8 +6,9 @@
 import sys
 Import('DnsEnv')
 env = DnsEnv.Clone()
-env.AppendUnique(CCFLAGS='-Wno-return-type')
-
+env.AppendUnique(CCFLAGS='/w')
+env.Append(CPPPATH = '#third_party\OpenSSLWin32\include')
+env.Append(CPPPATH = '#third_party\dirent\include')
 SandeshGenFiles = env.SandeshGenCpp('bind.sandesh')
 SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)
 

@@ -1,5 +1,5 @@
 # -*- mode: python; -*-
-
+print 'building hiredis'
 default = DefaultEnvironment()
 env = default.Clone()
 
@@ -8,7 +8,7 @@ hiredis_path = '#/third_party/hiredis-0.11.0'
 hiredis_asio_adapter_path = '#/third_party/hiredis-boostasio-adapter'
 
 include = [ third_party_path, hiredis_path, hiredis_path + '/adapters',
-        '#/build/include', '#/third_party/tbb40_20111130oss/include' ]
+        '#/build/include', '#/third_party/tbb2017_20160916oss/include' ]
 
 env.Append(CPPPATH = include)
 env.Append(CCFLAGS = ['-g'])
@@ -39,3 +39,5 @@ env.Install('#/build/include/hiredis', hiredis_path + '/hiredis.h')
 env.Install('#/build/include/hiredis', hiredis_path + '/async.h')
 env.Install('#/build/include/hiredis', 'base64.h')
 env.Install('#/build/include/hiredis', hiredis_asio_adapter_path + '/boostasio.hpp')
+
+print 'done building hiredis'

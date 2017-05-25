@@ -48,7 +48,7 @@ bool VMInterfaceKSyncEntry::Sync(DBEntry *db_entry) {
 
     std::string vn_name;
     if (entry->vn()) {
-        vn_name = UuidToString(entry->vn()->GetUuid());
+        vn_name = UUIDToString(entry->vn()->GetUuid());
     }
 
     SecurityGroupList sg_list;

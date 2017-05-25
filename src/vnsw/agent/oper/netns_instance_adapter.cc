@@ -15,9 +15,9 @@ InstanceTask* NetNSInstanceAdapter::CreateStartTask(const ServiceInstance::Prope
     cmd_str << netns_cmd_ << " create";
 
     cmd_str << " " << props.ServiceTypeString();
-    cmd_str << " " << UuidToString(props.instance_id);
-    cmd_str << " " << UuidToString(props.vmi_inside);
-    cmd_str << " " << UuidToString(props.vmi_outside);
+    cmd_str << " " << UUIDToString(props.instance_id);
+    cmd_str << " " << UUIDToString(props.vmi_inside);
+    cmd_str << " " << UUIDToString(props.vmi_outside);
 
     if (props.ip_prefix_len_inside != -1)  {
         cmd_str << " --vmi-left-ip " << props.ip_addr_inside << "/";
@@ -39,7 +39,7 @@ InstanceTask* NetNSInstanceAdapter::CreateStartTask(const ServiceInstance::Prope
     if (props.service_type == ServiceInstance::LoadBalancer) {
         if (props.loadbalancer_id.empty()) {
             LOG(ERROR, "loadbalancer id is missing for service instance: "
-                        << UuidToString(props.instance_id));
+                        << UUIDToString(props.instance_id));
             return NULL;
         }
         cmd_str << " --loadbalancer-id " << props.loadbalancer_id;
@@ -108,13 +108,13 @@ InstanceTask* NetNSInstanceAdapter::CreateStopTask(const ServiceInstance::Proper
     }
 
     cmd_str << " " << props.ServiceTypeString();
-    cmd_str << " " << UuidToString(props.instance_id);
-    cmd_str << " " << UuidToString(props.vmi_inside);
-    cmd_str << " " << UuidToString(props.vmi_outside);
+    cmd_str << " " << UUIDToString(props.instance_id);
+    cmd_str << " " << UUIDToString(props.vmi_inside);
+    cmd_str << " " << UUIDToString(props.vmi_outside);
     if (props.service_type == ServiceInstance::LoadBalancer) {
         if (props.loadbalancer_id.empty()) {
             LOG(ERROR, "loadbalancer id is missing for service instance: "
-                        << UuidToString(props.instance_id));
+                        << UUIDToString(props.instance_id));
             return NULL;
         }
         cmd_str << " --loadbalancer-id " << props.loadbalancer_id;

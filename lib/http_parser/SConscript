@@ -1,9 +1,11 @@
 # -*- mode: python; -*-
-
+print 'building httpparser'
 env = DefaultEnvironment()
 
 vpath = '#third_party/http-parser-2.1'
-lib = env.Library('http_parser', vpath + '/http_parser.c')
-
-env.Install('#/build/lib/', 'libhttp_parser.a')
+httpParserlib = env.Library('http_parser', vpath + '/http_parser.c')
+#env.Default(httpParserlib)
+env.Install('#/build/lib/', 'http_parser.lib')
 env.Install('#/build/include/http_parser', vpath + '/http_parser.h')
+
+print 'done installing http parser'

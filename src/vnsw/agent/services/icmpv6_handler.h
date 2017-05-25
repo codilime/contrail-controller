@@ -12,8 +12,15 @@
 // ICMPv6 protocol handler
 class Icmpv6Handler : public ProtoHandler {
 public:
+
+#ifndef _WINDOWS
     static const boost::array<uint8_t, 16> kPrefix;
     static const boost::array<uint8_t, 16> kSuffix;
+#else
+	static const array<uint8_t, 16> kPrefix;
+	static const array<uint8_t, 16> kSuffix;
+#endif
+
     static const Ip6Address kSolicitedNodeIpPrefix;
     static const Ip6Address kSolicitedNodeIpSuffixMask;
     Icmpv6Handler(Agent *agent, boost::shared_ptr<PktInfo> info,

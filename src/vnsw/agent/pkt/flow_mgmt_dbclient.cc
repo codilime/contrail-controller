@@ -1,3 +1,6 @@
+#include <boost/asio.hpp>
+#include <windows.h>
+
 #include "pkt/flow_mgmt_dbclient.h"
 #include "oper/ecmp_load_balance.h"
 

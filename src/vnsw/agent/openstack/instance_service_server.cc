@@ -135,11 +135,11 @@ InstanceServiceAsyncHandler::AddPort(const PortList& port_list) {
                            tx_vlan_id, rx_vlan_id, port_type, version_);
         req.data.reset(cfg_int_data);
         ctable->Enqueue(&req);
-        CFG_TRACE(OpenstackAddPort, "Add", UuidToString(port_id),
-                  UuidToString(instance_id), UuidToString(vn_id),
+        CFG_TRACE(OpenstackAddPort, "Add", UUIDToString(port_id),
+                  UUIDToString(instance_id), UUIDToString(vn_id),
                   port.ip_address, port.tap_name, port.mac_address,
                   port.display_name, port.hostname, port.host, version,
-                  tx_vlan_id, rx_vlan_id, UuidToString(vm_project_id),
+                  tx_vlan_id, rx_vlan_id, UUIDToString(vm_project_id),
                   CfgIntEntry::CfgIntTypeToString(port_type), port.ip6_address);
     }
     return true;
@@ -170,7 +170,7 @@ InstanceServiceAsyncHandler::DeletePort(const tuuid& t_port_id) {
     req.key.reset(new CfgIntKey(port_id));
     req.oper = DBRequest::DB_ENTRY_DELETE;
     ctable->Enqueue(&req);
-    CFG_TRACE(OpenstackDeletePort, "Delete", UuidToString(port_id), version_); 
+    CFG_TRACE(OpenstackDeletePort, "Delete", UUIDToString(port_id), version_); 
     return true;
 }
 

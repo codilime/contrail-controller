@@ -15,6 +15,12 @@
 #include "pkt/proto_handler.h"
 #include "diag/diag_types.h"
 #include "diag/diag.h"
+
+#ifdef _WINDOWS
+#include<netinet/tcp.h>
+#include<netinet/udp.h>
+#endif
+
 #include "diag/ping.h"
 
 using namespace boost::posix_time;

@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <sandesh/sandesh_types.h>
 #include <sandesh/sandesh.h>
 #include <sandesh/request_pipeline.h>
@@ -127,7 +128,7 @@ void xml_parse(pugi::xml_node &node, string &s, int n) {
             if (ms_set && ls_set) {
                 boost::uuids::uuid u;
                 to_uuid(uuid_ms, uuid_ls, u);
-                string tmp = UuidToString(u);
+                string tmp = UUIDToString(u);
                 s = s + t + "Uuid : " + tmp + "\n";
                 ms_set = ls_set = 0;
             }

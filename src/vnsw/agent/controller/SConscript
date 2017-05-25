@@ -5,7 +5,7 @@
 # -*- mode: python; -*-
 Import('AgentEnv')
 env = AgentEnv.Clone()
-
+env.Append(CPPPATH = '#third_party\OpenSSLWin32\include')
 import sys
 SandeshGenFiles = env.SandeshGenCpp('controller.sandesh')
 SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)

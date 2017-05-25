@@ -10,35 +10,37 @@ env = DnsEnv.Clone()
 SandeshGenFiles = env.SandeshGenCpp('dns.sandesh')
 SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)
 
-buildinfo_dep_libs = ['../../dns/cfg/libdns_cfg.a', '../../dns/mgr/libmgr.a', '../../dns/agent/libagent_xmpp.a', 
-                      '../../dns/bind/libbind_interface.a', 
-                      '../../schema/libifmap_vnc.a', '../../ifmap/libifmap_server.a', '../../ifmap/libifmap_common.a', 
-                      '../../net/libnet.a', '../../../lib/libifmapio.a', '../../xmpp/libxmpp.a', '../../../lib/libsandeshvns.a',
-                      '../../../lib/libsandesh.a', '../../../lib/libhttp.a', '../../../lib/libhttp_parser.a', 
-                      '../../db/libdb.a', '../../io/libio.a', '../../base/libbase.a', 
-                      '../../xml/libxml.a', '../../../lib/libpugixml.a',
-                      '../../dns/uve/libdns_uve.a'
+buildinfo_dep_libs = ['../../dns/cfg/dns_cfg.lib', '../../dns/mgr/mgr.lib', '../../dns/agent/agent_xmpp.lib', 
+                      '../../dns/bind/bind_interface.lib', 
+                      '../../schema/ifmap_vnc.lib', '../../ifmap/ifmap_server.lib', '../../ifmap/ifmap_common.lib', 
+                      '../../net/net.lib', '../../../lib/ifmapio.lib', '../../xmpp/xmpp.lib', '../../../lib/sandeshvns.lib',
+                      '../../../lib/sandesh.lib', '../../../lib/http.lib', '../../../lib/http_parser.lib', 
+                      '../../db/db.lib', '../../io/io.lib', '../../base/base.lib', 
+                      '../../xml/xml.lib', '../../../lib/pugixml.lib',
+                      '../../dns/uve/dns_uve.lib'
                   ]
 
 cmn_sources = ['dns.cc', 'dns_options.cc']
-
+buildinfoh = Dir('.').path+'\\buildinfo.h'
+buildinfocc = Dir('.').path+'\\buildinfo.cc'
+print 'buildinfoh=', buildinfoh
 env.GenerateBuildInfoCode(
-    target = ['buildinfo.h', 'buildinfo.cc'],
+    target = ['cmnbuildinfo.h', 'cmnbuildinfo.cc'],
     source = buildinfo_dep_libs +  cmn_sources +
                  ['../main.cc'],
     path = Dir('.').path)
 
-env.Depends('dns.o', 'buildinfo.cc')
+env.Depends('dns.o','cmnbuildinfo.cc')
 except_env = DnsEnv.Clone()
 except_env.CppEnableExceptions()
 
 sandesh_objs = []
 for src in SandeshGenSrcs:
+    print src
     objname = src.replace('.cpp', '.o')
     obj = except_env.Object(objname, src)
     sandesh_objs.append(obj)
 
 dns_cmn = env.Library('cmn',
                       sandesh_objs + cmn_sources +
-                      ['buildinfo.cc',
-                      ])
+                      ['buildinfo.cc'])

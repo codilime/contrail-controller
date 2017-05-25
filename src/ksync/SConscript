@@ -3,7 +3,7 @@
 #
 
 # -*- mode: python; -*-
-
+import os
 Import('BuildEnv')
 
 env = BuildEnv.Clone()
@@ -18,6 +18,8 @@ env.CppEnableExceptions()
 # Generate the source files
 SandeshGenFiles = env.SandeshGenCpp('ksync.sandesh')
 SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)
+if os.name == 'nt':
+ env.Append(CPPPATH = ['#windows'])
 
 # Basic KSync library
 libksync = env.Library('ksync', SandeshGenSrcs + ['ksync_object.cc'])

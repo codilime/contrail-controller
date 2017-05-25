@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include "ifmap/ifmap_agent_parser.h"
 
 #include <vector>
@@ -30,7 +31,7 @@ void IFMapAgentParser::NodeParse(xml_node &node, DBRequest::DBOperation oper, ui
     if (oper == DBRequest::DB_ENTRY_ADD_CHANGE)
         msg_type = UPDATE;
     else
-        msg_type = DELETE;
+        msg_type = DEL;
 
     IFMapTable *table;
     table = IFMapTable::FindTable(db_, name);

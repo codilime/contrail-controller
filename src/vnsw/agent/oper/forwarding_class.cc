@@ -36,7 +36,7 @@ std::string ForwardingClass::ToString() const {
 bool ForwardingClass::DBEntrySandesh(Sandesh *sresp, std::string &name) const {
     ForwardingClassSandeshResp *resp = static_cast<ForwardingClassSandeshResp *>(sresp);
     ForwardingClassSandeshData data;
-    data.set_uuid(UuidToString(uuid_));
+    data.set_uuid(UUIDToString(uuid_));
     data.set_id(id_);
     data.set_dscp(dscp_);
     data.set_vlan_priority(vlan_priority_);

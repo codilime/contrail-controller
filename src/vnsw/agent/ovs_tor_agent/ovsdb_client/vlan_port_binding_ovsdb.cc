@@ -134,7 +134,7 @@ bool VlanPortBindingEntry::Sync(DBEntry *db_entry) {
     }
 
     if (entry->vm_interface() && entry->vm_interface()->vn()) {
-        ls_name = UuidToString(entry->vm_interface()->vn()->GetUuid());
+        ls_name = UUIDToString(entry->vm_interface()->vn()->GetUuid());
     }
 
     if (vmi_uuid_ != vmi_uuid) {

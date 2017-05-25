@@ -1,3 +1,6 @@
+#include <boost/asio.hpp>
+#include <windows.h>
+
 #include <vrouter/flow_stats/flow_stats_collector.h>
 #include <pkt/flow_table.h>
 

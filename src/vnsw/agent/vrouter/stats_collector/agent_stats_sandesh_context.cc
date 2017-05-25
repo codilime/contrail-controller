@@ -1,7 +1,14 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#ifdef _WINDOWS
 
+#include <boost/asio.hpp>
+#include <windows.h>
+
+#endif
+
+#include<WinSock2.h> 
 #include <net/if.h>
 
 #include <uve/agent_uve_stats.h>

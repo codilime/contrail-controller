@@ -78,7 +78,7 @@ bool VrfOvsdbEntry::Delete() {
 bool VrfOvsdbEntry::Sync(DBEntry *db_entry) {
     // check if route table is available.
     const VrfEntry *vrf = static_cast<const VrfEntry *>(db_entry);
-    assert(logical_switch_name_ == UuidToString(vrf->vn()->GetUuid()));
+    assert(logical_switch_name_ == UUIDToString(vrf->vn()->GetUuid()));
     if (oper_route_table_ != vrf->GetBridgeRouteTable()) {
         oper_route_table_ = vrf->GetBridgeRouteTable();
         return true;
@@ -159,7 +159,7 @@ KSyncEntry *VrfOvsdbObject::Alloc(const KSyncEntry *key, uint32_t index) {
 KSyncEntry *VrfOvsdbObject::DBToKSyncEntry(const DBEntry* db_entry) {
     const VrfEntry *entry = static_cast<const VrfEntry *>(db_entry);
     VrfOvsdbEntry *key =
-        new VrfOvsdbEntry(this, UuidToString(entry->vn()->GetUuid()));
+        new VrfOvsdbEntry(this, UUIDToString(entry->vn()->GetUuid()));
     return static_cast<KSyncEntry *>(key);
 }
 
@@ -178,7 +178,7 @@ KSyncDBObject::DBFilterResp VrfOvsdbObject::OvsdbDBEntryFilter(
     if (ovsdb_entry != NULL) {
         const VrfOvsdbEntry *o_vrf =
             static_cast<const VrfOvsdbEntry *>(ovsdb_entry);
-        if (o_vrf->logical_switch_name_ != UuidToString(vrf->vn()->GetUuid())) {
+        if (o_vrf->logical_switch_name_ != UUIDToString(vrf->vn()->GetUuid())) {
             return DBFilterDelAdd;
         }
     }

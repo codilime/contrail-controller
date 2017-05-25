@@ -1,10 +1,15 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <vector>
 #include <bitset>
+
 #include <arpa/inet.h>
+
+
 #include <netinet/in.h>
 #include <base/os.h>
 
@@ -170,7 +175,12 @@ void VmFlowRef::FreeFd() {
     FlowProto *proto = flow_->flow_table()->agent()->pkt()->get_flow_proto();
     proto->update_linklocal_flow_count(-1);
     flow_->flow_table()->DelLinkLocalFlowInfo(fd_);
+#ifndef _WINDOWS
     close(fd_);
+#else
+	closesocket(fd_);
+#endif
+
     fd_ = kInvalidFd;
     port_ = 0;
 }
@@ -219,15 +229,19 @@ bool VmFlowRef::AllocateFd(Agent *agent, uint8_t l3_proto) {
 
     // allow the socket to be reused upon close
     int optval = 1;
+#ifndef _WINDOWS
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+#else
+	setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval));
+#endif
 
     struct sockaddr_in address;
     memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
-    if (bind(fd_, (struct sockaddr*) &address, sizeof(address)) < 0) {
+   if (::bind(fd_, (struct sockaddr*) &address, sizeof(address)) < 0) {
         FreeFd();
         return false;
-    }
+   }
 
     struct sockaddr_in bound_to;
     socklen_t len = sizeof(bound_to);
@@ -346,7 +360,7 @@ void MatchPolicy::Reset() {
 /////////////////////////////////////////////////////////////////////////////
 // FlowEventLog constructor/destructor
 /////////////////////////////////////////////////////////////////////////////
-FlowEventLog::FlowEventLog() : time_(0), event_(EVENT_MAX),
+FlowEventLog::FlowEventLog() : time_(0), event_(EVENT_MAXIMUM),
     flow_handle_(FlowEntry::kInvalidFlowHandle), flow_gen_id_(0),
     ksync_entry_(NULL), hash_id_(FlowEntry::kInvalidFlowHandle), gen_id_(0),
     vrouter_flow_handle_(FlowEntry::kInvalidFlowHandle), vrouter_gen_id_(0) {
@@ -818,7 +832,7 @@ void FlowEntry::RevFlowDepInfo(RevFlowDepParams *params) {
         params->sg_uuid_ = rev_flow->sg_rule_uuid();
         params->rev_egress_uuid_ = rev_flow->egress_uuid();
         if (rev_flow->intf_entry()) {
-            params->vmi_uuid_ = UuidToString(rev_flow->intf_entry()->GetUuid());
+            params->vmi_uuid_ = UUIDToString(rev_flow->intf_entry()->GetUuid());
         }
 
         if (key().family != Address::INET) {
@@ -2320,7 +2334,7 @@ static void SetAclListAclAction(const std::list<MatchAclParams> &acl_l,
     std::list<MatchAclParams>::const_iterator it;
     for(it = acl_l.begin(); it != acl_l.end(); ++it) {
         AclAction acl_action;
-        acl_action.set_acl_id(UuidToString((*it).acl->GetUuid()));
+        acl_action.set_acl_id(UUIDToString((*it).acl->GetUuid()));
         acl_action.set_acl_type(acl_type);
         std::vector<ActionStr> action_str_l;
         SetActionStr((*it).action_info, action_str_l);
@@ -2550,7 +2564,7 @@ void FlowEntry::SetAclFlowSandeshData(const AclDBEntry *acl,
         v.push_back(*it);
     }
     fe_sandesh_data.set_dest_sg_id_l(v);
-    fe_sandesh_data.set_flow_uuid(UuidToString(uuid()));
+    fe_sandesh_data.set_flow_uuid(UUIDToString(uuid()));
     if (fsc_) {
         const FlowExportInfo *info = fsc_->FindFlowExportInfo(this);
         if (info) {

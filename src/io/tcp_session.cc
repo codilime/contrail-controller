@@ -171,9 +171,9 @@ void TcpSession::DeferWriter() {
     // Update socket write block count.
     stats_.write_blocked++;
     server_->stats_.write_blocked++;
-    socket()->async_write_some(boost::asio::null_buffers(),
-                              boost::bind(&TcpSession::WriteReadyInternal, TcpSessionPtr(this),
-                                          placeholders::error, UTCTimestampUsec()));
+	socket()->async_write_some(boost::asio::null_buffers(),
+		boost::bind(&TcpSession::WriteReadyInternal, TcpSessionPtr(this),
+			boost::asio::placeholders::error, UTCTimestampUsec()));
 }
 
 void TcpSession::AsyncReadSome(boost::asio::mutable_buffer buffer) {

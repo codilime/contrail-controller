@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #ifdef __APPLE__
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -48,6 +49,7 @@ static uint32_t NumCpus() {
 }
 
 static void LoadAvg(CpuLoad &load) {
+#if 0 //WINDOWS-TEMP
     double averages[3];
     uint32_t num_cpus = NumCpus();
     getloadavg(averages, 3);
@@ -56,6 +58,7 @@ static void LoadAvg(CpuLoad &load) {
         load.five_min_avg = averages[1]/num_cpus;
         load.fifteen_min_avg = averages[2]/num_cpus;
     }
+#endif
 }
 
 static void ProcessMemInfo(ProcessMemInfo &info) {
@@ -119,6 +122,7 @@ static void SystemMemInfo(SystemMemInfo &info) {
 static clock_t snapshot, prev_sys_cpu, prev_user_cpu;
 
 static void ProcessCpuShare(double &percentage) {
+#if 0 //WINDOWS-TEMP
     struct tms cpu_taken;
     clock_t now;
 
@@ -136,6 +140,7 @@ static void ProcessCpuShare(double &percentage) {
     snapshot = now;
     prev_sys_cpu = cpu_taken.tms_stime;
     prev_user_cpu = cpu_taken.tms_utime;
+#endif
 }
 
 void CpuLoadData::GetCpuLoadInfo(CpuInfo &info, bool system) {
@@ -151,10 +156,12 @@ void CpuLoadData::GetCpuLoadInfo(CpuInfo &info, bool system) {
 }
 
 void CpuLoadData::Init() {
+#if 0 //WINDOWS-TEMP
     struct tms cpu_taken;
     snapshot = times(&cpu_taken);
     prev_sys_cpu = cpu_taken.tms_stime;
     prev_user_cpu = cpu_taken.tms_utime;
+#endif
 }
 
 void CpuLoadData::FillCpuInfo(CpuLoadInfo &cpu_load_info, bool system) {
