@@ -44,6 +44,8 @@ class HyperVManager(object):
     USERNAME = 'ubuntu'
     PASSWORD = 'ubuntu'
 
+    WMI_VIRT_NAMESPACE = "root\\virtualization\\v2"
+
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
                  vm_location=None, vhd_path=None,
                  mgmt_vswitch_name=None, vrouter_vswitch_name=None,
@@ -86,6 +88,41 @@ class HyperVManager(object):
                         "-EnableSecureBoot", "Off"])
 
         _ = powershell(["Start-VM", "-Name", self.wingw_name])
+
+
+    def configure_vm_mgmt_ip(self):
+        #
+        # Required:
+        # - self.wingw_name
+        # - self.wingw_mgmt_adapter_name
+        #
+        wmi_client = wmi.WMI(namespace=WMI_VIRT_NAMESPACE)
+
+        vms = wmi_client.Msvm_ComputerSystem()
+        vm = [vm for vm in vms if vm.ElementName == self.wingw_name][0]
+
+        vm_settings_ = vm.associators(wmi_result_class="Msvm_VirtualSystemSettingData")
+        vm_settings = [sett for sett in vm_settings_ if sett.VirtualSystemType == "Microsoft:Hyper-V:System:Realized"]
+        vm_settings = vm_settings[0]
+
+        vm_adapters = vm_settings.associators(wmi_result_class="Msvm_SyntheticEthernetPortSettingData")
+        vm_adapter = [adapter for adapter in vm_adapters if adapter.ElementName == self.wingw_mgmt_adapter_name]
+        vm_adapter = vm_adapter[0]
+
+        net_settings_ = vm_adapter.associators(wmi_result_class="Msvm_GuestNetworkAdapterConfiguration")
+        net_settings = net_settings_[0]
+
+        net_settings.IPAddresses = (self.mgmt_ip,)
+        net_settings.Subnets = (self.mgmt_subnet,)
+        net_settings.DHCPEnabled = False
+        net_settings.ProtocolIFType = 4096
+
+        service_ = wmi_client.Msvm_VirtualSystemManagementService()
+        service = service_[0]
+
+        # TODO: net_settings parameter does not work
+        # <x_wmi: Unexpected COM Error (-2147352567, 'Exception occurred.', (0, u'SWbemProperty', u'Type mismatch ', None, 0, -2147217403), None)>
+        job, ret = service.SetGuestNetworkAdapterConfiguration(vm, net_settings)
 
 
     def vm_exists(self):
