@@ -70,7 +70,7 @@ class HyperVManager(object):
     def spawn_vm(self):
         """calls powershell to spawn vm """
         if self.vm_exists():
-            raise ValueError("Windows gateway VM already exists")
+            raise ValueError("Specified Windows gateway VM already exists")
 
         _ = powershell(["New-VM", "-Name", self.wingw_name, \
                         "-Path", self.vm_location, \
@@ -119,10 +119,10 @@ class HyperVManager(object):
 
     def destroy_vm(self):
         """calls powershell to destroy vm """
-        remove_vm_cmd = ["Get-VM", "-Name", self.wingw_name, "|", \
-                         "Remove-VM", "-Force"]
-        out = subprocess.check_output(remove_vm_cmd, shell=True)
-        # TODO error check
+        if not self.vm_exists():
+            raise ValueError("Specified Windows gateway VM does not exist")
+        _ = powershell(["Stop-VM", "-Name", self.wingw_name, "-Force"])
+        _ = powershell(["Remove-VM", "-Name", self.wingw_name, "-Force"])
 
 
     def unregister_from_agent(self):
@@ -159,12 +159,15 @@ class HyperVManager(object):
                    "vn-id": '', "vm-project-id": '',
                    "type": port_type_value, "mac-address": str(nic['mac'])}
         json_dump = json.dumps(payload)
-        self._request_to_agent(self.BASE_URL, 'post', json_dump)
+
+        # TODO no agent - uncomment when works
+        #self._request_to_agent(self.BASE_URL, 'post', json_dump) 
 
 
     def _delete_port_from_agent(self, nic):
         url = self.BASE_URL + "/" + nic['uuid']
-        self._request_to_agent(url, 'delete', None)
+        # TODO no agent - uncomment when works
+        # self._request_to_agent(url, 'delete', None)
 
     def _get_wingw_iface_name(self, uuid_str):
         pass
