@@ -5,6 +5,8 @@ import uuid
 import requests # pip install this
 import json
 import subprocess
+import paramiko
+
 
 def validate_uuid(val):
     try:
@@ -15,13 +17,9 @@ def validate_uuid(val):
 
 
 def powershell(cmds):
-    # p = subprocess.Popen(["powershell.exe"] + cmds, 
-    #                      shell=True,
-    #                      stdout=sys.stdout,
-    #                      stderr=sys.stderr)
-    # stdout = p.communicate()
-    # return stdout, stderr
-    cmds = ["powershell.exe"] + cmds
+    #cmds = ["powershell.exe", "-NonInteractive"] + cmds
+    cmds = ["powershell.exe", "-NonInteractive"] + cmds
+    cmds = " ".join(cmds)
     print cmds
     try:
         output = subprocess.check_output(cmds, shell=True)
@@ -40,11 +38,14 @@ class HyperVManager(object):
     BASE_URL = "http://localhost:9091/port"
     HEADERS = {'content-type': 'application/json'}
 
-    HYPERV_GENERATION = "2"
-    RAM_GB = "1GB"
+    HYPERV_GENERATION = '2'
+    RAM_GB = '1GB'
+
+    USERNAME = 'ubuntu'
+    PASSWORD = 'ubuntu'
 
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
-                 vm_location=None, vhd_path=None, 
+                 vm_location=None, vhd_path=None,
                  mgmt_vswitch_name=None, vrouter_vswitch_name=None,
                  gw_ip=None):
 
@@ -104,9 +105,42 @@ class HyperVManager(object):
     def set_snat(self):
         """sshs into gateway machine and configures SNAT"""
         # get mgmt IP of machine
+
+        mgmt_ip = self.get_mgmt_ip()
+
         # ssh into machine
-        # configure snat
-        pass
+
+        ssh_client = None
+        try:
+            ssh_client = paramiko.SSHClient()
+            ssh_client.connect(mgmt_ip, username=self.USERNAME,
+                               password=self.PASSWORD)
+
+            # TODO configure snat
+        finally:
+            if ssh_client:
+                ssh_client.close()
+
+
+    def get_mgmt_ip(self):
+        """queries hyper-v for management IP of snat VM"""
+        import time
+        time.sleep(15)
+        ips = powershell(["Get-VMNetworkAdapter", "-VMName", self.wingw_name])
+        print ips
+        ips = powershell(["Get-VMNetworkAdapter", "-VMName", self.wingw_name,
+                          "|", "Where", "SwitchName", "-eq", self.mgmt_vswitch_name])
+        print ips
+        ips = powershell(["Get-VMNetworkAdapter", "-VMName", self.wingw_name,
+                          "|", "Where", "SwitchName", "-eq", self.mgmt_vswitch_name,
+                          "|", "Select", "-ExpandProperty", "IPAddresses"])
+        print ips
+        if ips == "":
+            raise IndexError("no management IP found")
+        ips = ips.splitlines()
+
+        # if multiple IPs connected to mgmt switch, we can use either one
+        return ips[0]
 
 
     def register_to_agent(self):
