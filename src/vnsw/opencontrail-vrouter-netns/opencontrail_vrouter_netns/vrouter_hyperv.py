@@ -6,7 +6,29 @@ import requests # pip install this
 import json
 import subprocess
 
-from vrouter_netns import validate_uuid
+def validate_uuid(val):
+    try:
+        if str(uuid.UUID(val)) == val:
+            return val
+    except (TypeError, ValueError, AttributeError):
+        raise ValueError('Invalid UUID format')
+
+
+def powershell(cmds):
+    # p = subprocess.Popen(["powershell.exe"] + cmds, 
+    #                      shell=True,
+    #                      stdout=sys.stdout,
+    #                      stderr=sys.stderr)
+    # stdout = p.communicate()
+    # return stdout, stderr
+    cmds = ["powershell.exe"] + cmds
+    print cmds
+    try:
+        output = subprocess.check_output(cmds, shell=True)
+    except subprocess.CalledProcessError as e:
+        print e.output
+        raise
+    return output
 
 class HyperVManager(object):
     SNAT_RT_TABLES_ID = 42
@@ -18,7 +40,7 @@ class HyperVManager(object):
     BASE_URL = "http://localhost:9091/port"
     HEADERS = {'content-type': 'application/json'}
 
-    HYPERV_GENERATION = 2
+    HYPERV_GENERATION = "2"
     RAM_GB = "1GB"
 
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
@@ -50,33 +72,33 @@ class HyperVManager(object):
         if self.vm_exists():
             raise ValueError("Windows gateway VM already exists")
 
-        new_vm_cmd = ["New-VM", "-Name", self.wingw_name, \
-                      "-Path", self.vm_location, \
-                      "-Generation", self.HYPERV_GENERATION, \
-                      "-MemoryStartupBytes", self.RAM_GB, \
-                      "-VHDPath", self.vhd_path, \
-                      "-SwitchName", self.mgmt_vswitch_name]
-        out = subprocess.check_output(new_vm_cmd, shell=True)
-        # TODO error check
+        _ = powershell(["New-VM", "-Name", self.wingw_name, \
+                        "-Path", self.vm_location, \
+                        "-Generation", self.HYPERV_GENERATION, \
+                        "-MemoryStartupBytes", self.RAM_GB, \
+                        "-VHDPath", self.vhd_path, \
+                        "-SwitchName", self.mgmt_vswitch_name])
 
         # TODO add two other NICs to self.vrouter_vswitch_name
 
-        set_firmware_cmd = ["Set-VMFirmware", "-VMName", self.wingw_name, \
-                            "-EnableSecureBoot", "-Off"]
-        out = subprocess.check_output(set_firmware_cmd, shell=True)
-        # TODO error check
+        _ = powershell(["Set-VMFirmware", "-VMName", self.wingw_name, \
+                        "-EnableSecureBoot", "Off"])
 
-        start_vm_cmd = ["Start-VM", "-Name", self.wingw_name]
-        out = subprocess.check_output(start_vm_cmd, shell=True)
-        # TODO error check
+        _ = powershell(["Start-VM", "-Name", self.wingw_name])
 
 
     def vm_exists(self):
         """calls powershell to check whether vm exists"""
-        get_vm_cmd = ["Get-VM", "-Name", self.wingw_name]
-        out = subprocess.check_output(get_vm_cmd, shell=True)
-        # TODO error check
-        return out != ""
+        try:
+            _ = powershell(["Get-VM", "-Name", self.wingw_name])
+        except subprocess.CalledProcessError as e:
+            if "unable to find" in e.output:
+                # vm doesn't exist
+                return False
+            else:
+                # other exception
+                raise
+        return True
 
 
     def set_snat(self):
@@ -97,15 +119,16 @@ class HyperVManager(object):
 
     def destroy_vm(self):
         """calls powershell to destroy vm """
-        remove_vm_cmd = ["Get-VM", "-Name", self.wingw_name, "|", "Remove-VM", "-Force"]
+        remove_vm_cmd = ["Get-VM", "-Name", self.wingw_name, "|", \
+                         "Remove-VM", "-Force"]
         out = subprocess.check_output(remove_vm_cmd, shell=True)
         # TODO error check
 
 
     def unregister_from_agent(self):
         """unregisters wingw interfaces (as seen on host) from agent"""
-        self._delete_port_to_agent(self.nic_left)
-        self._delete_port_to_agent(self.nic_right)
+        self._delete_port_from_agent(self.nic_left)
+        self._delete_port_from_agent(self.nic_right)
         # TODO do we have to unregister mgmt interface?
         pass
 
@@ -139,7 +162,7 @@ class HyperVManager(object):
         self._request_to_agent(self.BASE_URL, 'post', json_dump)
 
 
-    def _delete_port_to_agent(self, nic):
+    def _delete_port_from_agent(self, nic):
         url = self.BASE_URL + "/" + nic['uuid']
         self._request_to_agent(url, 'delete', None)
 
@@ -178,32 +201,29 @@ class VRouterHyperV(object):
 
         create_parser = subparsers.add_parser('create')
         create_parser.add_argument(
-            "vm_location",
+            "--vm_location",
             required=True,
             help="Location of gateway VM")
         create_parser.add_argument(
-            "vhd_path",
+            "--vhd_path",
             required=True,
             help="Path of VHD of VM")
         create_parser.add_argument(
-            "mgmt_vswitch_name",
+            "--mgmt_vswitch_name",
             required=True,
             help="Name of management virtual switch")
         create_parser.add_argument(
-            "vrotuer_vswitch_name",
+            "--vrouter_vswitch_name",
             required=True,
             help="Name of vRouter virtual switch")
         create_parser.add_argument(
             "vm_id",
-            required=True,
             help="Virtual machine UUID")
         create_parser.add_argument(
             "vmi_left_id",
-            required=True,
             help="Left virtual machine interface UUID")
         create_parser.add_argument(
             "vmi_right_id",
-            required=True,
             help="Right virtual machine interface UUID")
         create_parser.add_argument(
             "--vmi-left-mac",
@@ -232,17 +252,14 @@ class VRouterHyperV(object):
         create_parser.set_defaults(func=self.create)
 
         destroy_parser = subparsers.add_parser('destroy')
-        create_parser.add_argument(
+        destroy_parser.add_argument(
             "vm_id",
-            required=True,
             help="Virtual machine UUID")
-        create_parser.add_argument(
+        destroy_parser.add_argument(
             "vmi_left_id",
-            required=True,
             help="Left virtual machine interface UUID")
-        create_parser.add_argument(
+        destroy_parser.add_argument(
             "vmi_right_id",
-            required=True,
             help="Right virtual machine interface UUID")
         destroy_parser.set_defaults(func=self.destroy)
 
@@ -277,11 +294,16 @@ class VRouterHyperV(object):
             else:
                 nic_right['ip'] = None
 
-        hyperv_mgr = HyperVManager(vm_id, nic_left, nic_right)
-    
-        hyperv_mgr.spawn_vm()
-        hyperv_mgr.set_snat()
-        hyperv_mgr.register_to_agent()
+        hv_mgr = HyperVManager(vm_id, nic_left, nic_right,
+                               vm_location=self.args.vm_location,
+                               vhd_path=self.args.vhd_path,
+                               mgmt_vswitch_name=self.args.mgmt_vswitch_name,
+                               vrouter_vswitch_name=\
+                                    self.args.vrouter_vswitch_name)
+
+        hv_mgr.spawn_vm()
+        hv_mgr.set_snat()
+        hv_mgr.register_to_agent()
 
 
         # if (self.args.update is False):
