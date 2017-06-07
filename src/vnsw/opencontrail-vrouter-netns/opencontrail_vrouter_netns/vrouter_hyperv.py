@@ -17,12 +17,10 @@ def validate_uuid(val):
 
 
 def powershell(cmds):
-    #cmds = ["powershell.exe", "-NonInteractive"] + cmds
     cmds = ["powershell.exe", "-NonInteractive"] + cmds
-    cmds = " ".join(cmds)
-    print cmds
     try:
         output = subprocess.check_output(cmds, shell=True)
+        print output
     except subprocess.CalledProcessError as e:
         print e.output
         raise
@@ -45,6 +43,8 @@ class HyperVManager(object):
     PASSWORD = 'ubuntu'
 
     WMI_VIRT_NAMESPACE = "root\\virtualization\\v2"
+
+    MGMT_IP_RANGE = netaddr.IPRange("169.254.150.0", "169.254.200.0")
 
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
                  vm_location=None, vhd_path=None,
@@ -72,7 +72,7 @@ class HyperVManager(object):
 
     def spawn_vm(self):
         """calls powershell to spawn vm """
-        if self.vm_exists():
+        if self._vm_exists():
             raise ValueError("Specified Windows gateway VM already exists")
 
         _ = powershell(["New-VM", "-Name", self.wingw_name, \
@@ -89,8 +89,112 @@ class HyperVManager(object):
 
         _ = powershell(["Start-VM", "-Name", self.wingw_name])
 
+        new_mgmt_ip = self._generate_new_mgmt_ip()
+        #self._configure_vm_mgmt_ip(new_mgmt_ip)
 
-    def configure_vm_mgmt_ip(self):
+
+    def destroy_vm(self):
+        """calls powershell to destroy vm """
+        if not self._vm_exists():
+            raise ValueError("Specified Windows gateway VM does not exist")
+        _ = powershell(["Stop-VM", "-Name", self.wingw_name, "-Force"])
+        _ = powershell(["Remove-VM", "-Name", self.wingw_name, "-Force"])
+
+
+    def set_snat(self):
+        """sshs into gateway machine and configures SNAT"""
+        # get mgmt IP of machine
+
+        mgmt_ip = self._get_mgmt_ip()
+
+        # ssh into machine
+
+        ssh_client = None
+        try:
+            ssh_client = paramiko.SSHClient()
+            ssh_client.connect(mgmt_ip, username=self.USERNAME,
+                               password=self.PASSWORD)
+
+            # TODO configure snat
+        finally:
+            if ssh_client:
+                ssh_client.close()
+
+
+    def register_to_agent(self):
+        """registers wingw interface (as seen on host) to agent"""
+        # get 2 snat ifaces of wingw VM
+        # _add_port_to_agent on those nics
+        # TODO do we have to register mgmt interface?
+        pass
+
+
+    def unregister_from_agent(self):
+        """unregisters wingw interfaces (as seen on host) from agent"""
+        self._delete_port_from_agent(self.nic_left)
+        self._delete_port_from_agent(self.nic_right)
+        # TODO do we have to unregister mgmt interface?
+        pass
+
+
+    def _vm_exists(self):
+        """calls powershell to check whether vm exists"""
+        try:
+            _ = powershell(["Get-VM", "-Name", self.wingw_name])
+        except subprocess.CalledProcessError as e:
+            if "unable to find" in e.output:
+                # vm doesn't exist
+                return False
+            else:
+                # other exception
+                raise
+        return True
+
+
+    def _generate_new_mgmt_ip(self):
+        """generates an IP to give to new gateway VM"""
+        used_ips = self._get_all_mgmt_ips()
+
+        used_ips = netaddr.IPSet(used_ips)
+        pool_ips = netaddr.IPSet(self.MGMT_IP_RANGE)
+        free_ips = pool_ips ^ used_ips
+
+        try:
+            first_available_ip = next(ip for ip in free_ips)
+        except StopIteration:
+            raise ValueError("Ran out of management IPs for gateway VM")
+        return first_available_ip
+
+
+    def _get_mgmt_ip(self):
+        """queries hyper-v for management IP of snat VM"""
+        return self._get_mgmt_ips_of(self.wingw_name)
+
+
+    def _get_all_mgmt_ips(self):
+        """queries hyper-v for management IP of snat VM"""
+        try:
+            mgmt_ips = self._get_mgmt_ips_of(self.WINGW_PREFIX + "*")
+        except IndexError:
+            # ignore, just return an empty list
+            mgmt_ips = []
+        return mgmt_ips
+
+
+    def _get_mgmt_ips_of(self, vmname_regex):
+        ips = powershell(["Get-VMNetworkAdapter -VMName {} | "
+                          "Where SwitchName -eq {} | "
+                          "Select -ExpandProperty IPAddresses"
+                          .format(vmname_regex, self.mgmt_vswitch_name)])
+        if ips == "":
+            raise IndexError("no management IP found")
+        ips = ips.splitlines()
+
+        # if multiple IPs connected to mgmt switch, we can use either one
+        return ips[0]
+
+
+    def _configure_vm_mgmt_ip(self, ip_to_set):
         #
         # Required:
         # - self.wingw_name
@@ -112,7 +216,8 @@ class HyperVManager(object):
         net_settings_ = vm_adapter.associators(wmi_result_class="Msvm_GuestNetworkAdapterConfiguration")
         net_settings = net_settings_[0]
 
-        net_settings.IPAddresses = (self.mgmt_ip,)
+        # TODO: decide on mgmt_subnet
+        net_settings.IPAddresses = (self.ip_to_set,)
         net_settings.Subnets = (self.mgmt_subnet,)
         net_settings.DHCPEnabled = False
         net_settings.ProtocolIFType = 4096
@@ -123,85 +228,6 @@ class HyperVManager(object):
         # TODO: net_settings parameter does not work
         # <x_wmi: Unexpected COM Error (-2147352567, 'Exception occurred.', (0, u'SWbemProperty', u'Type mismatch ', None, 0, -2147217403), None)>
         job, ret = service.SetGuestNetworkAdapterConfiguration(vm, net_settings)
-
-
-    def vm_exists(self):
-        """calls powershell to check whether vm exists"""
-        try:
-            _ = powershell(["Get-VM", "-Name", self.wingw_name])
-        except subprocess.CalledProcessError as e:
-            if "unable to find" in e.output:
-                # vm doesn't exist
-                return False
-            else:
-                # other exception
-                raise
-        return True
-
-
-    def set_snat(self):
-        """sshs into gateway machine and configures SNAT"""
-        # get mgmt IP of machine
-
-        mgmt_ip = self.get_mgmt_ip()
-
-        # ssh into machine
-
-        ssh_client = None
-        try:
-            ssh_client = paramiko.SSHClient()
-            ssh_client.connect(mgmt_ip, username=self.USERNAME,
-                               password=self.PASSWORD)
-
-            # TODO configure snat
-        finally:
-            if ssh_client:
-                ssh_client.close()
-
-
-    def get_mgmt_ip(self):
-        """queries hyper-v for management IP of snat VM"""
-        import time
-        time.sleep(15)
-        ips = powershell(["Get-VMNetworkAdapter", "-VMName", self.wingw_name])
-        print ips
-        ips = powershell(["Get-VMNetworkAdapter", "-VMName", self.wingw_name,
-                          "|", "Where", "SwitchName", "-eq", self.mgmt_vswitch_name])
-        print ips
-        ips = powershell(["Get-VMNetworkAdapter", "-VMName", self.wingw_name,
-                          "|", "Where", "SwitchName", "-eq", self.mgmt_vswitch_name,
-                          "|", "Select", "-ExpandProperty", "IPAddresses"])
-        print ips
-        if ips == "":
-            raise IndexError("no management IP found")
-        ips = ips.splitlines()
-
-        # if multiple IPs connected to mgmt switch, we can use either one
-        return ips[0]
-
-
-    def register_to_agent(self):
-        """registers wingw interface (as seen on host) to agent"""
-        # get 2 snat ifaces of wingw VM
-        # _add_port_to_agent on those nics
-        # TODO do we have to register mgmt interface?
-        pass
-
-
-    def destroy_vm(self):
-        """calls powershell to destroy vm """
-        if not self.vm_exists():
-            raise ValueError("Specified Windows gateway VM does not exist")
-        _ = powershell(["Stop-VM", "-Name", self.wingw_name, "-Force"])
-        _ = powershell(["Remove-VM", "-Name", self.wingw_name, "-Force"])
-
-
-    def unregister_from_agent(self):
-        """unregisters wingw interfaces (as seen on host) from agent"""
-        self._delete_port_from_agent(self.nic_left)
-        self._delete_port_from_agent(self.nic_right)
-        # TODO do we have to unregister mgmt interface?
-        pass
 
 
     def _request_to_agent(self, url, method, data):
