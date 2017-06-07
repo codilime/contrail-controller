@@ -26,6 +26,7 @@ def powershell(cmds):
         raise
     return output
 
+
 class HyperVManager(object):
     SNAT_RT_TABLES_ID = 42
     NAME_LEN = 14
@@ -115,7 +116,8 @@ class HyperVManager(object):
             ssh_client.connect(mgmt_ip, username=self.USERNAME,
                                password=self.PASSWORD)
 
-            # TODO configure snat
+            self._setup_snat()
+
         finally:
             if ssh_client:
                 ssh_client.close()
@@ -167,12 +169,12 @@ class HyperVManager(object):
 
 
     def _get_mgmt_ip(self):
-        """queries hyper-v for management IP of snat VM"""
+        """queries hyper-v for management IP of SNAT VM"""
         return self._get_mgmt_ips_of(self.wingw_name)
 
 
     def _get_all_mgmt_ips(self):
-        """queries hyper-v for management IP of snat VM"""
+        """queries hyper-v for management IPs of all SNAT VMs"""
         try:
             mgmt_ips = self._get_mgmt_ips_of(self.WINGW_PREFIX + "*")
         except IndexError:
@@ -181,11 +183,11 @@ class HyperVManager(object):
         return mgmt_ips
 
 
-    def _get_mgmt_ips_of(self, vmname_regex):
+    def _get_mgmt_ips_of(self, vmname_with_wildcard):
         ips = powershell(["Get-VMNetworkAdapter -VMName {} | "
                           "Where SwitchName -eq {} | "
                           "Select -ExpandProperty IPAddresses"
-                          .format(vmname_regex, self.mgmt_vswitch_name)])
+                          .format(vmname_with_wildcard, self.mgmt_vswitch_name)])
         if ips == "":
             raise IndexError("no management IP found")
         ips = ips.splitlines()
@@ -269,6 +271,33 @@ class HyperVManager(object):
     def _get_wingw_iface_name(self, uuid_str):
         pass
         #return (self.TAP_PREFIX + uuid_str)[:self.DEV_NAME_LEN]
+
+
+    def _setup_snat(self, ssh_client):
+        ssh_client.exec_command("sysctl -w net.ipv4.ip_forward=1")
+        ssh_client.exec_command("iptables -t nat -F")
+        ssh_client.exec_command("iptables -t nat -A POSTROUTING -s 0.0.0.0/0 "
+                                "-o {} -j MASQUERADE"
+                                .format(self.nic_right['name']))
+        ssh_client.exec_command("ip route replace default dev {}"
+                                .format(self.nic_right['name']))
+        ssh_client.exec_command("ip route replace default dev {} table {}"
+                                .format(self.nic_left['name'],
+                                        self.SNAT_RT_TABLES_ID))
+        try:
+            ssh_client.exec_command("ip rule del iif {} table {}"
+                                    .format(self.nic_right['name'],
+                                            self.SNAT_RT_TABLES_ID))
+        except RuntimeError:
+            pass
+        ssh_client.exec_command("ip rule add iff {} table {}"
+                                .format(self.nic_right['name'],
+                                        self.SNAT_RT_TABLES_ID))
+        ssh_client.exec_command("ip route del default table {}"
+                                .format(self.SNAT_RT_TABLES_ID))
+        ssh_client.exec_command("ip route del default table {} via {} dev {}"
+                                .format(self.SNAT_RT_TABLES_ID, self.gw_ip, 
+                                        str(self.nic_left['name'])))
 
 
 class VRouterHyperV(object):
@@ -395,6 +424,7 @@ class VRouterHyperV(object):
                 nic_right['ip'] = None
 
         hv_mgr = HyperVManager(vm_id, nic_left, nic_right,
+                               gw_ip=self.args.gw_ip,
                                vm_location=self.args.vm_location,
                                vhd_path=self.args.vhd_path,
                                mgmt_vswitch_name=self.args.mgmt_vswitch_name,
