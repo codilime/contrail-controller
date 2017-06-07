@@ -116,7 +116,7 @@ class HyperVManager(object):
             ssh_client.connect(mgmt_ip, username=self.USERNAME,
                                password=self.PASSWORD)
 
-            self._setup_snat()
+            self._setup_snat(ssh_client)
 
         finally:
             if ssh_client:
@@ -268,6 +268,7 @@ class HyperVManager(object):
         # TODO no agent - uncomment when works
         # self._request_to_agent(url, 'delete', None)
 
+
     def _get_wingw_iface_name(self, uuid_str):
         pass
         #return (self.TAP_PREFIX + uuid_str)[:self.DEV_NAME_LEN]
@@ -276,28 +277,16 @@ class HyperVManager(object):
     def _setup_snat(self, ssh_client):
         ssh_client.exec_command("sysctl -w net.ipv4.ip_forward=1")
         ssh_client.exec_command("iptables -t nat -F")
-        ssh_client.exec_command("iptables -t nat -A POSTROUTING -s 0.0.0.0/0 "
-                                "-o {} -j MASQUERADE"
+        ssh_client.exec_command("iptables -t nat -A POSTROUTING -o {} "
+                                "-j MASQUERADE"
                                 .format(self.nic_right['name']))
-        ssh_client.exec_command("ip route replace default dev {}"
-                                .format(self.nic_right['name']))
-        ssh_client.exec_command("ip route replace default dev {} table {}"
-                                .format(self.nic_left['name'],
-                                        self.SNAT_RT_TABLES_ID))
-        try:
-            ssh_client.exec_command("ip rule del iif {} table {}"
-                                    .format(self.nic_right['name'],
-                                            self.SNAT_RT_TABLES_ID))
-        except RuntimeError:
-            pass
-        ssh_client.exec_command("ip rule add iff {} table {}"
+        ssh_client.exec_command("iptables -A FORWARD -i {} -o {} -m state "
+                                "--state RELATED,ESTABLISHED -j ACCEPT"
                                 .format(self.nic_right['name'],
-                                        self.SNAT_RT_TABLES_ID))
-        ssh_client.exec_command("ip route del default table {}"
-                                .format(self.SNAT_RT_TABLES_ID))
-        ssh_client.exec_command("ip route del default table {} via {} dev {}"
-                                .format(self.SNAT_RT_TABLES_ID, self.gw_ip, 
-                                        str(self.nic_left['name'])))
+                                        self.nic_left['name']))
+        ssh_client.exec_command("iptables -A FORWARD -i {} -o {} -j ACCEPT"
+                                .format(self.nic_left['name'],
+                                        self.nic_right['name']))
 
 
 class VRouterHyperV(object):
