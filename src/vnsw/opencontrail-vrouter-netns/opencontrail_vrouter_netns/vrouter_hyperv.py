@@ -83,7 +83,9 @@ class HyperVManager(object):
                         "-VHDPath", self.vhd_path, \
                         "-SwitchName", self.mgmt_vswitch_name])
 
-        # TODO add two other NICs to self.vrouter_vswitch_name
+        for i in range(2):
+            _ = powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
+                            "-SwitchName", self.vrouter_vswitch_name])
 
         _ = powershell(["Set-VMFirmware", "-VMName", self.wingw_name, \
                         "-EnableSecureBoot", "Off"])
