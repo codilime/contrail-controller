@@ -43,8 +43,9 @@ if not os.path.exists(gtestlibpath):
     print cmd
     subprocess.call(cmd, shell=True)
     #build googletest
-    os.chdir(Dir(gtest_path).abspath+ '\\msvc')
-    assert os.path.isdir(Dir(gtest_path).abspath+'\\msvc')
+    gpath = os.path.join(Dir(gtest_path).abspath,'msvc')
+    os.chdir(gpath)
+    assert os.path.isdir(gpath)
     print os.getcwd()
     subprocess.call("devenv gtest.sln /Build", shell=True)
     fromfile = os.path.join(Dir(gtest_path).abspath , 'msvc','gtest', '{direct}'.format(direct='Debug' if env['TARGET_CONFIG'] =='debug' else 'Release'),  gtestlibname)
