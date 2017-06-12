@@ -45,7 +45,7 @@ class HyperVManager(object):
 
     WMI_VIRT_NAMESPACE = "root\\virtualization\\v2"
 
-    MGMT_IP_RANGE = netaddr.IPRange("169.254.150.0", "169.254.200.0")
+    MGMT_IP_RANGE = netaddr.IPRange("169.254.150.1", "169.254.150.254")
 
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
                  vm_location=None, vhd_path=None,
