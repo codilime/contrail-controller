@@ -6,6 +6,8 @@ import requests # pip install this
 import json
 import subprocess
 import paramiko
+import os
+import time
 
 
 def validate_uuid(val):
@@ -45,7 +47,8 @@ class HyperVManager(object):
 
     WMI_VIRT_NAMESPACE = "root\\virtualization\\v2"
 
-    MGMT_IP_RANGE = netaddr.IPRange("169.254.150.1", "169.254.150.254")
+    MGMT_IP_RANGE = netaddr.IPRange("169.254.150.10", "169.254.150.254")
+    MGMT_SUBNET_MASK = "255.255.255.0"
 
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
                  vm_location=None, vhd_path=None,
@@ -83,17 +86,17 @@ class HyperVManager(object):
                         "-VHDPath", self.vhd_path, \
                         "-SwitchName", self.mgmt_vswitch_name])
 
-        for i in range(2):
-            _ = powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
-                            "-SwitchName", self.vrouter_vswitch_name])
-
         _ = powershell(["Set-VMFirmware", "-VMName", self.wingw_name, \
                         "-EnableSecureBoot", "Off"])
 
         _ = powershell(["Start-VM", "-Name", self.wingw_name])
 
         new_mgmt_ip = self._generate_new_mgmt_ip()
-        #self._configure_vm_mgmt_ip(new_mgmt_ip)
+        self._configure_vm_mgmt_ip(new_mgmt_ip)
+
+        for i in range(2):
+            _ = powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
+                            "-SwitchName", self.vrouter_vswitch_name])
 
 
     def destroy_vm(self):
@@ -199,39 +202,14 @@ class HyperVManager(object):
 
 
     def _configure_vm_mgmt_ip(self, ip_to_set):
-        #
-        # Required:
-        # - self.wingw_name
-        # - self.wingw_mgmt_adapter_name
-        #
-        wmi_client = wmi.WMI(namespace=WMI_VIRT_NAMESPACE)
-
-        vms = wmi_client.Msvm_ComputerSystem()
-        vm = [vm for vm in vms if vm.ElementName == self.wingw_name][0]
-
-        vm_settings_ = vm.associators(wmi_result_class="Msvm_VirtualSystemSettingData")
-        vm_settings = [sett for sett in vm_settings_ if sett.VirtualSystemType == "Microsoft:Hyper-V:System:Realized"]
-        vm_settings = vm_settings[0]
-
-        vm_adapters = vm_settings.associators(wmi_result_class="Msvm_SyntheticEthernetPortSettingData")
-        vm_adapter = [adapter for adapter in vm_adapters if adapter.ElementName == self.wingw_mgmt_adapter_name]
-        vm_adapter = vm_adapter[0]
-
-        net_settings_ = vm_adapter.associators(wmi_result_class="Msvm_GuestNetworkAdapterConfiguration")
-        net_settings = net_settings_[0]
-
-        # TODO: decide on mgmt_subnet
-        net_settings.IPAddresses = (self.ip_to_set,)
-        net_settings.Subnets = (self.mgmt_subnet,)
-        net_settings.DHCPEnabled = False
-        net_settings.ProtocolIFType = 4096
-
-        service_ = wmi_client.Msvm_VirtualSystemManagementService()
-        service = service_[0]
-
-        # TODO: net_settings parameter does not work
-        # <x_wmi: Unexpected COM Error (-2147352567, 'Exception occurred.', (0, u'SWbemProperty', u'Type mismatch ', None, 0, -2147217403), None)>
-        job, ret = service.SetGuestNetworkAdapterConfiguration(vm, net_settings)
+        time.sleep(10)
+        this_script_path = os.path.realpath(__file__)
+        script_dir = os.path.dirname(this_script_path)
+        inject_ip_script_path = os.path.join(script_dir, 'vrouter_hyperv_inject_ip.ps1')
+        powershell([inject_ip_script_path,
+                    '-Name', self.wingw_name,
+                    '-IPAddress', str(ip_to_set),
+                    '-Subnet', self.MGMT_SUBNET_MASK])
 
 
     def _request_to_agent(self, url, method, data):
