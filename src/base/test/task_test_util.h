@@ -12,8 +12,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <base/task_trigger.h>
 #include "testing/gunit.h"
-#include "taskutil.h"
-#include "winutils.h"
 
 class EventManager;
 
@@ -63,8 +61,11 @@ static inline void TaskUtilPauseTest() {
     if (!d_pause_)
         return;
     std::cout << "Test PAUSED. Exit (Ctrl-d) python shell to resume";
-	std::string str = TaskExecuteAndWait("where python", true);
-	TaskExecuteAndWait(str, false);
+    pid_t pid;
+    if (!(pid = fork()))
+        execl("/usr/bin/python", "/usr/bin/python", NULL);
+    int status;
+    waitpid(pid, &status, 0);
 }
 
 #define TASK_UTIL_WAIT_EQ_NO_MSG(expected, actual, wait, retry, msg)           \

@@ -41,7 +41,7 @@
 #define controller_src_ksync_ksync_tx_queue_h
 #ifndef _WINDOWS
 #include <sys/eventfd.h>
-#include <boost/thread.hpp>
+#include <pthread.h>
 #endif
 #include <algorithm>
 #include <vector>
