@@ -33,8 +33,8 @@ class HyperVManager(object):
     SNAT_RT_TABLES_ID = 42
     NAME_LEN = 14
     WINGW_PREFIX = 'contrail-wingw-'
-    LEFT_DEV_PREFIX = 'eth-'
-    RIGHT_DEV_PREFIX = 'eth-'
+    LEFT_DEV_PREFIX = 'eth'
+    RIGHT_DEV_PREFIX = 'eth'
     PORT_TYPE = 'NameSpacePort' # should maybe be NovaVMPort?
     BASE_URL = "http://localhost:9091/port"
     HEADERS = {'content-type': 'application/json'}
@@ -117,18 +117,18 @@ class HyperVManager(object):
 
         # ssh into machine
 
-        ssh_client = None
+        self.ssh_client = None
         try:
-            ssh_client = paramiko.SSHClient()
-            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh_client.connect(str(self.new_mgmt_ip), username=self.USERNAME,
+            self.ssh_client = paramiko.SSHClient()
+            self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.ssh_client.connect(str(self.new_mgmt_ip), username=self.USERNAME,
                                password=self.PASSWORD)
 
-            self._setup_snat(ssh_client)
+            self._setup_snat()
 
         finally:
-            if ssh_client:
-                ssh_client.close()
+            if self.ssh_client:
+                self.ssh_client.close()
 
 
     def register_to_agent(self):
@@ -286,28 +286,29 @@ class HyperVManager(object):
         #return (self.TAP_PREFIX + uuid_str)[:self.DEV_NAME_LEN]
 
 
-    def _setup_snat(self, ssh_client):
-        stdin, stdout, _ = ssh_client.exec_command("sudo su")
-        stdin.write(self.PASSWORD)
-        stdin.flush()
+    def _exec_ssh_command(self, command):
+        _, stdout, _ = self.ssh_client.exec_command(command)
+        return stdout.channel.recv_exit_status()
 
-        ssh_client.exec_command("sysctl -w net.ipv4.ip_forward=1")
-        ssh_client.exec_command("ip link set dev {} up"
-                                .format(self.nic_left['name']))
-        ssh_client.exec_command("ip link set dev {} up"
-                                .format(self.nic_right['name']))
-        ssh_client.exec_command("iptables -t nat -F")
-        ssh_client.exec_command("iptables -t nat -A POSTROUTING -o {} "
-                                "-j MASQUERADE"
-                                .format(self.nic_right['name']))
-        ssh_client.exec_command("iptables -A FORWARD -i {} -o {} -m state "
-                                "--state RELATED,ESTABLISHED -j ACCEPT"
-                                .format(self.nic_right['name'],
-                                        self.nic_left['name']))
-        ssh_client.exec_command("iptables -A FORWARD -i {} -o {} -j ACCEPT"
-                                .format(self.nic_left['name'],
-                                        self.nic_right['name']))
-        ssh_client.exec_command("/etc/init.d/iptables-persistent save")
+
+    def _setup_snat(self):
+        self._exec_ssh_command("sudo sysctl -w net.ipv4.ip_forward=1")
+        self._exec_ssh_command("sudo ip link set dev {} up"
+                               .format(self.nic_left['name']))
+        self._exec_ssh_command("sudo ip link set dev {} up"
+                               .format(self.nic_right['name']))
+        self._exec_ssh_command("sudo iptables -t nat -F")
+        self._exec_ssh_command("sudo iptables -t nat -A POSTROUTING -o {} "
+                               "-j MASQUERADE"
+                               .format(self.nic_right['name']))
+        self._exec_ssh_command("sudo iptables -A FORWARD -i {} -o {} -m state "
+                               "--state RELATED,ESTABLISHED -j ACCEPT"
+                               .format(self.nic_right['name'],
+                                       self.nic_left['name']))
+        self._exec_ssh_command("sudo iptables -A FORWARD -i {} -o {} -j ACCEPT"
+                               .format(self.nic_left['name'],
+                                       self.nic_right['name']))
+        self._exec_ssh_command("sudo /etc/init.d/iptables-persistent save")
 
 
 class VRouterHyperV(object):
