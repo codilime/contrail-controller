@@ -47,8 +47,11 @@ class HyperVManager(object):
 
     WMI_VIRT_NAMESPACE = "root\\virtualization\\v2"
 
+    MGMT_IP = "169.254.150.1"
+    MGMT_PREFIX_LEN = 16
     MGMT_IP_RANGE = netaddr.IPRange("169.254.150.10", "169.254.150.254")
-    MGMT_SUBNET_MASK = "255.255.255.0"
+    MGMT_SUBNET_MASK = "255.255.0.0"
+    MGMT_HOST_ADAPTER_NAME = "mgmt_snat_adapter"
 
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
                  vm_location=None, vhd_path=None,
@@ -78,6 +81,8 @@ class HyperVManager(object):
         """calls powershell to spawn vm """
         if self._vm_exists():
             raise ValueError("Specified Windows gateway VM already exists")
+
+        self._configure_host_mgmt_ip()
 
         _ = powershell(["New-VM", "-Name", self.wingw_name, \
                         "-Path", self.vm_location, \
@@ -156,6 +161,35 @@ class HyperVManager(object):
                 # other exception
                 raise
         return True
+
+
+    def _configure_host_mgmt_ip(self):
+        """configures host management adapter and its IP"""
+        name_wildcard = "\"*({})\"".format(self.MGMT_HOST_ADAPTER_NAME)
+
+        adapter_name = powershell(["Get-NetAdapter", "-Name", name_wildcard])
+        if adapter_name == "":
+            powershell(["Add-VMNetworkAdapter",
+                        "-SwitchName", self.mgmt_vswitch_name,
+                        "-Name", self.MGMT_HOST_ADAPTER_NAME,
+                        "-ManagementOS"])
+
+        current_ip = powershell(["Get-NetAdapter -Name {} | "
+                                 "Get-NetIPAddress | "
+                                 "Where AddressFamily -eq IPv4 | "
+                                 "Select -ExpandProperty IPAddress"
+                                 .format(name_wildcard)])
+        if current_ip != self.MGMT_IP:
+            if_index = powershell(["Get-NetAdapter -Name {} | "
+                                   "Select -ExpandProperty ifIndex"
+                                   .format(name_wildcard)])
+            if current_ip != "":
+                powershell(["Get-NetAdapter -Name {} | "
+                            "Remove-NetIPAddress -Confirm:$false"
+                            .format(name_wildcard)])
+            powershell(["New-NetIPAddress", "-IPAddress", self.MGMT_IP,
+                        "-PrefixLength", str(self.MGMT_PREFIX_LEN),
+                        "-InterfaceIndex", if_index])
 
 
     def _generate_new_mgmt_ip(self):
