@@ -287,7 +287,13 @@ class HyperVManager(object):
 
 
     def _setup_snat(self, ssh_client):
+        stdin, stdout, _ = ssh_client.exec_command("sudo su")
+        stdin.write("ubuntu")
+        stdin.flush()
+
         ssh_client.exec_command("sysctl -w net.ipv4.ip_forward=1")
+        ssh_client.exec_command("ip link set dev {} up".format(self.nic_left['name']))
+        ssh_client.exec_command("ip link set dev {} up".format(self.nic_right['name']))
         ssh_client.exec_command("iptables -t nat -F")
         ssh_client.exec_command("iptables -t nat -A POSTROUTING -o {} "
                                 "-j MASQUERADE"
@@ -299,6 +305,7 @@ class HyperVManager(object):
         ssh_client.exec_command("iptables -A FORWARD -i {} -o {} -j ACCEPT"
                                 .format(self.nic_left['name'],
                                         self.nic_right['name']))
+        ssh_client.exec_command("/etc/init.d/iptables-persistent save ")
 
 
 class VRouterHyperV(object):
