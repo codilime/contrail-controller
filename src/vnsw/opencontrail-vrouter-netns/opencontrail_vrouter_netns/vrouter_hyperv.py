@@ -71,10 +71,10 @@ class HyperVManager(object):
         self.wingw_name = self.WINGW_PREFIX + self.vm_uuid \
             if wingw_vm_name is None else wingw_vm_name
 
-        self.nic_left['name'] = (self.LEFT_DEV_PREFIX +
-                                 self.nic_left['uuid'])[:self.NAME_LEN]
-        self.nic_right['name'] = (self.RIGHT_DEV_PREFIX +
-                                  self.nic_right['uuid'])[:self.NAME_LEN]
+        self.nic_left['name'] = (self.LEFT_DEV_PREFIX + "1")
+                                #self.nic_left['uuid'])[:self.NAME_LEN]
+        self.nic_right['name'] = (self.RIGHT_DEV_PREFIX + "2")
+                                #self.nic_right['uuid'])[:self.NAME_LEN]
 
 
     def spawn_vm(self):
@@ -288,12 +288,14 @@ class HyperVManager(object):
 
     def _setup_snat(self, ssh_client):
         stdin, stdout, _ = ssh_client.exec_command("sudo su")
-        stdin.write("ubuntu")
+        stdin.write(self.PASSWORD)
         stdin.flush()
 
         ssh_client.exec_command("sysctl -w net.ipv4.ip_forward=1")
-        ssh_client.exec_command("ip link set dev {} up".format(self.nic_left['name']))
-        ssh_client.exec_command("ip link set dev {} up".format(self.nic_right['name']))
+        ssh_client.exec_command("ip link set dev {} up"
+                                .format(self.nic_left['name']))
+        ssh_client.exec_command("ip link set dev {} up"
+                                .format(self.nic_right['name']))
         ssh_client.exec_command("iptables -t nat -F")
         ssh_client.exec_command("iptables -t nat -A POSTROUTING -o {} "
                                 "-j MASQUERADE"
@@ -305,7 +307,7 @@ class HyperVManager(object):
         ssh_client.exec_command("iptables -A FORWARD -i {} -o {} -j ACCEPT"
                                 .format(self.nic_left['name'],
                                         self.nic_right['name']))
-        ssh_client.exec_command("/etc/init.d/iptables-persistent save ")
+        ssh_client.exec_command("/etc/init.d/iptables-persistent save")
 
 
 class VRouterHyperV(object):
