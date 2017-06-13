@@ -96,8 +96,8 @@ class HyperVManager(object):
 
         _ = powershell(["Start-VM", "-Name", self.wingw_name])
 
-        new_mgmt_ip = self._generate_new_mgmt_ip()
-        self._configure_vm_mgmt_ip(new_mgmt_ip)
+        self.new_mgmt_ip = self._generate_new_mgmt_ip()
+        self._configure_vm_mgmt_ip()
 
         for i in range(2):
             _ = powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
@@ -114,16 +114,14 @@ class HyperVManager(object):
 
     def set_snat(self):
         """sshs into gateway machine and configures SNAT"""
-        # get mgmt IP of machine
-
-        mgmt_ip = self._get_mgmt_ip()
 
         # ssh into machine
 
         ssh_client = None
         try:
             ssh_client = paramiko.SSHClient()
-            ssh_client.connect(mgmt_ip, username=self.USERNAME,
+            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh_client.connect(str(self.new_mgmt_ip), username=self.USERNAME,
                                password=self.PASSWORD)
 
             self._setup_snat(ssh_client)
@@ -235,14 +233,14 @@ class HyperVManager(object):
         return ips[0]
 
 
-    def _configure_vm_mgmt_ip(self, ip_to_set):
+    def _configure_vm_mgmt_ip(self):
         time.sleep(10)
         this_script_path = os.path.realpath(__file__)
         script_dir = os.path.dirname(this_script_path)
         inject_ip_script_path = os.path.join(script_dir, 'vrouter_hyperv_inject_ip.ps1')
         powershell([inject_ip_script_path,
                     '-Name', self.wingw_name,
-                    '-IPAddress', str(ip_to_set),
+                    '-IPAddress', str(self.new_mgmt_ip),
                     '-Subnet', self.MGMT_SUBNET_MASK])
 
 
