@@ -11,6 +11,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <netinet/tcp.h>
+#include <netinet/ip6.h>
 
 #include <pkt/pkt_handler.h>
 #include <vr_interface.h>
