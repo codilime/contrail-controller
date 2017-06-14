@@ -4,7 +4,7 @@
 
 #include <memory>
 
-#include <pthread.h>
+#include <boost/thread.hpp>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

@@ -17,7 +17,11 @@ VariantDir(vpath + '/src', '#/' + Dir('.').path + '/src')
 
 make_products = ['#/build/lib/curl.lib']
 
-
+def create_dir_if_needed(dirname):
+    try:
+        os.makedirs(dirname)
+    except OSError:
+        pass
 
 def build_curl_for_windows(target,source,env):
     curdir = os.getcwd()
@@ -30,7 +34,7 @@ def build_curl_for_windows(target,source,env):
       shutil.copyfile(Dir(vpath + binpath).abspath+ '\curl.exe', Dir('#/build/bin').abspath+'\curl.exe')
     targetfile = Dir('#/build/lib').abspath+'\curl.lib'
     if not os.path.exists(targetfile):
-      os.makedirs(os.path.dirname(targetfile))
+      create_dir_if_needed(os.path.dirname(targetfile))
       print 'copying curl.lib'
       shutil.copyfile(Dir(vpath + libpath).abspath+ '\libcurl_a.lib', targetfile)
     os.chdir(curdir)
