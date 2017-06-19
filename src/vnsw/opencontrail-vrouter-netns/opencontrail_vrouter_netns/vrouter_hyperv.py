@@ -1,13 +1,14 @@
-import argparse
-import netaddr # pip install this
-import sys
-import uuid
-import requests # pip install this
-import json
-import subprocess
-import paramiko
 import os
 import time
+import sys
+import argparse
+import subprocess
+import uuid
+
+import netaddr
+import requests
+import json
+import paramiko
 
 
 def validate_uuid(val):
@@ -22,9 +23,7 @@ def powershell(cmds):
     cmds = ["powershell.exe", "-NonInteractive"] + cmds
     try:
         output = subprocess.check_output(cmds, shell=True)
-        print output
     except subprocess.CalledProcessError as e:
-        print e.output
         raise
     return output
 
@@ -45,9 +44,10 @@ class HyperVManager(object):
     USERNAME = 'ubuntu'
     PASSWORD = 'ubuntu'
 
-    WMI_VIRT_NAMESPACE = "root\\virtualization\\v2"
+    INJECT_IP_SCRIPT_REL_PATH = "vrouter_hyperv_inject_ip.ps1"
+    WAIT_FOR_VM_TIME_SEC = 10
 
-    MGMT_IP = "169.254.150.1"
+    HOST_MGMT_IP = "169.254.150.1"
     MGMT_PREFIX_LEN = 16
     MGMT_IP_RANGE = netaddr.IPRange("169.254.150.10", "169.254.150.254")
     MGMT_SUBNET_MASK = "255.255.0.0"
@@ -84,48 +84,45 @@ class HyperVManager(object):
 
         self._configure_host_mgmt_ip()
 
-        _ = powershell(["New-VM", "-Name", self.wingw_name, \
-                        "-Path", self.vm_location, \
-                        "-Generation", self.HYPERV_GENERATION, \
-                        "-MemoryStartupBytes", self.RAM_GB, \
-                        "-VHDPath", self.vhd_path, \
-                        "-SwitchName", self.mgmt_vswitch_name])
+        powershell(["New-VM", "-Name", self.wingw_name, \
+                    "-Path", self.vm_location, \
+                    "-Generation", self.HYPERV_GENERATION, \
+                    "-MemoryStartupBytes", self.RAM_GB, \
+                    "-VHDPath", self.vhd_path, \
+                    "-SwitchName", self.mgmt_vswitch_name])
 
-        _ = powershell(["Set-VMFirmware", "-VMName", self.wingw_name, \
-                        "-EnableSecureBoot", "Off"])
+        powershell(["Set-VMFirmware", "-VMName", self.wingw_name, \
+                    "-EnableSecureBoot", "Off"])
 
-        _ = powershell(["Start-VM", "-Name", self.wingw_name])
+        powershell(["Start-VM", "-Name", self.wingw_name])
 
         self.new_mgmt_ip = self._generate_new_mgmt_ip()
         self._configure_vm_mgmt_ip()
 
-        for i in range(2):
-            _ = powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
-                            "-SwitchName", self.vrouter_vswitch_name])
+        for _ in range(2):
+            powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
+                        "-SwitchName", self.vrouter_vswitch_name])
 
 
     def destroy_vm(self):
         """calls powershell to destroy vm """
         if not self._vm_exists():
             raise ValueError("Specified Windows gateway VM does not exist")
-        _ = powershell(["Stop-VM", "-Name", self.wingw_name, "-Force"])
-        _ = powershell(["Remove-VM", "-Name", self.wingw_name, "-Force"])
+        powershell(["Stop-VM", "-Name", self.wingw_name, "-Force"])
+        powershell(["Remove-VM", "-Name", self.wingw_name, "-Force"])
 
 
     def set_snat(self):
         """sshs into gateway machine and configures SNAT"""
-
-        # ssh into machine
-
         self.ssh_client = None
         try:
             self.ssh_client = paramiko.SSHClient()
-            self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            self.ssh_client.connect(str(self.new_mgmt_ip), username=self.USERNAME,
-                               password=self.PASSWORD)
-
+            self.ssh_client.set_missing_host_key_policy(
+                paramiko.AutoAddPolicy())
+            self.ssh_client.connect(str(self.new_mgmt_ip), 
+                                    username=self.USERNAME,
+                                    password=self.PASSWORD)
             self._setup_snat()
-
         finally:
             if self.ssh_client:
                 self.ssh_client.close()
@@ -150,7 +147,7 @@ class HyperVManager(object):
     def _vm_exists(self):
         """calls powershell to check whether vm exists"""
         try:
-            _ = powershell(["Get-VM", "-Name", self.wingw_name])
+            powershell(["Get-VM", "-Name", self.wingw_name])
         except subprocess.CalledProcessError as e:
             if "unable to find" in e.output:
                 # vm doesn't exist
@@ -177,7 +174,7 @@ class HyperVManager(object):
                                  "Where AddressFamily -eq IPv4 | "
                                  "Select -ExpandProperty IPAddress"
                                  .format(name_wildcard)])
-        if current_ip != self.MGMT_IP:
+        if current_ip != self.HOST_MGMT_IP:
             if_index = powershell(["Get-NetAdapter -Name {} | "
                                    "Select -ExpandProperty ifIndex"
                                    .format(name_wildcard)])
@@ -185,7 +182,7 @@ class HyperVManager(object):
                 powershell(["Get-NetAdapter -Name {} | "
                             "Remove-NetIPAddress -Confirm:$false"
                             .format(name_wildcard)])
-            powershell(["New-NetIPAddress", "-IPAddress", self.MGMT_IP,
+            powershell(["New-NetIPAddress", "-IPAddress", self.HOST_MGMT_IP,
                         "-PrefixLength", str(self.MGMT_PREFIX_LEN),
                         "-InterfaceIndex", if_index])
 
@@ -224,7 +221,8 @@ class HyperVManager(object):
         ips = powershell(["Get-VMNetworkAdapter -VMName {} | "
                           "Where SwitchName -eq {} | "
                           "Select -ExpandProperty IPAddresses"
-                          .format(vmname_with_wildcard, self.mgmt_vswitch_name)])
+                          .format(vmname_with_wildcard, 
+                                  self.mgmt_vswitch_name)])
         if ips == "":
             raise IndexError("no management IP found")
         ips = ips.splitlines()
@@ -234,14 +232,15 @@ class HyperVManager(object):
 
 
     def _configure_vm_mgmt_ip(self):
-        time.sleep(10)
+        time.sleep(self.WAIT_FOR_VM_TIME_SEC)
         this_script_path = os.path.realpath(__file__)
-        script_dir = os.path.dirname(this_script_path)
-        inject_ip_script_path = os.path.join(script_dir, 'vrouter_hyperv_inject_ip.ps1')
+        this_script_dir = os.path.dirname(this_script_path)
+        inject_ip_script_path = os.path.join(this_script_dir,
+                                             self.INJECT_IP_SCRIPT_REL_PATH)
         powershell([inject_ip_script_path,
-                    '-Name', self.wingw_name,
-                    '-IPAddress', str(self.new_mgmt_ip),
-                    '-Subnet', self.MGMT_SUBNET_MASK])
+                    "-Name", self.wingw_name,
+                    "-IPAddress", str(self.new_mgmt_ip),
+                    "-Subnet", self.MGMT_SUBNET_MASK])
 
 
     def _request_to_agent(self, url, method, data):
@@ -270,19 +269,19 @@ class HyperVManager(object):
                    "vn-id": '', "vm-project-id": '',
                    "type": port_type_value, "mac-address": str(nic['mac'])}
         json_dump = json.dumps(payload)
-
-        # TODO no agent - uncomment when works
+        # TODO no agent - uncomment when it works
         #self._request_to_agent(self.BASE_URL, 'post', json_dump) 
 
 
     def _delete_port_from_agent(self, nic):
         url = self.BASE_URL + "/" + nic['uuid']
-        # TODO no agent - uncomment when works
+        # TODO no agent - uncomment when it works
         # self._request_to_agent(url, 'delete', None)
 
 
     def _get_wingw_iface_name(self, uuid_str):
         pass
+        # TODO no agent - uncomment and fix when it works
         #return (self.TAP_PREFIX + uuid_str)[:self.DEV_NAME_LEN]
 
 
@@ -312,8 +311,8 @@ class HyperVManager(object):
 
 
 class VRouterHyperV(object):
-    """Create or destroy a Hyper-V Gateway VM for NAT
-    between two virtual networks.
+    """Create or destroy a Hyper-V Gateway VM for NAT between two virtual 
+    networks.
     """
 
     def __init__(self, args_str=None):
@@ -441,35 +440,10 @@ class VRouterHyperV(object):
                                mgmt_vswitch_name=self.args.mgmt_vswitch_name,
                                vrouter_vswitch_name=\
                                     self.args.vrouter_vswitch_name)
-
         hv_mgr.spawn_vm()
         hv_mgr.set_snat()
         hv_mgr.register_to_agent()
 
-
-        # if (self.args.update is False):
-        #     if hyperv_mgr.is_netns_already_exists():
-        #         # If the netns already exists, destroy it to be sure to set it
-        #         # with new parameters like another external network
-        #         if self.args.service_type == self.LOAD_BALANCER:
-        #             hyperv_mgr.release_lbaas('create')
-        #         hyperv_mgr.unplug_namespace_interface()
-        #         hyperv_mgr.destroy()
-        #     hyperv_mgr.create()
-
-        # if self.args.service_type == self.SOURCE_NAT:
-        #     netns_mgr.set_snat()
-        # elif self.args.service_type == self.LOAD_BALANCER:
-        #     if (netns_mgr.set_lbaas() == False):
-        #         netns_mgr.destroy()
-        #         msg = 'Falied to Launch LOADBALANCER'
-        #         raise Exception(msg)
-        # else:
-        #     msg = ('The %s service type is not supported' %
-        #            self.args.service_type)
-        #     raise NotImplementedError(msg)
-
-        # netns_mgr.plug_namespace_interface()
 
     def destroy(self):
         vm_id = validate_uuid(self.args.vm_id)
@@ -484,18 +458,6 @@ class VRouterHyperV(object):
 
         hyperv_mgr.unregister_from_agent()
         hyperv_mgr.destroy_vm()
-
-        # netns_mgr.unplug_namespace_interface()
-        # if self.args.service_type == self.SOURCE_NAT:
-        #     netns_mgr.destroy()
-        # elif self.args.service_type == self.LOAD_BALANCER:
-        #     netns_mgr.release_lbaas('destroy')
-        #     netns_mgr.destroy()
-        # else:
-        #     msg = ('The %s service type is not supported' %
-        #            self.args.service_type)
-        #     raise NotImplementedError(msg)
-
 
 
 def main(args_str=None):
