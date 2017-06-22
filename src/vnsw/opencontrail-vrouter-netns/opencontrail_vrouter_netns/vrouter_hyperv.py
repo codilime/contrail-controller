@@ -309,17 +309,14 @@ class VRouterHyperV(object):
     networks.
     """
 
-    def __init__(self, args_str=None):
-        self.args = None
-        if not args_str:
-            args_str = ' '.join(sys.argv[1:])
-        self._parse_args(args_str)
+    def __init__(self):
+        self._parse_args(sys.argv[1:])
 
-    def _parse_args(self, args_str):
+    def _parse_args(self, args):
         """Return an argparse.ArgumentParser for me"""
         conf_parser = argparse.ArgumentParser(add_help=False)
 
-        _, remaining_argv = conf_parser.parse_known_args(args_str.split())
+        _, remaining_argv = conf_parser.parse_known_args(args)
         # Override with CLI options
         # Don't surpress add_help here so it will handle -h
         parser = argparse.ArgumentParser(
@@ -454,8 +451,8 @@ class VRouterHyperV(object):
         hyperv_mgr.destroy_vm()
 
 
-def main(args_str=None):
-    vrouter_hyperv = VRouterHyperV(args_str)
+def main():
+    vrouter_hyperv = VRouterHyperV()
     vrouter_hyperv.args.func()
 
 
