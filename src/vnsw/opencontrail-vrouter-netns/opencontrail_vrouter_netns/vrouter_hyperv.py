@@ -17,7 +17,7 @@ def powershell(cmds):
     cmds = ["powershell.exe", "-NonInteractive"] + cmds
     try:
         output = subprocess.check_output(cmds, shell=True)
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         raise
     return output
 
@@ -38,7 +38,8 @@ class HyperVManager(object):
     PASSWORD = 'ubuntu'
 
     INJECT_IP_SCRIPT_REL_PATH = "vrouter_hyperv_inject_ip.ps1"
-    WAIT_FOR_VM_TIME_SEC = 10
+    WAIT_FOR_VM_TIME_SEC = 5
+    NUM_INJECT_RETRIES = 5
 
     HOST_MGMT_IP = "169.254.150.1"
     MGMT_PREFIX_LEN = 16
@@ -141,13 +142,7 @@ class HyperVManager(object):
         try:
             powershell(["Get-VM", "-Name", self.wingw_name])
         except subprocess.CalledProcessError as e:
-            print e.returncode
-            if "unable to find" in e.output:
-                # vm doesn't exist
-                return False
-            else:
-                # other exception
-                raise
+            return False
         return True
 
 
@@ -225,15 +220,27 @@ class HyperVManager(object):
 
 
     def _configure_vm_mgmt_ip(self):
-        time.sleep(self.WAIT_FOR_VM_TIME_SEC)
         this_script_path = os.path.realpath(__file__)
         this_script_dir = os.path.dirname(this_script_path)
         inject_ip_script_path = os.path.join(this_script_dir,
                                              self.INJECT_IP_SCRIPT_REL_PATH)
-        powershell([inject_ip_script_path,
-                    "-Name", self.wingw_name,
-                    "-IPAddress", str(self.new_mgmt_ip),
-                    "-Subnet", self.MGMT_SUBNET_MASK])
+        retry_num = 0
+        while True:
+            if retry_num == self.NUM_INJECT_RETRIES:
+                raise RuntimeError("Waited for SNAT VM for too long")
+
+            time.sleep(self.WAIT_FOR_VM_TIME_SEC)
+            retry_num += 1
+            try:
+                powershell([inject_ip_script_path,
+                            "-Name", self.wingw_name,
+                            "-IPAddress", str(self.new_mgmt_ip),
+                            "-Subnet", self.MGMT_SUBNET_MASK])
+                powershell(["ping", str(self.new_mgmt_ip), "-n", "1"])
+            except subprocess.CalledProcessError:
+                continue
+            else:
+                break
 
 
     def _request_to_agent(self, url, method, data):
