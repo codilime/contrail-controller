@@ -40,17 +40,10 @@ from linux import ip_lib
 import haproxy_process
 
 
-def validate_uuid(val):
-    try:
-        if str(uuid.UUID(val)) == val:
-            return val
-    except (TypeError, ValueError, AttributeError):
-        raise ValueError('Invalid UUID format')
+from common import validate_uuid
 
 
 class NetnsManager(object):
-    SNAT_RT_TABLES_ID = 42
-    DEV_NAME_LEN = 14
     NETNS_PREFIX = 'vrouter-'
     LEFT_DEV_PREFIX = 'int-'
     RIGH_DEV_PREFIX = 'gw-'

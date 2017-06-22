@@ -10,13 +10,7 @@ import requests
 import json
 import paramiko
 
-
-def validate_uuid(val):
-    try:
-        if str(uuid.UUID(val)) == val:
-            return val
-    except (TypeError, ValueError, AttributeError):
-        raise ValueError('Invalid UUID format')
+from common import validate_uuid
 
 
 def powershell(cmds):
@@ -29,12 +23,11 @@ def powershell(cmds):
 
 
 class HyperVManager(object):
-    SNAT_RT_TABLES_ID = 42
     NAME_LEN = 14
     WINGW_PREFIX = 'contrail-wingw-'
     LEFT_DEV_PREFIX = 'eth'
     RIGHT_DEV_PREFIX = 'eth'
-    PORT_TYPE = 'NameSpacePort' # should maybe be NovaVMPort?
+    PORT_TYPE = 'NameSpacePort'
     BASE_URL = "http://localhost:9091/port"
     HEADERS = {'content-type': 'application/json'}
 
@@ -51,7 +44,6 @@ class HyperVManager(object):
     MGMT_PREFIX_LEN = 16
     MGMT_IP_RANGE = netaddr.IPRange("169.254.150.10", "169.254.150.254")
     MGMT_SUBNET_MASK = "255.255.0.0"
-    MGMT_HOST_ADAPTER_NAME = "mgmt_snat_adapter"
 
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
                  vm_location=None, vhd_path=None,
@@ -105,7 +97,7 @@ class HyperVManager(object):
 
 
     def destroy_vm(self):
-        """calls powershell to destroy vm """
+        """calls powershell to destroy vm"""
         if not self._vm_exists():
             raise ValueError("Specified Windows gateway VM does not exist")
         powershell(["Stop-VM", "-Name", self.wingw_name, "-Force"])
@@ -138,8 +130,8 @@ class HyperVManager(object):
 
     def unregister_from_agent(self):
         """unregisters wingw interfaces (as seen on host) from agent"""
-        self._delete_port_from_agent(self.nic_left)
-        self._delete_port_from_agent(self.nic_right)
+        # self._delete_port_from_agent(self.nic_left)
+        # self._delete_port_from_agent(self.nic_right)
         # TODO do we have to unregister mgmt interface?
         pass
 
@@ -149,6 +141,7 @@ class HyperVManager(object):
         try:
             powershell(["Get-VM", "-Name", self.wingw_name])
         except subprocess.CalledProcessError as e:
+            print e.returncode
             if "unable to find" in e.output:
                 # vm doesn't exist
                 return False
@@ -160,13 +153,13 @@ class HyperVManager(object):
 
     def _configure_host_mgmt_ip(self):
         """configures host management adapter and its IP"""
-        name_wildcard = "\"*({})\"".format(self.MGMT_HOST_ADAPTER_NAME)
+        name_wildcard = "\"*({})\"".format(self.mgmt_vswitch_name)
 
-        adapter_name = powershell(["Get-NetAdapter", "-Name", name_wildcard])
-        if adapter_name == "":
+        adapter_resp = powershell(["Get-NetAdapter", "-Name", name_wildcard])
+        if adapter_resp == "":
             powershell(["Add-VMNetworkAdapter",
                         "-SwitchName", self.mgmt_vswitch_name,
-                        "-Name", self.MGMT_HOST_ADAPTER_NAME,
+                        "-Name", self.mgmt_vswitch_name,
                         "-ManagementOS"])
 
         current_ip = powershell(["Get-NetAdapter -Name {} | "
@@ -196,7 +189,7 @@ class HyperVManager(object):
         free_ips = pool_ips ^ used_ips
 
         try:
-            first_available_ip = next(ip for ip in free_ips)
+            first_available_ip = next(iter(free_ips))
         except StopIteration:
             raise ValueError("Ran out of management IPs for gateway VM")
         return first_available_ip
@@ -311,7 +304,8 @@ class HyperVManager(object):
 
 
 class VRouterHyperV(object):
-    """Create or destroy a Hyper-V Gateway VM for NAT between two virtual 
+    """
+    Create or destroy a Hyper-V Gateway VM for NAT between two virtual 
     networks.
     """
 
@@ -412,7 +406,7 @@ class VRouterHyperV(object):
             nic_left['uuid'] = validate_uuid(self.args.vmi_left_id)
             if self.args.vmi_left_mac:
                 nic_left['mac'] = netaddr.EUI(self.args.vmi_left_mac,
-                                              dialect=netaddr.mac_eui48) # does eui48 break sth?
+                                              dialect=netaddr.mac_eui48)
             else:
                 nic_left['mac'] = None
             if self.args.vmi_left_ip:
@@ -425,7 +419,7 @@ class VRouterHyperV(object):
             nic_right['uuid'] = validate_uuid(self.args.vmi_right_id)
             if self.args.vmi_right_mac:
                 nic_right['mac'] = netaddr.EUI(self.args.vmi_right_mac,
-                                               dialect=netaddr.mac_eui48) # does eui48 break sth?
+                                               dialect=netaddr.mac_eui48)
             else:
                 nic_right['mac'] = None
             if self.args.vmi_right_ip:

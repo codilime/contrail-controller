@@ -16,7 +16,6 @@ $GuestNetworkAdapterConfiguration = ($VmEthernetPortSettingData.GetRelated( `
 $GuestNetworkAdapterConfiguration.IPAddresses = @($IPAddress)
 $GuestNetworkAdapterConfiguration.DHCPEnabled = $false
 $GuestNetworkAdapterConfiguration.Subnets = @($Subnet)
-$GuestNetworkAdapterConfiguration.DNSServers = @("8.8.8.8")
 
 $SetIpJob = $VmMgmtService.SetGuestNetworkAdapterConfiguration($Vm.Path, $GuestNetworkAdapterConfiguration.GetText(1))
 
@@ -29,7 +28,9 @@ if ($SetIpJob.ReturnValue -eq 4096) {
 
     if ($Job.JobState -eq 7) {
         Write-Host "Success"
+        exit 0
     } else {
         Write-Host "Failure"
+        exit 1
     }
 }
