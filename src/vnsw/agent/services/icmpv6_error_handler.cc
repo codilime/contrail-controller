@@ -14,6 +14,7 @@
 #include <services/services_init.h>
 #include <services/icmpv6_proto.h>
 #ifdef _WINDOWS
+#include "winnw.h"
 #include <netinet/ip6.h>
 #endif
 

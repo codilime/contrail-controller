@@ -20,6 +20,7 @@
 #include <boost/algorithm/string/find.hpp>
 #include <boost/algorithm/string/find_iterator.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include "taskutil.h"
 
 using namespace boost;
 
@@ -30,10 +31,8 @@ static uint32_t NumCpus() {
         return count;
     }
 
-#ifdef __APPLE__
-    size_t len = sizeof(count);
-    sysctlbyname("hw.logicalcpu", &count, &len, NULL, 0);
-    return count;
+#ifdef _WINDOWS
+    return (count = GetNumberOfCPUs());
 #else
     std::ifstream file("/proc/cpuinfo");
     std::string content((std::istreambuf_iterator<char>(file)),
@@ -49,7 +48,7 @@ static uint32_t NumCpus() {
 }
 
 static void LoadAvg(CpuLoad &load) {
-#if 0 //WINDOWS-TEMP
+//WINDOWS-CHECK
     double averages[3];
     uint32_t num_cpus = NumCpus();
     getloadavg(averages, 3);
@@ -58,25 +57,12 @@ static void LoadAvg(CpuLoad &load) {
         load.five_min_avg = averages[1]/num_cpus;
         load.fifteen_min_avg = averages[2]/num_cpus;
     }
-#endif
+
 }
 
 static void ProcessMemInfo(ProcessMemInfo &info) {
-#ifdef __APPLE__
-    struct task_basic_info t_info;
-    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-    if (KERN_SUCCESS != task_info(mach_task_self(),
-                                  TASK_BASIC_INFO,
-                                  (task_info_t)&t_info,
-                                  &t_info_count)) {
-        return;
-    }
-    info.res = t_info.resident_size;
-    info.virt = t_info.virtual_size;
-    // XXX Peak virt not availabe, just fill in virt
-    info.peakvirt = t_info.virtual_size;
-    return;
-#else
+
+#ifndef _WINDOWS
     std::ifstream file("/proc/self/status");
     bool vmsize = false;
     bool peak = false;
@@ -101,6 +87,10 @@ static void ProcessMemInfo(ProcessMemInfo &info) {
         if (rss && vmsize && peak)
             break;
     }
+#else
+
+
+
 #endif
 }
 

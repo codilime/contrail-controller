@@ -137,14 +137,16 @@ WindowsDomainSocketSession::HandleWrite(const boost::system::error_code &error)
 UnixDomainSocketServer::UnixDomainSocketServer(boost::asio::io_service &io,
                                                const std::string &file)
   : io_service_(io),
-   //WINDOWS-TEMP acceptor_(io, boost::asio::local::stream_protocol::endpoint(file)),
+    //WINDOWS-TEMP
+    acceptor_(io), //WINDOWS FIX NEEDED 
+    //acceptor_(io, boost::asio::generic::stream_protocol::endpoint(file)),
     session_idspace_(0)
 {
     SessionPtr new_session(new WindowsDomainSocketSession(io_service_));
-    //WINDOWS-TEMP acceptor_.async_accept(new_session->socket(),
-                  //         boost::bind(&UnixDomainSocketServer::
-                  //                     HandleAccept, this, new_session,
-                 //                      boost::asio::placeholders::error));
+    acceptor_.async_accept(new_session->socket(),
+                           boost::bind(&UnixDomainSocketServer::
+                                       HandleAccept, this, new_session,
+                                       boost::asio::placeholders::error));
 }
 
 void
@@ -167,8 +169,8 @@ UnixDomainSocketServer::HandleAccept(SessionPtr session,
     }
 
     SessionPtr new_session(new WindowsDomainSocketSession(io_service_));
-   //WINDOWS-TEMP acceptor_.async_accept(new_session->socket(),
-   //WINDOWS-TEMP                       boost::bind(&UnixDomainSocketServer::
-   //WINDOWS-TEMP                                   HandleAccept, this, new_session,
-   //WINDOWS-TEMP                                boost::asio::placeholders::error));
+    acceptor_.async_accept(new_session->socket(),
+                           boost::bind(&UnixDomainSocketServer::
+                                       HandleAccept, this, new_session,
+                                       boost::asio::placeholders::error));
 }

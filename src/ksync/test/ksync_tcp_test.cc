@@ -86,18 +86,18 @@ public:
    }
 
    void Start() {
-       assert(pthread_create(&thread_id_, NULL, &Run, this) == 0);
+       thrd = boost::thread(Run, this);
    }
 
    void Join() {
-       assert(pthread_join(thread_id_, NULL) == 0);
+       thrd.join();
    }
  
 private:
    boost::asio::io_service &io_service_;
    tcp::acceptor *acceptor_;
    tcp::socket *socket_;
-   pthread_t thread_id_;
+   boost::thread thrd;
 };
 
 class Vlan : public DBEntry {

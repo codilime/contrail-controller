@@ -7,6 +7,7 @@
 #include "cmn/agent_cmn.h"
 #include "pkt/pkt_init.h"
 #include "oper/vn.h"
+#include "winnw.h"
 #include "services/dhcp_proto.h"
 #include "services/dhcpv6_proto.h"
 #include "services/services_types.h"

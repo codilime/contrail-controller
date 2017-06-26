@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include "base/os.h"

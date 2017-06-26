@@ -112,6 +112,6 @@ class UnixDomainSocketServer
  private:
     boost::asio::io_service &io_service_;
     EventObserver observer_;
-   //WINDOWS-TEMP boost::asio::generic::stream_protocol::acceptor acceptor_;
+    boost::asio::ip::tcp::acceptor acceptor_;
     uint64_t session_idspace_;
 };

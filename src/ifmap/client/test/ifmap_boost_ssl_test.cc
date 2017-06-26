@@ -20,8 +20,10 @@ class BoostSslTest : public ::testing::Test {
 protected:
     BoostSslTest()
         : client_(new BoostSslClient(io_service_)),
-          server_(new BoostSslServer(io_service_, port, PASSWORD)),
-          thread_id_(pthread_self()) {
+          server_(new BoostSslServer(io_service_, port, PASSWORD))
+		//,
+      //    thread_id_(pthread_self()) 
+	{
     }
 
     virtual void SetUp() {
@@ -39,20 +41,25 @@ protected:
     }
 
     void Start() {
-        int res = pthread_create(&thread_id_, NULL, &ServerStart,
-                                 server_.get());
-        assert(res == 0);
+    //    int res = pthread_create(&thread_id_, NULL, &ServerStart,
+         //                        server_.get());
+     //   assert(res == 0);
+
+		thrd = boost::thread(&ServerStart, server_.get());
     }
 
     void Join() {
-        int res = pthread_join(thread_id_, NULL);
-        assert(res == 0);
+      //  int res = pthread_join(thread_id_, NULL);
+
+  //      assert(res == 0);
+		thrd.join();
     }
 
     boost::asio::io_service io_service_;
     std::auto_ptr<BoostSslClient> client_;
     std::auto_ptr<BoostSslServer> server_;
-    pthread_t thread_id_;
+  //  pthread_t thread_id_;
+	boost::thread thrd;
     static const unsigned short port = 23232;
 };
 

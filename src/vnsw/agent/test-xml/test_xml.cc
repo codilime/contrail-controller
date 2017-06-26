@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
+
 #include "base/os.h"
 #include <iostream>
 #include <fstream>
@@ -155,6 +158,7 @@ xml_node AddXmlNodeWithValue(xml_node *parent, const char *name,
                              const string &value) {
     xml_node n = parent->append_child(name);
     n.append_child(pugi::node_pcdata).set_value(value.c_str());
+	return n;
 }
 
 xml_node AddXmlNodeWithIntValue(xml_node *parent, const char *name,
@@ -163,6 +167,7 @@ xml_node AddXmlNodeWithIntValue(xml_node *parent, const char *name,
     s << val;
     xml_node n = parent->append_child(name);
     n.append_child(pugi::node_pcdata).set_value(s.str().c_str());
+	return n;
 }
 }
 
@@ -240,8 +245,9 @@ bool AgentUtXmlTest::ReadXml() {
 }
 
 bool AgentUtXmlTest::Load() {
-    struct stat s;
-    if (stat(file_name_.c_str(), &s)) {
+    struct _stat s;
+ //WINDOWS-CHECK - easy fix for windows
+    if (_stat(file_name_.c_str(), &s)) {
         cout << "Error <" << strerror(errno) << "> opening file "
             << file_name_ << endl;
         return false;
@@ -272,7 +278,7 @@ bool AgentUtXmlTest::Load() {
             << "> (error at [..." << (data + result.offset) << "])" << endl;
         return false;
     }
-
+#endif
     return true;
 }
 
@@ -852,6 +858,7 @@ bool AgentUtXmlFlowThreshold::Run() {
 
     mgr->UpdateFlowThreshold();
     TestClient::WaitForIdle();
+	return true;
 }
 
 void AgentUtXmlFlowThreshold::ToString(string *str) {

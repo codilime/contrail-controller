@@ -12,6 +12,7 @@
 #include <netinet/icmp6.h>
 #include <netinet/tcp.h>
 #include <netinet/ip6.h>
+#include<netinet/udp.h>
 
 #include <pkt/pkt_handler.h>
 #include <vr_interface.h>
@@ -24,45 +25,52 @@
 
 #define ARPHRD_ETHER    1
 
-struct icmp_packet {
-    struct ether_header eth;
-    struct ip ip;
-    struct icmp icmp;
-} __attribute__((packed));
+PACK(
+	struct icmp_packet {
+	struct ether_header eth;
+	struct ip ip;
+	struct icmp icmp;
+});
 
+
+PACK(
 struct tcp_packet {
     struct ether_header eth;
     struct ip ip;
     struct tcphdr tcp;
     char   payload[TCP_PAYLOAD_SIZE];
-}__attribute__((packed));
+});
 
+PACK(
 struct udp_packet {
     struct ether_header eth;
     struct ip ip;
     struct udphdr udp;
-    uint8_t payload[];
-}__attribute__((packed));
+    uint8_t payload[UDP_PAYLOAD_SIZE];//WINDOWS-CHECK - verify 
+});
 
+PACK(
 struct icmp6_packet {
     struct ether_header eth;
     struct ip6_hdr  ip;
     struct icmp icmp;
-} __attribute__((packed));
+});
 
+PACK(
 struct tcp6_packet {
     struct ether_header eth;
     struct ip6_hdr  ip;
     struct tcphdr tcp;
     char   payload[TCP_PAYLOAD_SIZE];
-}__attribute__((packed));
+});
 
+PACK(
 struct udp6_packet {
     struct ether_header eth;
     struct ip6_hdr  ip;
     struct udphdr udp;
-    uint8_t payload[];
-}__attribute__((packed));
+    uint8_t payload[UDP_PAYLOAD_SIZE];//WINDOWS-CHECK verify
+});
 
 class IpUtils {
 public:
@@ -164,7 +172,7 @@ public:
     UdpPacket(uint16_t sp, uint16_t dp, uint32_t sip, uint32_t dip) {
         uint16_t len;
         Init(sp, dp);
-        len = sizeof(pkt.ip) + sizeof(pkt.udp) + sizeof(pkt.payload);
+        len = sizeof(pkt.ip) + sizeof(pkt.udp) + sizeof(udp_packet::payload);
         IpUtils::IpInit(&pkt.ip, IPPROTO_UDP, len, sip, dip);
         IpUtils::EthInit(&pkt.eth, ETHERTYPE_IP);
     }
@@ -258,7 +266,7 @@ private:
     void Init(uint16_t sport, uint16_t dport) {
         pkt.udp.uh_sport = htons(sport);
         pkt.udp.uh_dport = htons(dport);
-        pkt.udp.uh_ulen = htons(sizeof(pkt.payload));
+        pkt.udp.uh_ulen = htons(sizeof(udp6_packet::payload));
         pkt.udp.uh_sum = htons(0); //ignoring checksum for now.
 
     }

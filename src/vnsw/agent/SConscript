@@ -221,7 +221,7 @@ AgentEnv.AppendUnique(TEST_CMN_LIBS_PRE = [
     'ifmap_test',
     'task_test',
     'control_node_mock',
-    'gunit',
+    'gtest','gmock'
 ])
 
 AgentEnv.AppendUnique(TEST_CMN_LIBS_POST = [ 'agent_test_buildinfo' ])

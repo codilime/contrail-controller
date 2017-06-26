@@ -25,11 +25,13 @@
 #include "oper/interface_common.h"
 #include "port_ipc/port_ipc_handler.h"
 #include "port_ipc/port_ipc_types.h"
+#include "AgentConstants.h"
+#include "winnw.h"
 
 using namespace std;
 namespace fs = boost::filesystem;
 
-const std::string PortIpcHandler::kPortsDir = "/var/lib/contrail/ports";
+const std::string PortIpcHandler::kPortsDir = AgentConstants::var_directory+"/lib/contrail/ports";
 
 PortIpcHandler::AddPortParams::AddPortParams
     (const string &pid, const string &iid, const string &vid,
@@ -498,12 +500,12 @@ bool PortIpcHandler::GetPortInfo(const string &uuid_str, string &info) const {
 }
 
 bool PortIpcHandler::InterfaceExists(const std::string &name) const {
-#if 0 //WINDOWS-TEMP
-    int indx  = if_nametoindex(name.c_str());
+
+    int indx  = osspecific_if_nametoindex(name.c_str());
     if (indx == 0) {
         return false;
     }
-#endif
+
     return true;
 }
 

@@ -10,6 +10,7 @@
 #include "net/address_util.h"
 #include "oper/route_common.h"
 #include "pkt/pkt_init.h"
+#include "winnw.h"
 #include "services/dhcpv6_proto.h"
 #include "services/services_types.h"
 #include "services/services_init.h"
@@ -20,7 +21,6 @@
 
 #include <boost/assign/list_of.hpp>
 #ifdef _WINDOWS
-#include "winutils.h"
 #include <netinet/ip6.h>
 #include <netinet/udp.h>
 #endif

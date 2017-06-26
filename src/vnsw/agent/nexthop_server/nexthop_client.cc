@@ -120,7 +120,7 @@ NexthopDBClient::NextMessage(int *data_len)
     }
 
     const char *nhdata = s.GetString();
-    int nhlen = s.GetSize();//WINDOWS-TEMP verify if this is correct
+    int nhlen = s.GetSize();//WINDOWS-CHECK verify if this is correct
     u_int8_t *out_data = new u_int8_t[nhlen + 4];
     out_data[0] = (unsigned char) (nhlen >> 24);
     out_data[1] = (unsigned char) (nhlen >> 16);

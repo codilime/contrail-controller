@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
+
 #include <base/os.h>
 #include <iostream>
 #include <fstream>
@@ -17,7 +20,7 @@
 #include <test-xml/test_xml_oper.h>
 #include <test-xml/test_xml_validate.h>
 #include <test-xml/test_xml_packet.h>
-
+#define ETH_HLEN	14
 using namespace std;
 using namespace pugi;
 using namespace boost::uuids;

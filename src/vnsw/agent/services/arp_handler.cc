@@ -11,6 +11,7 @@
 #include "services/arp_proto.h"
 #include "services/services_init.h"
 #include "services/services_sandesh.h"
+#include "winnw.h"
 
 ArpHandler::ArpHandler(Agent *agent, boost::shared_ptr<PktInfo> info,
                        boost::asio::io_service &io)

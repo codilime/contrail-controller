@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include "base/os.h"
 #include <algorithm>
 #include "test/test_cmn_util.h"

@@ -76,7 +76,7 @@
 #include "test_agent_init.h"
 using namespace std;
 
-#define TUN_INTF_CLONE_DEV "/dev/net/tun"
+#define TUN_INTF_CLONE_DEV AgentConstants::dev_directory+"/net/tun"
 #define DEFAULT_VNSW_CONFIG_FILE "controller/src/vnsw/agent/test/vnswa_cfg.ini"
 #define DEFAULT_VNSW_TSN_CONFIG_FILE "controller/src/vnsw/agent/test/vnswa_tsn_cfg.ini"
 #define DEFAULT_VNSW_DPDK_CONFIG_FILE \

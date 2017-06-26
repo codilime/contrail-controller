@@ -22,15 +22,17 @@
     #include "oper/libvirt_instance_adapter.h"
 #endif
 #include "base/util.h"
+#include "AgentConstants.h"
+#include "TaskUtil.h"
 
 using boost::uuids::uuid;
 SandeshTraceBufferPtr InstanceManagerTraceBuf(
         SandeshTraceBufferCreate("InstanceManager", 1000));
 
-static const char loadbalancer_config_path_default[] =
-        "/var/lib/contrail/loadbalancer/";
-static const char namespace_store_path_default[] =
-        "/var/run/netns";
+static const string loadbalancer_config_path_default =
+        AgentConstants::var_directory+"/lib/contrail/loadbalancer/";
+static const string namespace_store_path_default =
+        AgentConstants::var_directory+"/run/netns";
 static const char namespace_prefix[] = "vrouter-";
 
 class InstanceManager::NamespaceStaleCleaner {
@@ -732,7 +734,7 @@ void InstanceManager::StopStaleNetNS(ServiceInstance::Properties &props) {
     std::stringstream ss;
     ss << "StaleNetNS " << cmd;
     INSTANCE_MANAGER_TRACE(Trace, ss.str().c_str());
-#if 0 //WINDOWS-TEMP
+#ifndef _WINDOWS //WINDOWS-CHECK
     pid_t pid = vfork();
     if (pid == 0) {
         CloseTaskFds();
@@ -741,7 +743,13 @@ void InstanceManager::StopStaleNetNS(ServiceInstance::Properties &props) {
 
         _exit(127);
     }
+#else
+	CloseTaskFds();
+	WindowsTaskExecute(cmd, false, false);
 #endif
+
+
+
 }
 
 void InstanceManager::SetLastCmdType(ServiceInstance *svc_instance,

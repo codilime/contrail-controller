@@ -17,7 +17,7 @@ InstanceTaskExecvp::InstanceTaskExecvp(const std::string &name,
                                        const std::string &cmd,
                                        int cmd_type, EventManager *evm) :
         name_(name), cmd_(cmd), 
-	//WINDOWS-TEMP input_(*(evm->io_service())),
+	    input_(*(evm->io_service())),
 
         setup_done_(false), pid_(0), cmd_type_(cmd_type), pipe_stdout_(false) {
 }
@@ -33,7 +33,7 @@ void InstanceTaskExecvp::ReadData(const boost::system::error_code &ec,
 
     if (ec) {
         boost::system::error_code close_ec;
-   //WINDOWS-TEMP     input_.close(close_ec);
+        input_.close(close_ec);
 
         if (!on_exit_cb_.empty()) {
             on_exit_cb_(this, ec);
@@ -41,11 +41,11 @@ void InstanceTaskExecvp::ReadData(const boost::system::error_code &ec,
         return;
     }
 
-    bzero((unsigned char*)rx_buff_, sizeof(rx_buff_));
-   //WINDOWS-TEMP input_.async_read_some(boost::asio::buffer(rx_buff_, kBufLen),
-   //WINDOWS-TEMP                 boost::bind(&InstanceTaskExecvp::ReadData,
-   //WINDOWS-TEMP                           this, boost::asio::placeholders::error,
-   //WINDOWS-TEMP                          boost::asio::placeholders::bytes_transferred));
+       bzero((unsigned char*)rx_buff_, sizeof(rx_buff_));
+       input_.async_read_some(boost::asio::buffer(rx_buff_, kBufLen),
+                         boost::bind(&InstanceTaskExecvp::ReadData,
+                                  this, boost::asio::placeholders::error,
+                             boost::asio::placeholders::bytes_transferred));
 }
 
 void InstanceTaskExecvp::Stop() {
@@ -63,7 +63,7 @@ bool InstanceTaskExecvp::IsSetup() {
 }
 
 // If there is an error before the fork, task is set to "not running"
-// and "false" is returned to caller so that caller can take appropriate
+// and "false" is returned to caller so that caller can take appropriatreae
 // action on task. If an error is encounted after  fork, it is very
 // likely that child process is running so we keep the task status as
 // "running" and return "false" to caller, so that caller does not
@@ -80,14 +80,16 @@ bool InstanceTaskExecvp::Run() {
     for (std::size_t i = 0; i != argv.size(); ++i) {
         c_argv[i] = argv[i].c_str();
     }
+	//https://msdn.microsoft.com/en-us/library/y23kc048(v=vs.140).aspx
 
-    int err[2];
-	//WINDOWS-TEMP if (pipe(err) < 0) {
-	//WINDOWS-TEMP   return is_running_ = false;
-	//WINDOWS-TEMP}
-
-	//WINDOWS-TEMP  pid_ = vfork();
 #if 0 //WINDOWS-TEMP
+    int err[2];
+	if (pipe(err) < 0) {
+	  return is_running_ = false;
+	}
+
+	pid_ = vfork();
+
     if (pid_ == 0) {
         close(err[0]);
         if (pipe_stdout_) {
@@ -104,16 +106,16 @@ bool InstanceTaskExecvp::Run() {
 
         /* Close all the open fds before execvp */
         CloseTaskFds();
-		//WINDOWS-TEMP   execvp(c_argv[0], (char **) c_argv.data());
-		//WINDOWS-TEMP   perror("execvp");
+		execvp(c_argv[0], (char **) c_argv.data());
+		perror("execvp");
 
         _exit(127);
     }
-#endif
+
     close(err[1]);
 
     start_time_ = time(NULL);
-#if 0 //WINDOWS-TEMP
+   //WINDOWS-TEMP
     int fd = ::dup(err[0]);
     close(err[0]);
     if (fd == -1) {
@@ -135,10 +137,10 @@ bool InstanceTaskExecvp::Run() {
     setup_done_ = true;
 #endif
     bzero((unsigned char*)rx_buff_, sizeof(rx_buff_));
-	//WINDOWS-TEMP   input_.async_read_some(boost::asio::buffer(rx_buff_, kBufLen),
-	//WINDOWS-TEMP         boost::bind(&InstanceTaskExecvp::ReadData,
-	//WINDOWS-TEMP                    this, boost::asio::placeholders::error,
-	//WINDOWS-TEMP                  boost::asio::placeholders::bytes_transferred));
+	input_.async_read_some(boost::asio::buffer(rx_buff_, kBufLen),
+	         boost::bind(&InstanceTaskExecvp::ReadData,
+	                   this, boost::asio::placeholders::error,
+	                  boost::asio::placeholders::bytes_transferred));
     return true;
 
 }

@@ -2426,23 +2426,22 @@ static void *ConcurrencyThreadRun(void *objp) {
 
 template <class Type, class TypePtr, class TypeDB, class TypeSpec>
 static void ConcurrencyTest(TypeDB *db) {
-    std::vector<pthread_t> thread_ids;
-    pthread_t tid;
+    std::vector<boost::thread*> thread_ids;
+    boost::thread *thd=nullptr;
 
     int thread_count = 1024;
     char *str = getenv("THREAD_COUNT");
     if (str) thread_count = strtoul(str, NULL, 0);
 
     for (int i = 0; i < thread_count; i++) {
-        if (!pthread_create(&tid, NULL,
-                            &ConcurrencyThreadRun<Type, TypePtr, TypeDB,
+        thd = new boost::thread(&ConcurrencyThreadRun<Type, TypePtr, TypeDB,
                                                   TypeSpec>,
-                            db)) {
-            thread_ids.push_back(tid);
+			db));
+            thread_ids.push_back(thd);
         }
     }
 
-    BOOST_FOREACH(tid, thread_ids) { pthread_join(tid, NULL); }
+BOOST_FOREACH(thd, thread_ids) { thd->join(); delete thd; }
     TASK_UTIL_EXPECT_EQ(0, db->Size());
 }
 

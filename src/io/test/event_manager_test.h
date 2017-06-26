@@ -19,7 +19,7 @@ class ServerThread {
 public:
     explicit ServerThread(EventManager *evm)
     : 
-		//WINDOWSFIX thread_id_(pthread_self()),
+		//WINDOWS-CHECK thread_id_(pthread_self()),
 		 evm_(evm), tbb_scheduler_(NULL) {
     }
     void Run() {

@@ -44,7 +44,7 @@ static bool alloc_tap_interface(const char *devname, int flags) {
     int fd;
     LOG(DEBUG, "Allocating TAP device " << devname);
 
-    while ((fd = open("/dev/net/tun", O_RDWR)) < 0) {
+    while ((fd = open(AgentConstants::dev_directory+"/net/tun", O_RDWR)) < 0) {
         if (errno != EINTR) {
             LOG(ERROR, "Cannot open /dev/net/tun");
             return false;
@@ -85,7 +85,7 @@ static bool destroy_tap_interface(const char *devname) {
     struct ifreq ifr;
     int fd;
 
-    while ((fd = open("/dev/net/tun", O_RDWR)) < 0) {
+    while ((fd = open(AgentConstants::dev_directory+"/net/tun", O_RDWR)) < 0) {
         if (errno != EINTR) {
             LOG(ERROR, "Cannot open /dev/net/tun");
             return false;

@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
+
 #include <base/os.h>
 #include <iostream>
 #include <string>
@@ -841,6 +844,7 @@ bool AgentUtXmlNova::ReadXml() {
 
 bool AgentUtXmlNova::ToXml(xml_node *parent) {
     assert(0);
+	return true;
 }
 
 void AgentUtXmlNova::ToString(string *str) {
@@ -1470,6 +1474,7 @@ bool AgentUtXmlL2Route::Run() {
                                       Ip4Address::from_string(ip_),
                                       vxlan_id_, data);
     }
+	return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1622,6 +1627,7 @@ bool AgentUtXmlL3Route::Run() {
                                       Ip4Address::from_string(src_ip_), plen_,
                                       data);
     }
+	return true;
 }
 
 AgentUtXmlL3RouteValidate::AgentUtXmlL3RouteValidate(const string &name,

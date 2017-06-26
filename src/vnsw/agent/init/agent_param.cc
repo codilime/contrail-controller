@@ -13,6 +13,7 @@
 #include <boost/asio.hpp>
 #include <windows.h>
 #include "AgentConstants.h"
+#include "TaskUtil.h"
 #endif
 
 #include "base/os.h"
@@ -624,7 +625,7 @@ void AgentParam::ParseAgentInfo() {
 
     if (!GetValueFromTree<string>(agent_base_dir_,
                                   "DEFAULT.agent_base_directory")) {
-        agent_base_dir_ = "/var/lib/contrail";
+        agent_base_dir_ = AgentConstants::var_directory+"/lib/contrail";
     }
 }
 
@@ -677,7 +678,7 @@ void AgentParam::ParseNexthopServer() {
                            "NEXTHOP-SERVER.add_pid");
     if (nexthop_server_add_pid_) {
         std::stringstream ss;
-        ss << nexthop_server_endpoint_ << "." << getpid();
+        ss << nexthop_server_endpoint_ << "." << osspecific_getpid();
         nexthop_server_endpoint_ = ss.str();
     }
 }
@@ -920,7 +921,7 @@ void AgentParam::ParseNexthopServerArguments
                              "NEXTHOP-SERVER.add_pid");
     if (nexthop_server_add_pid_) {
         std::stringstream ss;
-        ss << nexthop_server_endpoint_ << "." << getpid();
+        ss << nexthop_server_endpoint_ << "." << osspecific_getpid();
         nexthop_server_endpoint_ = ss.str();
     }
 }
@@ -1143,7 +1144,7 @@ static bool ValidateInterface(bool test_mode, const std::string &ifname,
     if (test_mode) {
         return true;
     }
-#ifndef _WINDOWS
+#ifndef _WINDOWS //WINDOWS-TEMP
     int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
     assert(fd >= 0);
 

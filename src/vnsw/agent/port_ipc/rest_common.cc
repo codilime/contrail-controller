@@ -26,12 +26,10 @@ void SendResponse(HttpSession *session,
 void SendErrorResponse(HttpSession *session,
                         const std::string &error_msg, int status_code) {
     rapidjson::Document document;
-	//rapidjson::Value v1,v2;
+    rapidjson::Value v1,v2;
     document.SetObject();
-	//WINDOWS-TEMP
-	rapidjson::GenericStringRef<char> sr1("error"), sr2(error_msg.c_str());
-    //document.AddMember("error", error_msg.c_str(), document.GetAllocator());
-	document.AddMember(sr1, sr2, document.GetAllocator());
+    rapidjson::GenericStringRef<char> sr1("error"), sr2(error_msg.c_str());
+    document.AddMember(sr1, sr2, document.GetAllocator());
     rapidjson::StringBuffer strbuf;
     rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
     document.Accept(writer);

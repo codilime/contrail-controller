@@ -1,3 +1,6 @@
+
+#include <boost/asio.hpp>
+#include <windows.h>
 #include "base/os.h"
 #include "test/test_cmn_util.h"
 

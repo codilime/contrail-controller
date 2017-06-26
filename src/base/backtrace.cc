@@ -5,7 +5,9 @@
 #include "base/backtrace.h"
 
 #include <boost/algorithm/string.hpp>
-//WINDOWSFIX #include <execinfo.h>
+#ifndef _WINDOWS
+#include <execinfo.h>
+#endif
 #include <stdio.h>
 
 #include "base/logging.h"

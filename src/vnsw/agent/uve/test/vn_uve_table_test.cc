@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <uve/test/vn_uve_table_test.h>
 #include <uve/test/vn_uve_entry_test.h>

@@ -56,8 +56,13 @@ protected:
     time_t   prev_vcpu_snapshot_time_;
     char     rx_buff_[kBufLen];
     std::stringstream data_;
-    //WINDOWS boost::asio::posix::stream_descriptor input_;
-    Timer *timer_;
+#ifndef _WINDOWS
+	boost::asio::posix::stream_descriptor input_;
+#else
+	typedef boost::asio::windows::stream_handle stream_descriptor;
+	stream_descriptor input_;
+#endif
+	Timer *timer_;
     bool marked_delete_;
     uint32_t pid_;
     uint32_t retry_;

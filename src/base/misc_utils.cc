@@ -8,7 +8,9 @@
 #include <stdlib.h> 
 #include <base/misc_utils.h>
 #include <base/logging.h>
-//WINDOWSFIX #include <netdb.h>
+#ifndef _WINDOWS
+#include <netdb.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "boost/filesystem/operations.hpp"
@@ -18,11 +20,15 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "AgentConstants.h"
+#ifdef _WINDOWS
+#include "TaskUtil.h"
+#endif
 
 using namespace std;
 namespace fs = boost::filesystem;
 const std::string MiscUtils::ContrailVersionCmd = "/usr/bin/contrail-version";
-const std::string MiscUtils::CoreFileDir = "/var/crashes/";
+const std::string MiscUtils::CoreFileDir = AgentConstants::var_directory+"/crashes/";
 const int MiscUtils::MaxCoreFiles = 5;
 const map<MiscUtils::BuildModule, string> MiscUtils::BuildModuleNames = 
     MiscUtils::MapInit();
@@ -79,16 +85,19 @@ bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
                                        string &build_num) {
     FILE *fp=NULL;
     char line[512];
-   //WINDOWS-TEMP fp = popen(cmd.c_str(), "r");
+    //WINDOWS-CHECK
+    fp = popen(cmd.c_str(), "r");
     if (fp == NULL) {
         return false;
     }
     char *ptr = fgets(line, sizeof(line), fp);
     if (ptr == NULL) {
-  //WINDOWS-TEMP      pclose(fp);
+    //WINDOWS-CHECK
+    pclose(fp);
         return false;
     }
-    //WINDOWS-TEMP pclose(fp);
+    //WINDOWS-CHECK
+    pclose(fp);
     ptr = strchr(line, '\n');
     if (ptr != NULL) {
         *ptr = '\0';
@@ -144,7 +153,7 @@ bool MiscUtils::GetBuildInfo(BuildModule id, const string &build_info,
         result = build_info;
         return false;
     }
-	//WINDOWS-TEMP
+	//WINDOWS-CHECK
 	rapidjson::Value str1("build-id"), str2("build-number");
 	rapidjson::Value str11(rpm_version.c_str(), d.GetAllocator()), str22(build_num.c_str(), d.GetAllocator());
 

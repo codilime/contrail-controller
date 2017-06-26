@@ -16,6 +16,7 @@
 #include "oper/global_vrouter.h"
 #include "oper/vn.h"
 #ifdef _WINDOWS
+#include "winnw.h"
 #include <netinet/udp.h>
 #include <netinet/ip6.h>
 #endif

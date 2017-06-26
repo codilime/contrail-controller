@@ -3,6 +3,7 @@
  */
 #include <boost/asio.hpp>
 #include <windows.h>
+#include "winnw.h"
 #include <string>
 #include <vector>
 #include <base/logging.h>
@@ -470,7 +471,7 @@ static bool interface_exist(string &name)
 	bool ret = false;
 	string tname = "";
 
-	ifs = if_nameindex();
+	ifs = osspecific_if_nameindex();
 	if (ifs == NULL) {
 		LOG(INFO, "No interface exists!");
 		return ret;
@@ -485,7 +486,7 @@ static bool interface_exist(string &name)
 		}
 		ifs++;
 	}
-	if_freenameindex(head);
+	osspecific_if_freenameindex(head);
 	return ret;
 }
 

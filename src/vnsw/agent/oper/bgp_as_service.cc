@@ -58,7 +58,12 @@ void BgpAsAService::BindBgpAsAServicePorts(const std::vector<uint16_t> &ports) {
         address.sin_addr.s_addr = htonl(agent_->router_id().to_ulong());
         address.sin_port = htons(port);
         unsigned char optval = 1;
-#if 0 //WINDOWS-TEMP
+#ifndef _WINDOWS //WINDOWS-CHECK
+        //This may not be needed for windows
+        //It causes the file descriptors to be automatically closed on success of exec
+        //In windows, all handles opened by a process (unless they are inherited) are closed.
+        //https://msdn.microsoft.com/en-us/library/windows/desktop/ms682658(v=vs.85).aspx
+
         if (fcntl(port_fd, F_SETFD, FD_CLOEXEC) < 0) {
             std::stringstream ss;
             ss << "Port setting fcntl failed with error ";

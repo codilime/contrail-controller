@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2016 Juniper Networks, Inc. All rights reserved.
  */
-
+#include <boost/asio.hpp>
+#include <windows.h>
 #include "test_cmn_util.h"
 
 void RouterIdDepInit(Agent *agent) {

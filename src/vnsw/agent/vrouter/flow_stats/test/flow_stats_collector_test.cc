@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <vrouter/flow_stats/test/flow_stats_collector_test.h>
 

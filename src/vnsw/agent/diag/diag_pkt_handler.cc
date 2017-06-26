@@ -8,6 +8,7 @@
 #include <netinet/udp.h>
 #include <netinet/ip.h>
 #include <netinet/icmp.h>
+#include "winnw.h"
 #endif
 
 #include <stdint.h>

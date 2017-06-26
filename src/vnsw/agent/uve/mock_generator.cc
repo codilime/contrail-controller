@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
         var_map["log_level"].as<std::string>(), false, log_flow);
     int gen_id(var_map["generator_id"].as<int>());
     int ngens(var_map["num_generators"].as<int>());
-    int pid(getpid());
+    int pid(osspecific_getpid());
     int num_instances(var_map["num_instances_per_generator"].as<int>());
     int num_networks(var_map["num_networks"].as<int>());
     NodeType::type node_type(

@@ -5,6 +5,7 @@
 #include<netinet/udp.h>
 #include <boost/asio.hpp>
 #include <windows.h>
+#include "winnw.h"
 #endif
 
 #include <stdint.h>

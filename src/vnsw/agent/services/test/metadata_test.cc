@@ -43,7 +43,8 @@ IpamInfo ipam_info[] = {
     {"10.1.1.0", 24, "10.1.1.1"},
 };
 
-pthread_t curl_thread;
+//pthread_t curl_thread;
+boost::thread curl_thread;
 // send multiple requests using curl
 void *SendMultiGetRequest(void *arg) {
     uint16_t port = Agent::GetInstance()->metadata_server_port();
@@ -60,18 +61,20 @@ void *SendMultiGetRequest(void *arg) {
 }
 
 void CurlRun() {
-    pthread_attr_t attr;
+    //pthread_attr_t attr;
     int ret;
 
-    pthread_attr_init(&attr);
-    if ((ret = pthread_create(&curl_thread, &attr, SendMultiGetRequest, NULL)) != 0) {
-        LOG(ERROR, "pthread_create error : " <<  strerror(ret) );
-        assert(0);
-    }
+    //pthread_attr_init(&attr);
+	curl_thread = boost::thread(SendMultiGetRequest);
+   // if ((ret = pthread_create(&curl_thread, &attr, SendMultiGetRequest, NULL)) != 0) {
+   //     LOG(ERROR, "pthread_create error : " <<  strerror(ret) );
+   //     assert(0);
+   // }
 }
 
 void CurlStop() {
-    pthread_join(curl_thread, NULL);
+   // pthread_join(curl_thread, NULL);
+	curl_thread.join();
 }
 
 class TestInterfaceTable : public InterfaceTable {

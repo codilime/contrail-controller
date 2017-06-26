@@ -76,8 +76,8 @@ void TestAgentInit::CreateModules() {
 	Agent *pAgent = agent();
     uve_.reset(AgentObjectFactory::Create<AgentUveBase>
                (pAgent, const_cast<uint64_t&>(AgentUveBase::kBandwidthInterval),
-                const_cast<uint32_t&>(TestAgentInit::kDefaultInterval),
-                const_cast<uint32_t&>(TestAgentInit::kIncrementalInterval)));
+				   const_cast<uint32_t&>(TestAgentInit::kDefaultInterval),
+				   const_cast<uint32_t&>(TestAgentInit::kIncrementalInterval)));
     agent()->set_uve(uve_.get());
 
     if (agent()->tsn_enabled() == false) {

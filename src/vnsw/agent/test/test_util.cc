@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include <boost/asio.hpp>
+#include <windows.h>
 
 #include <boost/foreach.hpp>
 
@@ -1533,6 +1535,7 @@ bool BridgeTunnelRouteAdd(const Peer *peer, const string &vm_vrf,
     BridgeTunnelRouteAdd(peer, vm_vrf, bmap,
                         Ip4Address::from_string(server_ip, ec), label, remote_vm_mac,
                         IpAddress::from_string(vm_addr, ec), plen);
+	return true;
 }
 
 bool EcmpTunnelRouteAdd(const Peer *peer, const string &vrf_name, const Ip4Address &vm_ip,
@@ -1555,6 +1558,7 @@ bool EcmpTunnelRouteAdd(const Peer *peer, const string &vrf_name, const Ip4Addre
                                 sg, path_preference, TunnelType::MplsType(),
                                 EcmpLoadBalance(), nh_req);
     InetUnicastAgentRouteTable::AddRemoteVmRouteReq(peer, vrf_name, vm_ip, plen, data);
+	return true;
 }
 
 bool Inet6TunnelRouteAdd(const Peer *peer, const string &vm_vrf, const Ip6Address &vm_addr,
@@ -1603,6 +1607,7 @@ bool EcmpTunnelRouteAdd(Agent *agent, const Peer *peer, const string &vrf,
     EcmpTunnelRouteAdd(peer, vrf, Ip4Address::from_string(prefix), plen,
                        comp_nh_list, false, vn, sg_id_list, PathPreference());
     client->WaitForIdle();
+	return true;
 }
 
 bool Inet4TunnelRouteAdd(const Peer *peer, const string &vm_vrf, const Ip4Address &vm_addr,
@@ -1633,6 +1638,7 @@ bool Inet4TunnelRouteAdd(const Peer *peer, const string &vm_vrf, char *vm_addr,
     Inet4TunnelRouteAdd(peer, vm_vrf, Ip4Address::from_string(vm_addr, ec), plen,
                         Ip4Address::from_string(server_ip, ec), bmap, label,
                         dest_vn_name, sg, path_preference);
+	return true;
 }
 
 bool TunnelRouteAdd(const char *server, const char *vmip, const char *vm_vrf,
@@ -3601,6 +3607,7 @@ int MplsToVrfId(int label) {
 }
 
 uint32_t GetInterfaceLabel(int uuid, bool l3) {
+	return 0;//WINDOWS-TEMP
 }
 
 PktGen *TxMplsPacketUtil(int ifindex, const char *out_sip,

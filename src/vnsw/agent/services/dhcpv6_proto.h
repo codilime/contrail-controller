@@ -7,6 +7,7 @@
 
 #include "pkt/proto.h"
 #include "services/dhcpv6_handler.h"
+#include "winnw.h"
 
 #define DHCPV6_TRACE(obj, arg)                                               \
 do {                                                                         \

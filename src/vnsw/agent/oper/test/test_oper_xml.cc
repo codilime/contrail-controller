@@ -1,3 +1,5 @@
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <base/os.h>
 #include <iostream>
 #include <boost/program_options.hpp>

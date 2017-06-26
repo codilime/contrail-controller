@@ -21,6 +21,7 @@
 
 #ifdef _WINDOWS
 #include <netinet/ip6.h>
+#include "winnw.h"
 #endif
 
 #ifndef _WINDOWS
