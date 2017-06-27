@@ -9,14 +9,17 @@ import netaddr
 import requests
 import json
 import paramiko
+import socket
 
 from common import validate_uuid
 
 
 def powershell(cmds):
-    cmds = ["powershell.exe", "-NonInteractive"] + cmds
+    powershell_command = subprocess.list2cmdline(cmds)
+    process_cmdline = ["powershell.exe", "-NonInteractive", "-Command"]
+    process_cmdline.append(powershell_command)
     try:
-        output = subprocess.check_output(cmds, shell=True)
+        output = subprocess.check_output(process_cmdline, shell=True)
     except subprocess.CalledProcessError:
         raise
     return output
@@ -92,9 +95,12 @@ class HyperVManager(object):
         self.new_mgmt_ip = self._generate_new_mgmt_ip()
         self._configure_vm_mgmt_ip()
 
-        for _ in range(2):
-            powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
-                        "-SwitchName", self.vrouter_vswitch_name])
+        powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
+                    "-SwitchName", self.vrouter_vswitch_name,
+                    "-Name", self.nic_left['win_name']])
+        powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
+                    "-SwitchName", self.vrouter_vswitch_name,
+                    "-Name", self.nic_right['win_name']])
 
 
     def destroy_vm(self):
@@ -112,9 +118,7 @@ class HyperVManager(object):
             self.ssh_client = paramiko.SSHClient()
             self.ssh_client.set_missing_host_key_policy(
                 paramiko.AutoAddPolicy())
-            self.ssh_client.connect(str(self.new_mgmt_ip), 
-                                    username=self.USERNAME,
-                                    password=self.PASSWORD)
+            self._connect_with_retries()
             self._setup_snat()
         finally:
             if self.ssh_client:
@@ -142,34 +146,33 @@ class HyperVManager(object):
         try:
             powershell(["Get-VM", "-Name", self.wingw_name])
         except subprocess.CalledProcessError as e:
-            return False
+            print e.returncode
+            if e.returncode != 0:
+                # vm doesn't exist
+                return False
+            else:
+                # other exception
+                raise
         return True
 
 
     def _configure_host_mgmt_ip(self):
         """configures host management adapter and its IP"""
-        name_wildcard = "\"*({})\"".format(self.mgmt_vswitch_name)
 
-        adapter_resp = powershell(["Get-NetAdapter", "-Name", name_wildcard])
-        if adapter_resp == "":
-            powershell(["Add-VMNetworkAdapter",
-                        "-SwitchName", self.mgmt_vswitch_name,
-                        "-Name", self.mgmt_vswitch_name,
-                        "-ManagementOS"])
-
-        current_ip = powershell(["Get-NetAdapter -Name {} | "
-                                 "Get-NetIPAddress | "
-                                 "Where AddressFamily -eq IPv4 | "
-                                 "Select -ExpandProperty IPAddress"
-                                 .format(name_wildcard)])
+        adapter_name = self.mgmt_vswitch_name
+        current_ip = powershell(["Get-NetAdapter", "|",
+                                 "Where-Object", "Name", "-Match", adapter_name, "|"
+                                 "Get-NetIPAddress", "|",
+                                 "Where-Object", "AddressFamily", "-eq", "IPv4", "|",
+                                 "Select", "-ExpandProperty", "IPAddress"])
         if current_ip != self.HOST_MGMT_IP:
-            if_index = powershell(["Get-NetAdapter -Name {} | "
-                                   "Select -ExpandProperty ifIndex"
-                                   .format(name_wildcard)])
+            if_index = powershell(["Get-NetAdapter", "|",
+                                   "Where-Object", "Name", "-Match", adapter_name, "|"
+                                   "Select", "-ExpandProperty", "ifIndex"])
             if current_ip != "":
-                powershell(["Get-NetAdapter -Name {} | "
-                            "Remove-NetIPAddress -Confirm:$false"
-                            .format(name_wildcard)])
+                powershell(["Get-NetAdapter", "|",
+                            "Where-Object", "Name", "-Match", adapter_name, "|"
+                            "Remove-NetIPAddress", "-Confirm:$false"])
             powershell(["New-NetIPAddress", "-IPAddress", self.HOST_MGMT_IP,
                         "-PrefixLength", str(self.MGMT_PREFIX_LEN),
                         "-InterfaceIndex", if_index])
@@ -206,11 +209,9 @@ class HyperVManager(object):
 
 
     def _get_mgmt_ips_of(self, vmname_with_wildcard):
-        ips = powershell(["Get-VMNetworkAdapter -VMName {} | "
-                          "Where SwitchName -eq {} | "
-                          "Select -ExpandProperty IPAddresses"
-                          .format(vmname_with_wildcard, 
-                                  self.mgmt_vswitch_name)])
+        ips = powershell(["Get-VMNetworkAdapter", "-VMName", vmname_with_wildcard, "|",
+                          "Where", "SwitchName", "-eq", self.mgmt_vswitch_name, "|",
+                          "Select", "-ExpandProperty", "IPAddresses"])
         if ips == "":
             raise IndexError("no management IP found")
         ips = ips.splitlines()
@@ -285,6 +286,23 @@ class HyperVManager(object):
         #return (self.TAP_PREFIX + uuid_str)[:self.DEV_NAME_LEN]
 
 
+    def _connect_with_retries(self):
+        attempts = 0
+        while True:
+            try:
+                self.ssh_client.connect(str(self.new_mgmt_ip),
+                                        username=self.USERNAME,
+                                        password=self.PASSWORD,
+                                        auth_timeout=5)
+                break
+            except socket.error:
+                attempts += 1
+                if attempts >= 5:
+                    break
+                else:
+                    raise
+
+
     def _exec_ssh_command(self, command):
         _, stdout, _ = self.ssh_client.exec_command(command)
         return stdout.channel.recv_exit_status()
@@ -296,6 +314,8 @@ class HyperVManager(object):
                                .format(self.nic_left['name']))
         self._exec_ssh_command("sudo ip link set dev {} up"
                                .format(self.nic_right['name']))
+        self._exec_ssh_command("sudo ip addr add dev {} 10.0.0.1/24".format(self.nic_left['name']))
+        self._exec_ssh_command("sudo ip addr add dev {} {}/24".format(self.nic_right['name'], self.gw_ip))
         self._exec_ssh_command("sudo iptables -t nat -F")
         self._exec_ssh_command("sudo iptables -t nat -A POSTROUTING -o {} "
                                "-j MASQUERADE"
@@ -408,6 +428,7 @@ class VRouterHyperV(object):
         nic_left = {}
         if uuid.UUID(self.args.vmi_left_id):
             nic_left['uuid'] = validate_uuid(self.args.vmi_left_id)
+            nic_left['win_name'] = "int-{}".format(nic_left['uuid'])
             if self.args.vmi_left_mac:
                 nic_left['mac'] = netaddr.EUI(self.args.vmi_left_mac,
                                               dialect=netaddr.mac_eui48)
@@ -421,6 +442,7 @@ class VRouterHyperV(object):
         nic_right = {}
         if uuid.UUID(self.args.vmi_right_id):
             nic_right['uuid'] = validate_uuid(self.args.vmi_right_id)
+            nic_right['win_name'] = "gw-{}".format(nic_right['uuid'])
             if self.args.vmi_right_mac:
                 nic_right['mac'] = netaddr.EUI(self.args.vmi_right_mac,
                                                dialect=netaddr.mac_eui48)
