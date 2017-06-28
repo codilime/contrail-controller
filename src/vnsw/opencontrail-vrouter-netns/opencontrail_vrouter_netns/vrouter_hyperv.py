@@ -71,6 +71,9 @@ class HyperVManager(object):
                                 #self.nic_left['uuid'])[:self.NAME_LEN]
         self.nic_right['name'] = (self.RIGHT_DEV_PREFIX + "2")
                                 #self.nic_right['uuid'])[:self.NAME_LEN]
+        
+        self.nic_left['win_name'] = self.nic_left['win_name'][:self.NAME_LEN]
+        self.nic_right['win_name'] = self.nic_right['win_name'][:self.NAME_LEN]
 
 
     def spawn_vm(self):
