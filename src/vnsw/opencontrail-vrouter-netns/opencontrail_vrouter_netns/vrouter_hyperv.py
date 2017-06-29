@@ -71,7 +71,7 @@ class HyperVManager(object):
                                 #self.nic_left['uuid'])[:self.NAME_LEN]
         self.nic_right['name'] = (self.RIGHT_DEV_PREFIX + "2")
                                 #self.nic_right['uuid'])[:self.NAME_LEN]
-        
+
         self.nic_left['win_name'] = self.nic_left['win_name'][:self.NAME_LEN]
         self.nic_right['win_name'] = self.nic_right['win_name'][:self.NAME_LEN]
 
@@ -83,11 +83,17 @@ class HyperVManager(object):
 
         self._configure_host_mgmt_ip()
 
+        root_disk_dir = os.path.dirname(self.vhd_path)
+        cloned_disk_name = "disk_" + self.vm_uuid.split("-")[0] + ".vhdx"
+        self.cloned_disk_path = os.path.join(root_disk_dir, cloned_disk_name)
+
+        powershell(["Copy-Item", self.vhd_path, self.cloned_disk_path])
+
         powershell(["New-VM", "-Name", self.wingw_name, \
                     "-Path", self.vm_location, \
                     "-Generation", self.HYPERV_GENERATION, \
                     "-MemoryStartupBytes", self.RAM_GB, \
-                    "-VHDPath", self.vhd_path, \
+                    "-VHDPath", self.cloned_disk_path, \
                     "-SwitchName", self.mgmt_vswitch_name])
 
         powershell(["Set-VMFirmware", "-VMName", self.wingw_name, \
@@ -112,6 +118,7 @@ class HyperVManager(object):
             raise ValueError("Specified Windows gateway VM does not exist")
         powershell(["Stop-VM", "-Name", self.wingw_name, "-Force"])
         powershell(["Remove-VM", "-Name", self.wingw_name, "-Force"])
+        powershell(["Remove-Item", self.cloned_disk_path])
 
 
     def set_snat(self):
@@ -163,14 +170,15 @@ class HyperVManager(object):
         """configures host management adapter and its IP"""
 
         adapter_name = self.mgmt_vswitch_name
-        current_ip = powershell(["Get-NetAdapter", "|",
-                                 "Where-Object", "Name", "-Match", adapter_name, "|"
-                                 "Get-NetIPAddress", "|",
-                                 "Where-Object", "AddressFamily", "-eq", "IPv4", "|",
+        current_ip = powershell(["Get-NetAdapter", "|", "Where-Object", "Name",
+                                 "-Match", adapter_name, "|",
+                                 "Get-NetIPAddress", "|", "Where-Object",
+                                 "AddressFamily", "-eq", "IPv4", "|",
                                  "Select", "-ExpandProperty", "IPAddress"])
         if current_ip != self.HOST_MGMT_IP:
             if_index = powershell(["Get-NetAdapter", "|",
-                                   "Where-Object", "Name", "-Match", adapter_name, "|"
+                                   "Where-Object", "Name", "-Match",
+                                   adapter_name, "|"
                                    "Select", "-ExpandProperty", "ifIndex"])
             if current_ip != "":
                 powershell(["Get-NetAdapter", "|",
@@ -212,9 +220,10 @@ class HyperVManager(object):
 
 
     def _get_mgmt_ips_of(self, vmname_with_wildcard):
-        ips = powershell(["Get-VMNetworkAdapter", "-VMName", vmname_with_wildcard, "|",
-                          "Where", "SwitchName", "-eq", self.mgmt_vswitch_name, "|",
-                          "Select", "-ExpandProperty", "IPAddresses"])
+        ips = powershell(["Get-VMNetworkAdapter",
+                          "-VMName", vmname_with_wildcard, "|",
+                          "Where", "SwitchName", "-eq", self.mgmt_vswitch_name,
+                          "|", "Select", "-ExpandProperty", "IPAddresses"])
         if ips == "":
             raise IndexError("no management IP found")
         ips = ips.splitlines()
@@ -229,12 +238,9 @@ class HyperVManager(object):
         inject_ip_script_path = os.path.join(this_script_dir,
                                              self.INJECT_IP_SCRIPT_REL_PATH)
         retry_num = 0
-        while True:
-            if retry_num == self.NUM_INJECT_RETRIES:
-                raise RuntimeError("Waited for SNAT VM for too long")
-
-            time.sleep(self.WAIT_FOR_VM_TIME_SEC)
+        while retry_num < self.NUM_INJECT_RETRIES:
             retry_num += 1
+            time.sleep(self.WAIT_FOR_VM_TIME_SEC)
             try:
                 powershell([inject_ip_script_path,
                             "-Name", self.wingw_name,
@@ -245,6 +251,8 @@ class HyperVManager(object):
                 continue
             else:
                 break
+        if retry_num == self.NUM_INJECT_RETRIES:
+            raise RuntimeError("Waited for SNAT VM for too long")
 
 
     def _request_to_agent(self, url, method, data):
@@ -317,8 +325,10 @@ class HyperVManager(object):
                                .format(self.nic_left['name']))
         self._exec_ssh_command("sudo ip link set dev {} up"
                                .format(self.nic_right['name']))
-        self._exec_ssh_command("sudo ip addr add dev {} 10.0.0.1/24".format(self.nic_left['name']))
-        self._exec_ssh_command("sudo ip addr add dev {} {}/24".format(self.nic_right['name'], self.gw_ip))
+        self._exec_ssh_command("sudo ip addr add dev {} 10.0.0.1/24"
+                               .format(self.nic_left['name']))
+        self._exec_ssh_command("sudo ip addr add dev {} {}/24"
+                               .format(self.nic_right['name'], self.gw_ip))
         self._exec_ssh_command("sudo iptables -t nat -F")
         self._exec_ssh_command("sudo iptables -t nat -A POSTROUTING -o {} "
                                "-j MASQUERADE"
