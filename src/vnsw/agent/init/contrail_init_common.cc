@@ -26,8 +26,11 @@
 
 #include "contrail_init_common.h"
 
+// TODO (Juniper-Windows)
+// Temporary change: ksync_enable_(true) -> ksync_enable_(false)
+// It should be reverted once KSync initialization doesn't crash anymore.
 ContrailInitCommon::ContrailInitCommon() : AgentInit(), create_vhost_(true),
-    ksync_enable_(true), services_enable_(true), packet_enable_(true),
+    ksync_enable_(false), services_enable_(true), packet_enable_(true),
     uve_enable_(true), vgw_enable_(true), router_id_dep_enable_(true) {
 }
 

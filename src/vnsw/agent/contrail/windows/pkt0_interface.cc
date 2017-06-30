@@ -18,7 +18,12 @@
 #include "../pkt0_interface.h"
 
 #define TUN_INTF_CLONE_DEV "/dev/net/tun"
-const LPCTSTR PKT0_PATH = TEXT("\\\\.\\vrouterPkt0");
+
+// TODO (Juniper-Windows) This is temporary change that allows running
+// Agent without vRouter Extension. Complementary change is below
+// (line 43) - they both should be removed together.
+// const LPCTSTR PKT0_PATH = TEXT("\\\\.\\vrouterPkt0");
+const LPCTSTR PKT0_PATH = TEXT("vrouterPkt0");
 
 #define TAP_TRACE(obj, ...)                                              \
 do {                                                                     \
@@ -31,7 +36,12 @@ void Pkt0Interface::InitControlInterface() {
     pkt_handler()->agent()->set_pkt_interface_name(name_);
 
     DWORD access_flags = GENERIC_READ | GENERIC_WRITE;
-    DWORD attrs = OPEN_EXISTING;
+    // TODO (Juniper-Windows) This is temporary change that allows running
+    // Agent without vRouter Extension. Complementary change is above
+    // (line 26) - they both should be removed together.
+    // DWORD attrs = OPEN_EXISTING;
+    DWORD attrs = CREATE_ALWAYS;
+
     DWORD flags = FILE_FLAG_OVERLAPPED;
 
     HANDLE handle = CreateFile(PKT0_PATH, access_flags, 0, NULL, attrs, flags, NULL);
