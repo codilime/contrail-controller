@@ -9,5 +9,5 @@ cmd = ('cd ' + str_vpath + ' & ' +
        'perl Configure debug-VC-WIN64A ' + config_opts + ' & ' +
        r'ms\do_win64a & nmake -f ms\nt.mak & nmake -f ms\nt.mak install')
 
-libs = [str(File('#/build/lib/libeay32.lib')), str(File('#/build/lib/ssleay32.lib'))]
-openssl_cfg = env.Command(libs, vpath, cmd)
+target = [File('#/build/lib/libeay32.lib'), File('#/build/lib/ssleay32.lib'), Dir('#/build/include/openssl')]
+openssl_cfg = env.Command(target, vpath, cmd)
