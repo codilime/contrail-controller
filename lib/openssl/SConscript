@@ -1,49 +1,13 @@
-# -*- mode: python; -*-
-
-import os
-import re
-import subprocess
-import sys
-import glob
-import shutil
-
-print 'openssl enter...'
+env = DefaultEnvironment()
 
 vpath = '#/third_party/openssl-1.0.2k'
-buildpath = '#/build'
+str_vpath = str(Dir(vpath).abspath)
 
-env = DefaultEnvironment()
-ssllibpath = Dir(vpath).abspath+ r'\out32\ssleay32.lib'
-cryptolibpath = Dir(vpath).abspath+ r'\out32\libeay32.lib'
-opensslconfheader = '#build/include/openssl/conf.h'
+config_opts = '--prefix=' + str(Dir('#/build').abspath)
 
-def build_openssl_for_windows(target,source,env):
-   cwd = os.getcwd()
-   os.chdir(Dir(vpath).abspath)
-   assert os.path.isdir(Dir(vpath).abspath)
-   print os.getcwd()
-   perlcmd = "perl Configure debug-VC-WIN64A" + " --prefix=" + Dir('#/build').abspath
-   print perlcmd
-   subprocess.call(perlcmd, shell=True)
-   print ' calling do_win64'
-   subprocess.call(r'ms\do_win64a', shell=True)
-   print '  calling ms nk.mak'
-   subprocess.call(r'nmake -f ms\nt.mak', shell=True)
-   print ' calling ms nt.mak install'
-   subprocess.call(r'nmake -f ms\nt.mak install', shell=True)
-   os.chdir(cwd)
+cmd = ('cd ' + str_vpath + ' & ' +
+       'perl Configure debug-VC-WIN64A ' + config_opts + ' & ' +
+       r'ms\do_win64a & nmake -f ms\nt.mak & nmake -f ms\nt.mak install')
 
-env.Command('#/build/lib/ssleay32.lib', str(Dir(vpath)) , build_openssl_for_windows)
-
-#env.InstallAs('#build/lib/ssl.lib', ssllibpath)
-#env.InstallAs('#build/lib/crypto.lib',cryptolibpath)
-
-srcdir = Dir(vpath + '/inc32/openssl').abspath
-destdir = Dir('#/build/include/openssl').abspath
-
-if not os.path.exists(destdir):
-  print 'copying files to' + destdir
-  shutil.copytree(srcdir, destdir)
-
-print 'openssl leave...'
-     
+target = [File('#/build/lib/libeay32.lib'), File('#/build/lib/ssleay32.lib'), Dir('#/build/include/openssl')]
+openssl_cfg = env.Command(target, vpath, cmd)
