@@ -85,8 +85,8 @@ int main(int argc, char *argv[]) {
         init_file = var_map["config_file"].as<string>();
         struct stat s;
         if (stat(init_file.c_str(), &s) != 0) {
-            LOG(ERROR, "Error opening config file <" << init_file 
-                << ">. Error number <" << errno << ">");
+            cout << "Error opening config file <" << init_file
+                << ">. Error number <" << errno << ">";
             exit(EINVAL);
         }
     }
