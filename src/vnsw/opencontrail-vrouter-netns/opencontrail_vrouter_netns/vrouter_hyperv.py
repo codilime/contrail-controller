@@ -64,6 +64,10 @@ class HyperVManager(object):
         self.mgmt_vswitch_name = mgmt_vswitch_name
         self.vrouter_vswitch_name = vrouter_vswitch_name
 
+        root_disk_dir = os.path.dirname(self.vhd_path)
+        cloned_disk_name = "disk_" + self.vm_uuid.split("-")[0] + ".vhdx"
+        self.cloned_disk_path = os.path.join(root_disk_dir, cloned_disk_name)
+
         self.wingw_name = self.WINGW_PREFIX + self.vm_uuid \
             if wingw_vm_name is None else wingw_vm_name
 
@@ -82,10 +86,6 @@ class HyperVManager(object):
             raise ValueError("Specified Windows gateway VM already exists")
 
         self._configure_host_mgmt_ip()
-
-        root_disk_dir = os.path.dirname(self.vhd_path)
-        cloned_disk_name = "disk_" + self.vm_uuid.split("-")[0] + ".vhdx"
-        self.cloned_disk_path = os.path.join(root_disk_dir, cloned_disk_name)
 
         powershell(["Copy-Item", self.vhd_path, self.cloned_disk_path])
 
@@ -431,6 +431,10 @@ class VRouterHyperV(object):
         destroy_parser.add_argument(
             "vmi_right_id",
             help="Right virtual machine interface UUID")
+        destroy_parser.add_argument(
+            "--vhd_path",
+            required=True,
+            help="Path of VHD of VM")
         destroy_parser.set_defaults(func=self.destroy)
 
         self.args = parser.parse_args(remaining_argv)
@@ -480,14 +484,19 @@ class VRouterHyperV(object):
 
     def destroy(self):
         vm_id = validate_uuid(self.args.vm_id)
+
         nic_left = {}
         if uuid.UUID(self.args.vmi_left_id):
-            nic_left = {'uuid': validate_uuid(self.args.vmi_left_id)}
+            nic_left['uuid'] = validate_uuid(self.args.vmi_left_id)
+            nic_left['win_name'] = "int-{}".format(nic_left['uuid'])
+
         nic_right = {}
         if uuid.UUID(self.args.vmi_right_id):
-            nic_right = {'uuid': validate_uuid(self.args.vmi_right_id)}
+            nic_right['uuid'] = validate_uuid(self.args.vmi_right_id)
+            nic_right['win_name'] = "gw-{}".format(nic_right['uuid'])
 
-        hyperv_mgr = HyperVManager(vm_id, nic_left, nic_right)
+        hyperv_mgr = HyperVManager(vm_id, nic_left, nic_right,
+                                   vhd_path=self.args.vhd_path)
 
         hyperv_mgr.unregister_from_agent()
         hyperv_mgr.destroy_vm()
