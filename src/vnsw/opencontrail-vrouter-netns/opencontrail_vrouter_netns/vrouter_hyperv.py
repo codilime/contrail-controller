@@ -125,23 +125,26 @@ class SNATVirtualMachine(object):
 
     INJECT_IP_SCRIPT_REL_PATH = "vrouter_hyperv_inject_ip.ps1"
     WAIT_FOR_VM_TIME_SEC = 5
-    NUM_INJECT_RETRIES = 5
+    NUM_INJECT_RETRIES = 25
 
     HOST_MGMT_IP = "169.254.150.1"
     MGMT_PREFIX_LEN = 16
     MGMT_IP_RANGE = netaddr.IPRange("169.254.150.10", "169.254.150.254")
     MGMT_SUBNET_MASK = "255.255.0.0"
 
+    # TODO: Remove `forwarding_mac` when agent is functional
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
                  vm_location=None, vhd_path=None,
                  mgmt_vswitch_name=None, vrouter_vswitch_name=None,
-                 left_gw_cidr=None, right_gw_cidr=None):
+                 left_gw_cidr=None, right_gw_cidr=None,
+                 forwarding_mac=None):
 
         self.vm_uuid = vm_uuid
         self.nic_left = nic_left
         self.nic_right = nic_right
         self.left_gw_cidr = left_gw_cidr
         self.right_gw_cidr = right_gw_cidr
+        self.forwarding_mac = forwarding_mac
 
         self.vm_location = vm_location
         self.vhd_path = vhd_path
@@ -358,6 +361,11 @@ class SNATVirtualMachine(object):
                                         self.nic_right.name))
         ssh_client.exec_command("sudo /etc/init.d/iptables-persistent save")
 
+        # TODO: Remove when Agent is functional
+        ssh_client.exec_command("sudo arp -i {} -s 10.7.3.10 {}"
+                                .format(self.nic_right.name,
+                                        self.forwarding_mac))
+
 
 class VRouterHyperV(object):
     """
@@ -439,6 +447,11 @@ class VRouterHyperV(object):
             "--right-gw-cidr",
             default=None,
             help=("Gateway IP for right network"))
+        # TODO: Remove when Agent is functional
+        create_parser.add_argument(
+            "--forwarding-mac",
+            default=None,
+            help=("MAC address of the forwarding interface on host"))
         create_parser.set_defaults(func=self.create)
 
         destroy_parser = subparsers.add_parser('destroy')
@@ -477,9 +490,11 @@ class VRouterHyperV(object):
                                mac=self.args.vmi_right_mac,
                                ip=self.args.vmi_right_ip)
 
+        # TODO: Remove `forwarding_mac` when Agent is functional
         snat_vm = SNATVirtualMachine(vm_id, nic_left, nic_right,
                                      left_gw_cidr=self.args.left_gw_cidr,
                                      right_gw_cidr=self.args.right_gw_cidr,
+                                     forwarding_mac=self.args.forwarding_mac,
                                      vm_location=self.args.vm_location,
                                      vhd_path=self.args.vhd_path,
                                      mgmt_vswitch_name=\
