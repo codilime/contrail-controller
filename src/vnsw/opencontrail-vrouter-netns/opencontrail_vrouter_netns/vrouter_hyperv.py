@@ -217,7 +217,7 @@ class SNATVirtualMachine(object):
         call_powershell(["Remove-VM", "-Name", self.wingw_name, "-Force"])
         call_powershell(["Remove-Item", self.cloned_disk_path])
 
-    def inject_ip(self, mgmt_ip):
+    def inject_ip(self, mgmt_ip, mgmt_switch_name):
         """injects management IP to the vm"""
         this_script_path = os.path.realpath(__file__)
         this_script_dir = os.path.dirname(this_script_path)
@@ -229,6 +229,7 @@ class SNATVirtualMachine(object):
             time.sleep(self.WAIT_FOR_VM_TIME_SEC)
             try:
                 call_powershell([inject_ip_script_path,
+                                 "-SwitchName", mgmt_switch_name,
                                  "-Name", self.wingw_name,
                                  "-IPAddress", str(mgmt_ip),
                                  "-Subnet", self.MGMT_SUBNET_MASK])
@@ -479,12 +480,13 @@ class VRouterHyperV(object):
                                      vhd_path=self.args.vhd_path)
         snat_vm.create(self.args.mgmt_vswitch_name)
         try:
-            ipam = MgmtIPAM(self.args.mgmt_vswitch_name)
-            mgmt_ip = ipam.generate()
-
-            snat_vm.inject_ip(mgmt_ip)
             snat_vm.attach_vrouter(self.args.vrouter_vswitch_name)
             snat_vm.spawn()
+
+            ipam = MgmtIPAM(self.args.mgmt_vswitch_name)
+            mgmt_ip = ipam.generate()
+            snat_vm.inject_ip(mgmt_ip, self.args.mgmt_vswitch_name)
+
             snat_vm.set_snat(mgmt_ip)
             snat_vm.register()
         except:

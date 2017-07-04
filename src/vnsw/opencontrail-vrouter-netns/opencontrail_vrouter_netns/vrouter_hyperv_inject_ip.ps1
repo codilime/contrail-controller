@@ -1,15 +1,18 @@
 param (
     [parameter(Mandatory=$true)][string]$Name,
+    [parameter(Mandatory=$true)][string]$SwitchName,
     [parameter(Mandatory=$true)][string]$IPAddress,
     [parameter(Mandatory=$true)][string]$Subnet
 )
 
-$VmMgmtService = Get-WmiObject -Namespace 'root\virtualization\v2' -Class Msvm_VirtualSystemManagementService 
+$VmMgmtService = Get-WmiObject -Namespace 'root\virtualization\v2' -Class Msvm_VirtualSystemManagementService
+
+$vmNetworkAdapter = Get-VM -Name $Name | Get-VMNetworkAdapter | Where-Object SwitchName -eq $SwitchName
 
 $Vm = Get-WmiObject -Namespace 'root\virtualization\v2' -Class Msvm_ComputerSystem | Where-Object { $_.ElementName -eq $Name } 
 $VmSettingData = ($Vm.GetRelated( `
         "Msvm_VirtualSystemSettingData", "Msvm_SettingsDefineState", $null, $null, "SettingData", "ManagedElement", $false, $null) | % {$_})
-$VmEthernetPortSettingData = $VmSettingData.GetRelated('Msvm_SyntheticEthernetPortSettingData') 
+$VmEthernetPortSettingData = $VmSettingData.GetRelated('Msvm_SyntheticEthernetPortSettingData') | Where-Object { $_.ElementName -eq $vmNetworkAdapter.Name }
 $GuestNetworkAdapterConfiguration = ($VmEthernetPortSettingData.GetRelated( `
         "Msvm_GuestNetworkAdapterConfiguration", "Msvm_SettingDataComponent", $null, $null, "PartComponent", "GroupComponent", $false, $null) | % {$_})
 
