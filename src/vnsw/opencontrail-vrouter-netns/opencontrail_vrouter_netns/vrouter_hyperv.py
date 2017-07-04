@@ -179,8 +179,10 @@ class SNATVirtualMachine(object):
         self.nic_right = nic_right
         self.vm_location = vm_location
         self.vhd_path = vhd_path
-        self.wingw_name = WINGW_PREFIX + self.vm_uuid \
-            if wingw_vm_name is None else wingw_vm_name
+        if wingw_vm_name is None:
+            self.wingw_name = WINGW_PREFIX + self.vm_uuid
+        else:
+            self.wingw_name = wingw_vm_name
         root_disk_dir = os.path.dirname(self.vhd_path)
         cloned_disk_name = "disk_" + self.vm_uuid.split("-")[0] + ".vhdx"
         self.cloned_disk_path = os.path.join(root_disk_dir, cloned_disk_name)
