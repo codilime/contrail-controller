@@ -27,6 +27,8 @@ def call_powershell(cmds):
 
 LEFT_DEV_PREFIX = 'int'
 RIGHT_DEV_PREFIX = 'gw'
+WINGW_PREFIX = 'contrail-wingw-'
+
 
 class BlockingSSHClient(paramiko.SSHClient):
 
@@ -45,16 +47,18 @@ class VMPort(object):
     BASE_URL = "http://localhost:9091/port"
     HEADERS = {'content-type': 'application/json'}
 
-    def __init__(self, uuid, prefix, mac=None, ip=None):
+    def __init__(self, uuid, prefix, mac=None, ip_cidr=None, gw_cidr=None):
         self.uuid = validate_uuid(uuid)
         if mac:
             self.mac = netaddr.EUI(mac, dialect=netaddr.mac_eui48)
-        if ip:
-            self.ip = netaddr.IPNetwork(ip)
+        if ip_cidr:
+            self.ip = netaddr.IPNetwork(ip_cidr)
+        if gw_cidr:
+            self.gw_cidr = gw_cidr
 
         if prefix == LEFT_DEV_PREFIX:
-            dev_suffix = "1"
-            win_prefix = "int"
+            dev_suffix = "1"    # as seen from inside the SNAT VM
+            win_prefix = "int"  # as seen from the host
         elif prefix == RIGHT_DEV_PREFIX:
             dev_suffix = "2"
             win_prefix = "gw"
@@ -114,9 +118,49 @@ class VMPort(object):
         pass
 
 
-class SNATVirtualMachine(object):
-    WINGW_PREFIX = 'contrail-wingw-'
+class MgmtIPAM(object):
+    MGMT_IP_RANGE = netaddr.IPRange("169.254.150.10", "169.254.150.254")
 
+    def __init__(self, mgmt_vswitch_name):
+        self.mgmt_vswitch_name = mgmt_vswitch_name
+
+    def generate(self):
+        """generates an IP to give to new gateway VM"""
+        used_ips = self._get_all_mgmt_ips()
+
+        used_ips = netaddr.IPSet(used_ips)
+        pool_ips = netaddr.IPSet(self.MGMT_IP_RANGE)
+        free_ips = pool_ips ^ used_ips
+
+        try:
+            first_available_ip = next(iter(free_ips))
+        except StopIteration:
+            raise ValueError("Ran out of management IPs for gateway VM")
+        return first_available_ip
+
+    def _get_all_mgmt_ips(self):
+        """queries hyper-v for management IPs of all SNAT VMs"""
+        try:
+            mgmt_ips = self._get_mgmt_ips_of(WINGW_PREFIX + "*")
+        except IndexError:
+            # ignore, just return an empty list
+            mgmt_ips = []
+        return mgmt_ips
+
+    def _get_mgmt_ips_of(self, vmname_with_wildcard):
+        ips = call_powershell(["Get-VMNetworkAdapter",
+                               "-VMName", "{}".format(vmname_with_wildcard), "|",
+                               "Where", "SwitchName", "-eq", self.mgmt_vswitch_name,
+                               "|", "Select", "-ExpandProperty", "IPAddresses"])
+        if ips == "":
+            raise IndexError("no management IP found")
+        ips = ips.splitlines()
+
+        # if multiple IPs connected to mgmt switch, we can use either one
+        return ips[0]
+
+
+class SNATVirtualMachine(object):
     HYPERV_GENERATION = '2'
     RAM_GB = '1GB'
 
@@ -129,65 +173,38 @@ class SNATVirtualMachine(object):
 
     HOST_MGMT_IP = "169.254.150.1"
     MGMT_PREFIX_LEN = 16
-    MGMT_IP_RANGE = netaddr.IPRange("169.254.150.10", "169.254.150.254")
     MGMT_SUBNET_MASK = "255.255.0.0"
 
-    # TODO: Remove `forwarding_mac` when agent is functional
     def __init__(self, vm_uuid, nic_left, nic_right, wingw_vm_name=None,
-                 vm_location=None, vhd_path=None,
-                 mgmt_vswitch_name=None, vrouter_vswitch_name=None,
-                 left_gw_cidr=None, right_gw_cidr=None,
-                 forwarding_mac=None):
-
+                 vm_location=None, vhd_path=None, forwarding_mac=None):
         self.vm_uuid = vm_uuid
         self.nic_left = nic_left
         self.nic_right = nic_right
-        self.left_gw_cidr = left_gw_cidr
-        self.right_gw_cidr = right_gw_cidr
-        self.forwarding_mac = forwarding_mac
-
         self.vm_location = vm_location
         self.vhd_path = vhd_path
-        self.mgmt_vswitch_name = mgmt_vswitch_name
-        self.vrouter_vswitch_name = vrouter_vswitch_name
-
+        self.wingw_name = WINGW_PREFIX + self.vm_uuid \
+            if wingw_vm_name is None else wingw_vm_name
         root_disk_dir = os.path.dirname(self.vhd_path)
         cloned_disk_name = "disk_" + self.vm_uuid.split("-")[0] + ".vhdx"
         self.cloned_disk_path = os.path.join(root_disk_dir, cloned_disk_name)
+        # TODO: Remove `forwarding_mac` when agent is functional
+        self.forwarding_mac = forwarding_mac
 
-        self.wingw_name = self.WINGW_PREFIX + self.vm_uuid \
-            if wingw_vm_name is None else wingw_vm_name
-
-    def spawn(self):
+    def spawn(self, mgmt_vswitch_name):
         """calls powershell to spawn vm """
         if self._exists():
             raise ValueError("Specified Windows gateway VM already exists")
-
-        self._configure_host_mgmt_ip()
-
+        self._configure_host_mgmt_ip(mgmt_vswitch_name)
         call_powershell(["Copy-Item", self.vhd_path, self.cloned_disk_path])
-
         call_powershell(["New-VM", "-Name", self.wingw_name, \
                          "-Path", self.vm_location, \
                          "-Generation", self.HYPERV_GENERATION, \
                          "-MemoryStartupBytes", self.RAM_GB, \
                          "-VHDPath", self.cloned_disk_path, \
-                         "-SwitchName", self.mgmt_vswitch_name])
-
+                         "-SwitchName", mgmt_vswitch_name])
         call_powershell(["Set-VMFirmware", "-VMName", self.wingw_name, \
                          "-EnableSecureBoot", "Off"])
-
         call_powershell(["Start-VM", "-Name", self.wingw_name])
-
-        self.new_mgmt_ip = self._generate_new_mgmt_ip()
-        self._configure_mgmt_ip()
-
-        call_powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
-                         "-SwitchName", self.vrouter_vswitch_name,
-                         "-Name", self.nic_left.win_name])
-        call_powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
-                         "-SwitchName", self.vrouter_vswitch_name,
-                         "-Name", self.nic_right.win_name])
 
     def destroy(self):
         """calls powershell to destroy vm"""
@@ -197,13 +214,45 @@ class SNATVirtualMachine(object):
         call_powershell(["Remove-VM", "-Name", self.wingw_name, "-Force"])
         call_powershell(["Remove-Item", self.cloned_disk_path])
 
-    def set_snat(self):
+    def inject_ip(self, mgmt_ip):
+        """injects management IP to the vm"""
+        this_script_path = os.path.realpath(__file__)
+        this_script_dir = os.path.dirname(this_script_path)
+        inject_ip_script_path = os.path.join(this_script_dir,
+                                             self.INJECT_IP_SCRIPT_REL_PATH)
+        retry_num = 0
+        while retry_num < self.NUM_INJECT_RETRIES:
+            retry_num += 1
+            time.sleep(self.WAIT_FOR_VM_TIME_SEC)
+            try:
+                call_powershell([inject_ip_script_path,
+                                 "-Name", self.wingw_name,
+                                 "-IPAddress", str(mgmt_ip),
+                                 "-Subnet", self.MGMT_SUBNET_MASK])
+                call_powershell(["ping", str(mgmt_ip), "-n", "1"])
+            except subprocess.CalledProcessError:
+                continue
+            else:
+                break
+        if retry_num == self.NUM_INJECT_RETRIES:
+            raise RuntimeError("Waited for SNAT VM for too long")
+
+    def attach_vrouter(self, vswitch):
+        """attaches left and right NICs of the VM to the vrouter switch"""
+        call_powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
+                         "-SwitchName", vswitch,
+                         "-Name", self.nic_left.win_name])
+        call_powershell(["Add-VMNetworkAdapter", "-VMName", self.wingw_name,
+                         "-SwitchName", vswitch,
+                         "-Name", self.nic_right.win_name])
+
+    def set_snat(self, mgmt_ip):
         """sshs into gateway machine and configures SNAT"""
         ssh_client = None
         try:
             ssh_client = BlockingSSHClient()
             ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            self._connect_with_retries(ssh_client)
+            self._connect_with_retries(ssh_client, mgmt_ip)
             self._setup_snat(ssh_client)
         finally:
             if ssh_client:
@@ -224,18 +273,11 @@ class SNATVirtualMachine(object):
         try:
             call_powershell(["Get-VM", "-Name", self.wingw_name])
         except subprocess.CalledProcessError as e:
-            if e.returncode != 0:
-                # vm doesn't exist
-                return False
-            else:
-                # other exception
-                raise
+            return False
         return True
 
-    def _configure_host_mgmt_ip(self):
+    def _configure_host_mgmt_ip(self, adapter_name):
         """configures host management adapter and its IP"""
-
-        adapter_name = self.mgmt_vswitch_name
         current_ip = call_powershell(["Get-NetAdapter", "|", "Where-Object",
                                       "Name", "-Match", adapter_name, "|",
                                       "Get-NetIPAddress", "|", "Where-Object",
@@ -255,72 +297,11 @@ class SNATVirtualMachine(object):
                              str(self.MGMT_PREFIX_LEN), "-InterfaceIndex",
                              if_index])
 
-    def _generate_new_mgmt_ip(self):
-        """generates an IP to give to new gateway VM"""
-        used_ips = self._get_all_mgmt_ips()
-
-        used_ips = netaddr.IPSet(used_ips)
-        pool_ips = netaddr.IPSet(self.MGMT_IP_RANGE)
-        free_ips = pool_ips ^ used_ips
-
-        try:
-            first_available_ip = next(iter(free_ips))
-        except StopIteration:
-            raise ValueError("Ran out of management IPs for gateway VM")
-        return first_available_ip
-
-    def _get_mgmt_ip(self):
-        """queries hyper-v for management IP of SNAT VM"""
-        return self._get_mgmt_ips_of(self.wingw_name)
-
-    def _get_all_mgmt_ips(self):
-        """queries hyper-v for management IPs of all SNAT VMs"""
-        try:
-            mgmt_ips = self._get_mgmt_ips_of(self.WINGW_PREFIX + "*")
-        except IndexError:
-            # ignore, just return an empty list
-            mgmt_ips = []
-        return mgmt_ips
-
-    def _get_mgmt_ips_of(self, vmname_with_wildcard):
-        ips = call_powershell(["Get-VMNetworkAdapter",
-                               "-VMName", "{}".format(vmname_with_wildcard), "|",
-                               "Where", "SwitchName", "-eq", self.mgmt_vswitch_name,
-                               "|", "Select", "-ExpandProperty", "IPAddresses"])
-        if ips == "":
-            raise IndexError("no management IP found")
-        ips = ips.splitlines()
-
-        # if multiple IPs connected to mgmt switch, we can use either one
-        return ips[0]
-
-    def _configure_mgmt_ip(self):
-        this_script_path = os.path.realpath(__file__)
-        this_script_dir = os.path.dirname(this_script_path)
-        inject_ip_script_path = os.path.join(this_script_dir,
-                                             self.INJECT_IP_SCRIPT_REL_PATH)
-        retry_num = 0
-        while retry_num < self.NUM_INJECT_RETRIES:
-            retry_num += 1
-            time.sleep(self.WAIT_FOR_VM_TIME_SEC)
-            try:
-                call_powershell([inject_ip_script_path,
-                                 "-Name", self.wingw_name,
-                                 "-IPAddress", str(self.new_mgmt_ip),
-                                 "-Subnet", self.MGMT_SUBNET_MASK])
-                call_powershell(["ping", str(self.new_mgmt_ip), "-n", "1"])
-            except subprocess.CalledProcessError:
-                continue
-            else:
-                break
-        if retry_num == self.NUM_INJECT_RETRIES:
-            raise RuntimeError("Waited for SNAT VM for too long")
-
-    def _connect_with_retries(self, ssh_client):
+    def _connect_with_retries(self, ssh_client, mgmt_ip):
         attempts = 0
         while True:
             try:
-                ssh_client.connect(str(self.new_mgmt_ip),
+                ssh_client.connect(str(mgmt_ip),
                                    username=self.USERNAME,
                                    password=self.PASSWORD,
                                    auth_timeout=5)
@@ -332,10 +313,6 @@ class SNATVirtualMachine(object):
                 else:
                     raise
 
-    def _exec_ssh_command(self, ssh_client, command):
-        _, stdout, _ = ssh_client.exec_command(command)
-        return stdout.channel.recv_exit_status()
-
     def _setup_snat(self, ssh_client):
         ssh_client.exec_command("sudo sysctl -w net.ipv4.ip_forward=1")
         ssh_client.exec_command("sudo ip link set dev {} up"
@@ -344,10 +321,10 @@ class SNATVirtualMachine(object):
                                 .format(self.nic_right.name))
         ssh_client.exec_command("sudo ip addr add dev {} {}"
                                 .format(self.nic_left.name,
-                                        self.left_gw_cidr))
+                                        self.nic_left.gw_cidr))
         ssh_client.exec_command("sudo ip addr add dev {} {}"
                                 .format(self.nic_right.name,
-                                        self.right_gw_cidr))
+                                        self.nic_right.gw_cidr))
         ssh_client.exec_command("sudo iptables -t nat -F")
         ssh_client.exec_command("sudo iptables -t nat -A POSTROUTING -o {} "
                                 "-j MASQUERADE"
@@ -481,29 +458,35 @@ class VRouterHyperV(object):
             nic_left = VMPort(uuid=self.args.vmi_left_id,
                               prefix=LEFT_DEV_PREFIX,
                               mac=self.args.vmi_left_mac,
-                              ip=self.args.vmi_left_ip)
+                              ip_cidr=self.args.vmi_left_ip,
+                              gw_cidr=self.args.left_gw_cidr)
 
         nic_right = None
         if uuid.UUID(self.args.vmi_right_id):
             nic_right = VMPort(uuid=self.args.vmi_right_id,
                                prefix=RIGHT_DEV_PREFIX,
                                mac=self.args.vmi_right_mac,
-                               ip=self.args.vmi_right_ip)
+                               ip_cidr=self.args.vmi_right_ip,
+                               gw_cidr=self.args.right_gw_cidr)
 
         # TODO: Remove `forwarding_mac` when Agent is functional
         snat_vm = SNATVirtualMachine(vm_id, nic_left, nic_right,
-                                     left_gw_cidr=self.args.left_gw_cidr,
-                                     right_gw_cidr=self.args.right_gw_cidr,
                                      forwarding_mac=self.args.forwarding_mac,
                                      vm_location=self.args.vm_location,
-                                     vhd_path=self.args.vhd_path,
-                                     mgmt_vswitch_name=\
-                                        self.args.mgmt_vswitch_name,
-                                     vrouter_vswitch_name=\
-                                        self.args.vrouter_vswitch_name)
-        snat_vm.spawn()
-        snat_vm.set_snat()
-        snat_vm.register()
+                                     vhd_path=self.args.vhd_path)
+        snat_vm.spawn(self.args.mgmt_vswitch_name)
+
+        try:
+            ipam = MgmtIPAM(self.args.mgmt_vswitch_name)
+            mgmt_ip = ipam.generate()
+
+            snat_vm.inject_ip(mgmt_ip)
+            snat_vm.attach_vrouter(self.args.vrouter_vswitch_name)
+            snat_vm.set_snat(mgmt_ip)
+            snat_vm.register()
+        except:
+            snat_vm.destroy()
+            raise
 
     def destroy(self):
         """Destroys a SNAT VM"""
@@ -521,8 +504,10 @@ class VRouterHyperV(object):
 
         snat_vm = SNATVirtualMachine(vm_id, nic_left, nic_right,
                                      vhd_path=self.args.vhd_path)
-        snat_vm.unregister()
-        snat_vm.destroy()
+        try:
+            snat_vm.unregister()
+        finally:
+            snat_vm.destroy()
 
 
 def main():
