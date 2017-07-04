@@ -41,6 +41,6 @@ def enumfiles(directory, pattern):
 
 
 windowsstubs_lib = '#build/lib/windowsstubs.lib'
-sources = ['#windows/winutils.cpp', '#windows/windowsstubs/windowsstubs/TimeUtils.cpp', '#windows/windowsstubs/windowsstubs/AgentConstants.cpp', '#windows/windowsstubs/windowsstubs/wmi.cpp' , '#windows/windowsstubs/windowsstubs/cpuinfo.cpp']
+sources = ['#windows/winutils.cc', '#windows/windowsstubs/windowsstubs/timeutils.cc', '#windows/windowsstubs/windowsstubs/agentconstants.cc', '#windows/windowsstubs/windowsstubs/wmi.cc' , '#windows/windowsstubs/windowsstubs/cpuinfo.cc']
 env.Command(windowsstubs_lib, sources , build_windowsstubs_lib)
 env.Alias('windowsstubs', windowsstubs_lib)
