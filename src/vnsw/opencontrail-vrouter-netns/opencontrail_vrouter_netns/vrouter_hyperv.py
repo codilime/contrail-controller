@@ -18,10 +18,7 @@ def call_powershell(cmds):
     powershell_command = subprocess.list2cmdline(cmds)
     process_cmdline = ["powershell.exe", "-NonInteractive", "-Command"]
     process_cmdline.append(powershell_command)
-    try:
-        output = subprocess.check_output(process_cmdline, shell=True)
-    except subprocess.CalledProcessError:
-        raise
+    output = subprocess.check_output(process_cmdline, shell=True)
     return output
 
 
