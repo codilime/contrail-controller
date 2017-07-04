@@ -146,9 +146,10 @@ class MgmtIPAM(object):
 
     def _get_mgmt_ips_of(self, vmname_with_wildcard):
         ips = call_powershell(["Get-VMNetworkAdapter",
-                               "-VMName", "{}".format(vmname_with_wildcard), "|",
-                               "Where", "SwitchName", "-eq", self.mgmt_vswitch_name,
-                               "|", "Select", "-ExpandProperty", "IPAddresses"])
+                               "-VMName", "{}".format(vmname_with_wildcard), 
+                               "|", "Where", "SwitchName", "-eq", 
+                               self.mgmt_vswitch_name, "|", "Select", 
+                               "-ExpandProperty", "IPAddresses"])
         if ips == "":
             raise IndexError("no management IP found")
         ips = ips.splitlines()
@@ -189,8 +190,8 @@ class SNATVirtualMachine(object):
         # TODO: Remove `forwarding_mac` when agent is functional
         self.forwarding_mac = forwarding_mac
 
-    def spawn(self, mgmt_vswitch_name):
-        """calls powershell to spawn vm """
+    def create(self, mgmt_vswitch_name):
+        """calls powershell to create vm """
         if self._exists():
             raise ValueError("Specified Windows gateway VM already exists")
         self._configure_host_mgmt_ip(mgmt_vswitch_name)
@@ -203,10 +204,13 @@ class SNATVirtualMachine(object):
                          "-SwitchName", mgmt_vswitch_name])
         call_powershell(["Set-VMFirmware", "-VMName", self.wingw_name, \
                          "-EnableSecureBoot", "Off"])
+
+    def spawn(self):
+        """starts the VM"""
         call_powershell(["Start-VM", "-Name", self.wingw_name])
 
-    def destroy(self):
-        """calls powershell to destroy vm"""
+    def cleanup(self):
+        """calls powershell to destroy vm and remove cloned vhdx disk"""
         if not self._exists():
             raise ValueError("Specified Windows gateway VM does not exist")
         call_powershell(["Stop-VM", "-Name", self.wingw_name, "-Force"])
@@ -271,7 +275,7 @@ class SNATVirtualMachine(object):
         """calls powershell to check whether vm exists"""
         try:
             call_powershell(["Get-VM", "-Name", self.wingw_name])
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             return False
         return True
 
@@ -473,18 +477,18 @@ class VRouterHyperV(object):
                                      forwarding_mac=self.args.forwarding_mac,
                                      vm_location=self.args.vm_location,
                                      vhd_path=self.args.vhd_path)
-        snat_vm.spawn(self.args.mgmt_vswitch_name)
-
+        snat_vm.create(self.args.mgmt_vswitch_name)
         try:
             ipam = MgmtIPAM(self.args.mgmt_vswitch_name)
             mgmt_ip = ipam.generate()
 
             snat_vm.inject_ip(mgmt_ip)
             snat_vm.attach_vrouter(self.args.vrouter_vswitch_name)
+            snat_vm.spawn()
             snat_vm.set_snat(mgmt_ip)
             snat_vm.register()
         except:
-            snat_vm.destroy()
+            snat_vm.cleanup()
             raise
 
     def destroy(self):
@@ -506,7 +510,7 @@ class VRouterHyperV(object):
         try:
             snat_vm.unregister()
         finally:
-            snat_vm.destroy()
+            snat_vm.cleanup()
 
 
 def main():
