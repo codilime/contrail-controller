@@ -7,13 +7,13 @@
 #include <string.h>
 #include <fcntl.h>
 #include <assert.h>
+
 #ifndef _WINDOWS
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include<WinSock2.h>
-#include<WinSock2.h> 
 #include <net/if.h>
 #endif
+
 #include "base/logging.h"
 #include "cmn/agent_cmn.h"
 #include "sandesh/sandesh_types.h"
@@ -128,8 +128,10 @@ Pkt0RawInterface::~Pkt0RawInterface() {
 Pkt0Socket::Pkt0Socket(const std::string &name,
     boost::asio::io_service *io):
     connected_(false),
-	//WINDOWS socket_(*io), 
-	timer_(NULL),
+#ifndef _WINDOWS
+    socket_(*io), 
+#endif
+    timer_(NULL),
     read_buff_(NULL), pkt_handler_(NULL), name_(name){
 }
 
@@ -143,10 +145,12 @@ void Pkt0Socket::CreateUnixSocket() {
     boost::filesystem::create_directory(kSocketDir);
     boost::filesystem::remove(kAgentSocketPath);
 
-	boost::system::error_code ec;// = boost::system::errc::success;
-   //WINDOWS socket_.open();
-    //WINDOWS local::datagram_protocol::endpoint ep(kAgentSocketPath);
-   //WINDOWS  socket_.bind(ep, ec);
+    boost::system::error_code ec;
+#ifndef _WINDOWS
+    socket_.open();
+    local::datagram_protocol::endpoint ep(kAgentSocketPath);
+    socket_.bind(ep, ec);
+#endif
     if (ec) {
         LOG(DEBUG, "Error binding to the socket " << kAgentSocketPath
                 << ": " << ec.message());
@@ -167,7 +171,9 @@ void Pkt0Socket::IoShutdownControlInterface() {
     }
 
     boost::system::error_code ec;
-    //WINDOWS socket_.close(ec);
+#ifndef _WINDOWS
+    socket_.close(ec);
+#endif
 }
 
 void Pkt0Socket::ShutdownControlInterface() {
@@ -197,9 +203,13 @@ void Pkt0Socket::StartConnectTimer() {
 }
 
 bool Pkt0Socket::OnTimeout() {
-  //WINDOWS  local::datagram_protocol::endpoint ep(kVrouterSocketPath);
+#ifndef _WINDOWS
+    local::datagram_protocol::endpoint ep(kVrouterSocketPath);
+#endif
     boost::system::error_code ec;
-   //WINDOWS socket_.connect(ep, ec);
+#ifndef _WINDOWS
+    socket_.connect(ep, ec);
+#endif
     if (ec != 0) {
         LOG(DEBUG, "Error connecting to socket " << kVrouterSocketPath
                 << ": " << ec.message());
@@ -230,7 +240,7 @@ int Pkt0Socket::Send(uint8_t *buff, uint16_t buff_len,
 
     return (buff_len + pkt->data_len());
 #else
-	return 0;
+    return 0;
 #endif
 }
 
