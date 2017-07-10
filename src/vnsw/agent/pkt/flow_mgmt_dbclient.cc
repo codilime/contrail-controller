@@ -1,5 +1,6 @@
-#include <boost/asio.hpp>
-#include <windows.h>
+#ifdef _WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#endif // _WINDOWS
 
 #include "pkt/flow_mgmt_dbclient.h"
 #include "oper/ecmp_load_balance.h"

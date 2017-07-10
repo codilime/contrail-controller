@@ -1,6 +1,14 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#include "pkt/pkt_handler.h"
+
+#ifdef _WINDOWS
+#include <netinet/udp.h>
+#include <netinet/ip.h>
+#include <netinet/icmp.h>
+#include <netinet/tcp.h>
+#endif
 
 #include "base/os.h"
 #include <sys/types.h>
@@ -8,14 +16,6 @@
 #include <netinet/in.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
-#ifdef _WINDOWS
-#include <WinSock2.h>
-#include <netinet/udp.h>
-#include <netinet/ip.h>
-#include <netinet/icmp.h>
-#include <netinet/tcp.h>
-
-#endif
 
 #include "cmn/agent_cmn.h"
 #include "net/address_util.h"
@@ -26,7 +26,6 @@
 #include "oper/vrf.h"
 #include "oper/tunnel_nh.h"
 #include "pkt/control_interface.h"
-#include "pkt/pkt_handler.h"
 #include "pkt/proto.h"
 #include "pkt/flow_table.h"
 #include "pkt/flow_proto.h"

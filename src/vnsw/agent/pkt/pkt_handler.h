@@ -6,7 +6,6 @@
 #define vnsw_agent_pkt_handler_hpp
 
 #ifndef _WINDOWS
-
 #include <net/if.h>
 #include <sys/socket.h>
 #include <netinet/if_ether.h>
@@ -14,6 +13,7 @@
 #include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
 #else
+#include <winsock2.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>

@@ -1,9 +1,13 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include<WinSock2.h>
-#include "base/os.h"
 #include "pkt/proto.h"
+
+#ifdef _WINDOWS
+#include <WinSock2.h>
+#endif // _WINDOWS
+
+#include "base/os.h"
 #include "pkt/proto_handler.h"
 #include "pkt/pkt_init.h"
 #include "cmn/agent_stats.h"
