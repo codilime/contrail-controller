@@ -1,8 +1,11 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+#ifdef _WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#endif // _WINDOWS
+
+#include <pkt/flow_table.h>
 
 #include <vector>
 #include <bitset>
@@ -14,7 +17,6 @@
 #include <sandesh/sandesh.h>
 #include <sandesh/sandesh_trace.h>
 #include <net/address_util.h>
-#include <pkt/flow_table.h>
 #include <vrouter/ksync/ksync_init.h>
 #include <vrouter/ksync/ksync_flow_index_manager.h>
 

@@ -1,13 +1,17 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+#ifdef _WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#endif // _WINDOWS
+
 #include <pkt/pkt_sandesh_flow.h>
+
 #include <vector>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <sstream>
 #include <algorithm>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <cmn/agent_stats.h>
 #include <uve/agent_uve.h>

@@ -1,14 +1,16 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+#ifdef _WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#endif // _WINDOWS
+
+#include <pkt/flow_entry.h>
 
 #include <vector>
 #include <bitset>
 
 #include <arpa/inet.h>
-
 
 #include <netinet/in.h>
 #include <base/os.h>
@@ -50,7 +52,6 @@
 #include <pkt/pkt_sandesh_flow.h>
 #include <pkt/flow_mgmt.h>
 #include <pkt/flow_event.h>
-#include <pkt/flow_entry.h>
 
 const std::map<FlowEntry::FlowPolicyState, const char*>
     FlowEntry::FlowPolicyStateStr = boost::assign::map_list_of
