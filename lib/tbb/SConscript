@@ -9,7 +9,7 @@ import shutil
 
 print 'building windows tbb'
 
-vpath = '#/third_party/tbb2017_20160916oss'
+vpath = '#/third_party/tbb-2017_U7'
 
 env = DefaultEnvironment()
 
