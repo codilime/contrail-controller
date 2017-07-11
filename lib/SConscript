@@ -11,8 +11,6 @@ subdirs = [
     'rapidjson',
     'thrift',
     'openvswitch',
-	'openssl',
-	'windowsstubs'
 ]
 
 (distname, version, _) = platform.dist()
@@ -43,6 +41,12 @@ else:
 if platform.system() == 'FreeBSD':
     subdirs += [
         'icu',
+    ]
+elif platform.system() == 'Windows':
+    subdirs += [
+        'dirent'
+        'openssl',
+        'windowsstubs'
     ]
 
 for dir in subdirs:

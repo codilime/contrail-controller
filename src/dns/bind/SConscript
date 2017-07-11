@@ -6,10 +6,10 @@
 import sys
 Import('DnsEnv')
 env = DnsEnv.Clone()
-env.AppendUnique(CCFLAGS='/w')
-env.Depends('bind_interface','#build/include/openssl/conf.h')
-env.Append(CPPPATH = '#openssl\include')
-env.Append(CPPPATH = '#third_party\dirent\include')
+
+if not sys.platform.startswith('win'):
+    env.AppendUnique(CCFLAGS='-Wno-return-type')
+
 SandeshGenFiles = env.SandeshGenCpp('bind.sandesh')
 SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)
 
@@ -30,3 +30,6 @@ bind_interface = env.Library('bind_interface',
                                 'named_config.cc', 
                                 'xmpp_dns_agent.cc', 
                              ])
+
+if sys.platform.startswith('win'):
+    env.Depends(bind_interface, Dir('#/build/include/openssl'))
