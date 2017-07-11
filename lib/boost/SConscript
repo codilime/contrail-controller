@@ -88,7 +88,8 @@ if not os.path.exists(destdir):
   print 'copying files to' + destdir
   shutil.copytree(srcdir, destdir)
 
-boost_command = env.Command('#build/lib/boost_filesystem.lib', str(Dir(vpath)), build_boost_for_windows)
+products = [File('#build/lib/boost_filesystem.lib'), Dir('#build/include/boost')]
+boost_command = env.Command(products, str(Dir(vpath)), build_boost_for_windows)
 env.Alias('boostbuild', '#build/lib/boost_filesystem.lib')
 env.Depends(boost_command, Dir('#/build/include/openssl'))
 
