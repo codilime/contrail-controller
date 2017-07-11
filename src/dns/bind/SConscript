@@ -30,6 +30,3 @@ bind_interface = env.Library('bind_interface',
                                 'named_config.cc', 
                                 'xmpp_dns_agent.cc', 
                              ])
-
-if sys.platform.startswith('win'):
-    env.Depends(bind_interface, Dir('#/build/include/openssl'))
