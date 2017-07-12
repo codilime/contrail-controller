@@ -42,6 +42,9 @@
 #include <cmn/agent_factory.h>
 #include <base/task_tbbkeepawake.h>
 #include<net/if.h>
+#ifdef _WINDOWS
+    #include <winnw.h>
+#endif
 const std::string Agent::null_string_ = "";
 const std::set<std::string> Agent::null_string_list_;
 const std::string Agent::fabric_vn_name_ =
@@ -470,7 +473,7 @@ static bool interface_exist(string &name)
 	bool ret = false;
 	string tname = "";
 
-	ifs = if_nameindex();
+	ifs = osspecific_if_nameindex();
 	if (ifs == NULL) {
 		LOG(INFO, "No interface exists!");
 		return ret;
@@ -485,7 +488,7 @@ static bool interface_exist(string &name)
 		}
 		ifs++;
 	}
-	if_freenameindex(head);
+	osspecific_if_freenameindex(head);
 	return ret;
 }
 

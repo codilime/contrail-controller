@@ -43,7 +43,9 @@
 #include <sandesh/common/vns_types.h>
 #include <sandesh/common/vns_constants.h>
 #include <filter/acl.h>
-
+#ifdef _WINDOWS
+#include <winnw.h>
+#endif
 using namespace std;
 using namespace boost::uuids;
 using boost::assign::map_list_of;
@@ -477,7 +479,7 @@ void Interface::GetOsParams(Agent *agent) {
     mac_ = ifr.ifr_addr;
 #endif
 
-    int idx = if_nametoindex(name.c_str());
+    int idx = osspecific_if_nametoindex(name.c_str());
     if (idx)
         os_index_ = idx;
 }
