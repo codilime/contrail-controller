@@ -21,7 +21,7 @@
 #include <sandesh/sandesh.h>
 #include <base/sandesh/task_types.h>
 
-#include <TaskUtil.h>
+#include "taskutil.h"
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
