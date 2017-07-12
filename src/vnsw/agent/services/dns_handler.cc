@@ -18,6 +18,7 @@
 #ifdef _WINDOWS
 #include <netinet/udp.h>
 #include <netinet/ip6.h>
+#include <winnw.h>
 #endif
 
 DnsHandler::DnsHandler(Agent *agent, boost::shared_ptr<PktInfo> info,

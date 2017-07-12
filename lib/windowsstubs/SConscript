@@ -4,43 +4,26 @@ import sys
 import fnmatch
 
 print 'Enter windowslib'
-vpath = '#/windows/windowsstubs'
-
-env = DefaultEnvironment()
-
-abs_vpath = Dir(vpath).abspath
-abs_toppath = Dir('#').abspath
-
-x64dir = ''
-if env['TARGET_ARCH'] == 'x64':
-   x64dir = r'\x64'
-
-#build libraries
-def build_windowsstubs_lib(target,source,env):
-   curdir = os.getcwd()
-   os.chdir(abs_vpath)
-   print os.getcwd()
-   msbuildcmd = "msbuild WindowsStubs.sln /p:platform=" + env['TARGET_ARCH'] + " /p:Configuration=Debug"
-   print msbuildcmd
-   subprocess.call(msbuildcmd, shell=True)
-   cmd = 'copy ' +  abs_vpath +  x64dir + r'\debug' + r'\windowsstubs.lib ' +  env.Dir(env['TOP_LIB']).abspath 
-   print cmd
-   subprocess.call(cmd, shell=True)
-   os.chdir(curdir)
-
-
-def enumfiles(directory, pattern):
-    results = []
-    for root, dirs, files in os.walk(directory):
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                filename = os.path.join(root, basename)
-                results.append(filename)
-    return results
 
 
 
-windowsstubs_lib = '#build/lib/windowsstubs.lib'
-sources = ['#windows/winutils.cc', '#windows/windowsstubs/windowsstubs/timeutils.cc', '#windows/windowsstubs/windowsstubs/agentconstants.cc', '#windows/windowsstubs/windowsstubs/wmi.cc' , '#windows/windowsstubs/windowsstubs/cpuinfo.cc']
-env.Command(windowsstubs_lib, sources , build_windowsstubs_lib)
-env.Alias('windowsstubs', windowsstubs_lib)
+env = DefaultEnvironment().Clone()
+env.AppendUnique(CCFLAGS='/DUNICODE')#both are needed by the compiler
+env.AppendUnique(CCFLAGS='/D_UNICODE')
+
+#vpath = '#/third_party/pugixml/src'
+#env.VariantDir('#/' + Dir('.').path + '/src', vpath)
+#pugixml_buildpath = Dir('.').abspath + '/src'
+
+#lib = env.Library('pugixml', pugixml_buildpath + '/pugixml.cpp')
+
+vpath = '#windows/src'
+env.VariantDir('#/' + Dir('.').path + '/src', vpath,0)
+windows_buildpath = Dir('.').abspath + '/src'
+
+print windows_buildpath
+files = Glob(windows_buildpath +'/*.cc')
+libsources = ['#windows/src/agentconstants.cc','#windows/src/cpuinfo.cc','#windows/src/taskutil.cc', '#windows/src/timeutils.cc', '#windows/src/winnw.cc' , '#windows/src/wmi.cc']
+windowsstubs_lib = env.Library('windowsstubs', files)
+env.Install('#/build/lib/', 'windowsstubs.lib')
+env.Alias('windowsstubs', '#/build/lib/windowsstubs.lib')

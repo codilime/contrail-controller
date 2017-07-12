@@ -8,6 +8,7 @@
 #include <netinet/ip.h>
 #include <netinet/icmp.h>
 #include <netinet/tcp.h>
+#include <winnw.h>
 #endif
 
 #include "base/os.h"

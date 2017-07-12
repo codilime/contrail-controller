@@ -10,6 +10,7 @@
 #include <netinet/ip6.h>
 #include <netinet/udp.h>
 #include <netinet/icmp6.h>
+#include <winnw.h>
 #endif
 
 #include <stdint.h>
