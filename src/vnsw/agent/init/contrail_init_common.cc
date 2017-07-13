@@ -223,6 +223,88 @@ void ContrailInitCommon::CreateInterfaces() {
         agent()->vgw()->CreateInterfaces(vhost_transport);
     }
 
+    // TODO(sodar): Some debug mocks
+    {
+        boost::uuids::string_generator gen;
+
+        // some random uuids
+        std::string vm_raw_uuid = "ea9d68ec-66e6-11e7-907b-a6006ad3dba0";
+        boost::uuids::uuid vm_uuid = gen(vm_raw_uuid);
+        std::string vm_name = "container";
+
+        // Container data
+        std::string raw_uuid = "dae38c1d-887a-4abf-af25-d549f7ac2183";
+        boost::uuids::uuid uuid = gen(raw_uuid);
+        std::string name = "ethernet_32778";
+        std::string ip = "10.0.0.11";
+        std::string mac = "02:da:e3:8c:1d:88";
+
+        // container data
+        std::string target_ip = "10.0.0.1";
+        std::string raw_route_uuid = "ba6ad92a-67c7-11e7-907b-a6006ad3dba0";
+        boost::uuids::uuid route_uuid = gen(raw_route_uuid);
+
+        VrfTable *vrf_table = agent()->vrf_table();
+        vrf_table->CreateVrf("testnetwork", VrfData::ConfigVrf);
+
+        VrfEntry *vrf = vrf_table->FindVrfFromName("testnetwork");
+        InetUnicastAgentRouteTable *route_table =
+            static_cast<InetUnicastAgentRouteTable *>(vrf->GetInet4UnicastRouteTable());
+        // TODO(sodar): param1 = Peer
+        VnListType vn_list;
+        vn_list.insert("testnetwork");
+        route_table->AddLocalVmRouteReq(
+            agent()->local_vm_peer(), "testnetwork", Ip4Address::from_string(target_ip), 32,
+            route_uuid, vn_list, 1, SecurityGroupList(), CommunityList(), false, PathPreference(),
+            Ip4Address(0), EcmpLoadBalance(), false, false);
+
+        DBRequest req(DBRequest::DBOperation::DB_ENTRY_ADD_CHANGE);
+        req.key.reset(new VmInterfaceKey(AgentKey::ADD_DEL_CHANGE, uuid, name));
+
+        VmInterfaceConfigData *data = new VmInterfaceConfigData(NULL, NULL);
+        data->addr_ = Ip4Address::from_string(ip);
+        data->vm_mac_ = mac;
+        data->cfg_name_ = vm_name; // TODO(sodar): What is that?
+        data->vm_uuid_ = vm_uuid;
+        data->vm_name_ = vm_name;
+        data->transport_ = Interface::Transport::TRANSPORT_ETHERNET;
+        data->bridging_ = true;
+        data->vrf_name_ = "testnetwork";
+        req.data.reset(data);
+
+        bool junk = false;
+        VmInterface *intf = (VmInterface *)table->OperDBAdd(&req);
+        intf->bridging(true);
+
+        // TODO(sodar): Insert ArpEntry into ArpTable (ArpProto ??)
+        // TODO(sodar): ArpNH w agent()->nexthop_table() ??
+        //ArpProto *arp_proto = agent()->GetArpProto();
+        //ArpEntry *arp_entry = new
+        #if 1
+        ArpKey *arp_key = new ArpKey(Ip4Address::from_string(target_ip).to_ulong(), vrf);
+        ArpEntry *arp_entry = new ArpEntry(*agent()->event_manager()->io_service(),
+                                           NULL,
+                                           *arp_key,
+                                           vrf,
+                                           ArpEntry::State::ACTIVE,
+                                           intf);
+        ArpProto *arp_proto = agent()->GetArpProto();
+        arp_proto->AddArpEntry(arp_entry);
+        #else
+        InetUnicastAgentRouteTable::ArpRoute(DBRequest::DB_ENTRY_ADD_CHANGE,
+                                             "testnetwork",
+                                             Ip4Address::from_string("10.0.0.1"),
+                                             MacAddress("de:ad:be:ef:12:34"),
+                                             "testnetwork",
+                                             *intf,
+                                             true,
+                                             32,
+                                             false,
+                                             vn_list,
+                                             SecurityGroupList());
+        #endif
+    }
+
     ProcessComputeAddress(agent_param());
 }
 

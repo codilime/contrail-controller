@@ -1961,6 +1961,11 @@ VmInterface *VmInterfaceConfigData::OnAdd(const InterfaceTable *table,
                         nil_uuid(), tx_vlan_id_, rx_vlan_id_, parent,
                         ip6_addr_, device_type_, vmi_type_);
     vmi->SetConfigurer(VmInterface::CONFIG);
+
+    // TODO(sodar): Use to make mocking easier
+    bool junk = false;
+    vmi->CopyConfig(table, this, &junk, &junk, &junk, &junk, &junk);
+
     return vmi;
 }
 

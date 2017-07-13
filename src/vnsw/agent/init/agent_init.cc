@@ -165,7 +165,8 @@ void AgentInit::InitLoggingBase() {
     Sandesh::SetLoggingParams(agent_param_->log_local(),
                               agent_param_->log_category(),
                               agent_param_->log_level(),
-                              false,
+                              // NOTE(sodar): Changed to true, so ARP_TRACE could work.
+                              true,
                               agent_param_->log_flow());
     InitLogging();
 }
