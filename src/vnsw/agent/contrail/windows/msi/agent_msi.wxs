@@ -9,9 +9,13 @@
                 <Directory Id="ManufacturerFolder" Name="Juniper Networks">
                     <Directory Id="INSTALLDIR" Name="Agent">
                         <Component Id="ApplicationFiles" Guid="0AA4E35B-89F0-4E60-8D1C-F79BFBE49F78" Win64="yes">
-                            <File Id="AgentMainExe" Source="../../../../../../build/debug/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
+                            <File Id="AgentMainExe" Source="build/debug/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
                             <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="shareProcess" Start="auto" ErrorControl="normal"/>
                             <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="uninstall"/>
+                        </Component>
+                        <Component Id="VRouterHyperv" Guid="2E5ED884-4461-4852-B841-CF6FE4E1E6B7" Win64="yes">
+                            <File Id="VRouterHypervScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv.py" />
+                            <File Id="VRouterHypervInjectIPScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv_inject_ip.ps1" />
                         </Component>
                     </Directory>
                 </Directory>
@@ -20,6 +24,7 @@
  
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="ApplicationFiles"/>
+            <ComponentRef Id="VRouterHyperv"/>
         </Feature>
     </Product>
 </Wix>
