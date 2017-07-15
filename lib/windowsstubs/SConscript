@@ -11,12 +11,6 @@ env = DefaultEnvironment().Clone()
 env.AppendUnique(CCFLAGS='/DUNICODE')#both are needed by the compiler
 env.AppendUnique(CCFLAGS='/D_UNICODE')
 
-#vpath = '#/third_party/pugixml/src'
-#env.VariantDir('#/' + Dir('.').path + '/src', vpath)
-#pugixml_buildpath = Dir('.').abspath + '/src'
-
-#lib = env.Library('pugixml', pugixml_buildpath + '/pugixml.cpp')
-
 vpath = '#windows/src'
 env.VariantDir('#/' + Dir('.').path + '/src', vpath,0)
 windows_buildpath = Dir('.').abspath + '/src'

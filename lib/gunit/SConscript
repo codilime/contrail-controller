@@ -51,8 +51,7 @@ if not os.path.exists(gtestlibpath):
     print cmd
     subprocess.call(cmd, shell=True)
     #build googletest
-    os.chdir(Dir(gtest_path).abspath+ '\\msvc')
-    assert os.path.isdir(Dir(gtest_path).abspath+'\\msvc')
+    os.chdir(os.path.join(Dir(gtest_path).abspath,'msvc'))
     print os.getcwd()
     subprocess.call(buildgtestcmd, shell=True)
     fromfile = os.path.join(Dir(gtest_path).abspath , 'msvc',vsplatform, vsconfig,  gtestlibname)
@@ -62,7 +61,9 @@ if not os.path.exists(gtestlibpath):
 
 
 if not os.path.exists(gmocklibpath):
-   cmd = 'copy ' + Dir('.').srcnode().abspath + r'\msvc15\gmock\* ' + Dir(gmock_path).abspath + r'\msvc\2015\ /y'
+   fromgm = os.path.join(Dir(gmock_path).abspath, 'msvc', '2015')
+   togm = os.path.join(Dir('.').srcnode().abspath, 'msvc15','gmock')
+   cmd = 'copy ' + togm + fromgm + ' /y'
    print Dir('.').abspath
    print cmd
    subprocess.call(cmd, shell=True)

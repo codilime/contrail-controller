@@ -54,26 +54,18 @@ typedef boost::uint8_t  uint8_t;
 #include <ws2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
 
-// pthreads
-#if 0
-#	include <pthread.h>
-#else
-#ifndef _WINDOWS
-struct timespec {
-	int64_t tv_sec;
-	int64_t tv_nsec;
-};
-#endif
-#	define USE_BOOST_THREAD 1
-#	define ctime_r( _clock, _buf ) \
+
+
+#define USE_BOOST_THREAD 1
+#define ctime_r( _clock, _buf ) \
         ( strcpy( (_buf), ctime( (_clock) ) ),  \
           (_buf) )
-#endif
+
 
 typedef ptrdiff_t ssize_t;
 
 // Missing functions.
-#define usleep(ms) Sleep(ms)
+#define usleep(ms) Sleep(ms/1000)
 
 #if WINVER <= 0x0502
 #define poll(fds, nfds, timeout) \
