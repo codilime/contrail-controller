@@ -63,7 +63,7 @@ if not os.path.exists(gtestlibpath):
 if not os.path.exists(gmocklibpath):
    fromgm = os.path.join(Dir(gmock_path).abspath, 'msvc', '2015')
    togm = os.path.join(Dir('.').srcnode().abspath, 'msvc15','gmock')
-   cmd = 'copy ' + togm + fromgm + ' /y'
+   cmd = 'copy ' + togm + ' ' + fromgm + ' /y'
    print Dir('.').abspath
    print cmd
    subprocess.call(cmd, shell=True)
