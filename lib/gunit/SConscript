@@ -46,7 +46,9 @@ def create_dir_if_needed(dirname):
         pass
 
 if not os.path.exists(gtestlibpath):
-    cmd = 'copy ' + Dir('.').srcnode().abspath + '\msvc15\gtest\* ' + Dir(gtest_path).abspath + '\msvc /y'
+    togt = os.path.join(Dir(gtest_path).abspath ,'msvc')
+    fromgt = os.path.join(Dir('.').srcnode().abspath , 'msvc15', 'gtest')
+    cmd = 'copy ' + fromgt + ' ' + togt + ' /y'
     print Dir('.').abspath
     print cmd
     subprocess.call(cmd, shell=True)
@@ -61,14 +63,14 @@ if not os.path.exists(gtestlibpath):
 
 
 if not os.path.exists(gmocklibpath):
-   fromgm = os.path.join(Dir(gmock_path).abspath, 'msvc', '2015')
-   togm = os.path.join(Dir('.').srcnode().abspath, 'msvc15','gmock')
-   cmd = 'copy ' + togm + ' ' + fromgm + ' /y'
+   togm = os.path.join(Dir(gmock_path).abspath, 'msvc', '2015')
+   fromgm = os.path.join(Dir('.').srcnode().abspath, 'msvc15','gmock')
+   cmd = 'copy ' + fromgm + ' ' + togm + ' /y'
    print Dir('.').abspath
    print cmd
    subprocess.call(cmd, shell=True)
    #build googlemock
-   os.chdir(Dir(gmock_path).abspath+ '/msvc/2015')
+   os.chdir(os.path.join(Dir(gmock_path).abspath, 'msvc', '2015'))
    print os.getcwd()
    subprocess.call(buildgmockcmd, shell=True)
    fromfile = os.path.join(Dir(gmock_path).abspath , 'msvc','2015',vsplatform, vsconfig,  gmocklibname)
