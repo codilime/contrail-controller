@@ -1,46 +1,19 @@
 import os
 import subprocess
-import sys
-import fnmatch
+from shutil import copyfile
 
-print 'Enter windowslib'
 vpath = '#/windows/windowsstubs'
 
 env = DefaultEnvironment()
 
 abs_vpath = Dir(vpath).abspath
-abs_toppath = Dir('#').abspath
-
-x64dir = ''
-if env['TARGET_ARCH'] == 'x64':
-   x64dir = r'\x64'
-
-#build libraries
-def build_windowsstubs_lib(target,source,env):
-   curdir = os.getcwd()
-   os.chdir(abs_vpath)
-   print os.getcwd()
-   msbuildcmd = "msbuild WindowsStubs.sln /p:platform=" + env['TARGET_ARCH'] + " /p:Configuration=Debug"
-   print msbuildcmd
-   subprocess.call(msbuildcmd, shell=True)
-   cmd = 'copy ' +  abs_vpath +  x64dir + r'\debug' + r'\windowsstubs.lib ' +  env.Dir(env['TOP_LIB']).abspath 
-   print cmd
-   subprocess.call(cmd, shell=True)
-   os.chdir(curdir)
-
-
-def enumfiles(directory, pattern):
-    results = []
-    for root, dirs, files in os.walk(directory):
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                filename = os.path.join(root, basename)
-                results.append(filename)
-    return results
-
-
-
 windowsstubs_lib = '#build/lib/windowsstubs.lib'
+
+def build_windowsstubs_lib(target, source, env):
+   msbuildcmd = [os.environ['MSBUILD'], 'WindowsStubs.sln', '/p:platform=x64', '/p:Configuration=Debug']
+   subprocess.call(msbuildcmd, cwd = abs_vpath)
+   copyfile(File('#/windows/windowsstubs/x64/debug/windowsstubs.lib').abspath, File(windowsstubs_lib).abspath)
+
 sources = ['#windows/winutils.cc', '#windows/windowsstubs/windowsstubs/timeutils.cc', '#windows/windowsstubs/windowsstubs/agentconstants.cc', '#windows/windowsstubs/windowsstubs/wmi.cc' , '#windows/windowsstubs/windowsstubs/cpuinfo.cc']
 env.Command(windowsstubs_lib, sources , build_windowsstubs_lib)
 env.Alias('windowsstubs', windowsstubs_lib)
