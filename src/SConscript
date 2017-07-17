@@ -61,10 +61,9 @@ common.Append(LIBPATH = libpath)
 common.Prepend(LIBS = libs)
 
 if sys.platform.startswith('win'):
-    common.Append(CCFLAGS = '-Wall -Werror -Wsign-compare')
+    common.Append(CCFLAGS = '/w /D NOMINMAX')
 else:
-    common.Append(CCFLAGS = '/w')
-    common.Append(CCFLAGS = '/D NOMINMAX')
+    common.Append(CCFLAGS = '-Wall -Werror -Wsign-compare')
 
 if not sys.platform.startswith('darwin'):
     if platform.system().startswith('Linux'):
