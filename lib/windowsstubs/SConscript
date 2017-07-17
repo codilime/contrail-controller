@@ -9,7 +9,7 @@ env = DefaultEnvironment()
 abs_vpath = Dir(vpath).abspath
 windowsstubs_lib = '#build/lib/windowsstubs.lib'
 
-def build_windowsstubs_lib(target,source,env):
+def build_windowsstubs_lib(target, source, env):
    msbuildcmd = [os.environ['MSBUILD'], 'WindowsStubs.sln', '/p:platform=x64', '/p:Configuration=Debug']
    subprocess.call(msbuildcmd, cwd = abs_vpath)
    copyfile(File('#/windows/windowsstubs/x64/debug/windowsstubs.lib').abspath, File(windowsstubs_lib).abspath)
