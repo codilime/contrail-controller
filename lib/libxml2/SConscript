@@ -1,7 +1,6 @@
 # -*- mode: python; -*-
 import sys
 import os
-from distutils.dir_util import copy_tree
 
 env = DefaultEnvironment().Clone()
 

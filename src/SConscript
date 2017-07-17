@@ -45,7 +45,7 @@ include = ['#/controller/src', '#/build/include', '#controller/lib']
 
 libpath = ['#/build/lib']
 #WINDOWS-TEMP
-libs = ['boost_system', 'log4cplus', 'libboost_system-vc140-mt-gd-1_62', 'libboost_date_time-vc140-mt-gd-1_62', 'libboost_regex-vc140-mt-gd-1_62', 'libboost_program_options-vc140-mt-gd-1_62', 'libboost_thread-vc140-mt-gd-1_62', 'libboost_filesystem-vc140-mt-gd-1_62']
+libs = ['boost_system', 'log4cplusD', 'libboost_system-vc140-mt-gd-1_62', 'libboost_date_time-vc140-mt-gd-1_62', 'libboost_regex-vc140-mt-gd-1_62', 'libboost_program_options-vc140-mt-gd-1_62', 'libboost_thread-vc140-mt-gd-1_62', 'libboost_filesystem-vc140-mt-gd-1_62']
 
 common = DefaultEnvironment().Clone()
 
