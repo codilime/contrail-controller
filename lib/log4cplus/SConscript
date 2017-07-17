@@ -7,7 +7,7 @@ from shutil import copyfile
 
 vpath = '#/third_party/log4cplus-1.1.1'
 
-env = DefaultEnvironment(MSVC_SETUP_RUN=True)
+env = DefaultEnvironment()
 
 if platform.system() == 'Windows':
     output_lib = File('#/build/lib/log4cplusD.lib')
