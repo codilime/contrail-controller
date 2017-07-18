@@ -7,8 +7,6 @@ import sys
 import glob
 import shutil
 
-print 'building windows tbb'
-
 vpath = '#/third_party/tbb2017_20160916oss'
 
 env = DefaultEnvironment()
@@ -23,33 +21,24 @@ bindir = r'\build\windows_' + arch + '_cl_' + vcversion +'_' + env['TARGET_CONFI
 abs_vpath = Dir(vpath).abspath
 
 def build_tbb_for_windows(target,source,env):
-     BUILD_ENV = {'PATH': env['ENV']['PATH'],
+    srcdir = Dir(vpath +'/include/tbb').abspath
+    destdir = Dir('#/build/include/tbb').abspath
+    if not os.path.exists(destdir):
+        shutil.copytree(srcdir, destdir)
+    BUILD_ENV = {'PATH': env['ENV']['PATH'],
               'tbb_build_dir': Dir('.').abspath,'tbb_root': Dir(vpath).abspath,'runtime':'vc14'
             }
-     cwd = os.getcwd()
-     os.chdir(abs_vpath)
-     print os.getcwd()
-#     proc = subprocess.Popen("make info",stdout = subprocess.PIPE)
-#     (output, _) = proc.communicate()
-#     print output
-     subprocess.call("make tbb", shell=True)
-     cmd = 'copy /Y ' +  abs_vpath + bindir + r'\*.dll ' + env.Dir(env['TOP_BIN']).abspath 
-     print cmd
-     subprocess.call(cmd, shell=True)
-     cmd = 'copy /Y ' + abs_vpath + bindir + r'\*.lib ' + env.Dir(env['TOP_LIB']).abspath
-     print cmd
-     subprocess.call(cmd, shell=True)
-     os.chdir(cwd)
+    cwd = os.getcwd()
+    os.chdir(abs_vpath)
+    subprocess.call("make tbb", shell=True)
+    cmd = 'copy /Y ' +  abs_vpath + bindir + r'\*.dll ' + env.Dir(env['TOP_BIN']).abspath 
+    subprocess.call(cmd, shell=True)
+    cmd = 'copy /Y ' + abs_vpath + bindir + r'\*.lib ' + env.Dir(env['TOP_LIB']).abspath
+    subprocess.call(cmd, shell=True)
+    os.chdir(cwd)
 
 #shutil.copytree()
 
-srcdir = Dir(vpath +'/include/tbb').abspath
-destdir = Dir('#/build/include/tbb').abspath
-
-if not os.path.exists(destdir):
-  shutil.copytree(srcdir, destdir)
-
 #os.symcopy(Dir(vpath + '/include/tbb').abspath, Dir('#/build/include/tbb').abspath)
-env.Command('#build/lib/tbb_debug.lib', str(Dir(vpath)) , build_tbb_for_windows)
+env.Command('#build/lib/tbb_debug.lib', Dir(vpath), build_tbb_for_windows)
 
-     
