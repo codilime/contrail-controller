@@ -5,7 +5,6 @@ import shutil
 
 # path to the sources
 vpath = '#/third_party/curl-curl-7_51_0'
-print 'curl for windows'
 env = DefaultEnvironment().Clone()
 
 binaries_path = '/builds/libcurl-vc-x64-release-static-ipv6-sspi-winssl/'
@@ -17,11 +16,6 @@ VariantDir(vpath + '/src', '#/' + Dir('.').path + '/src')
 
 make_products = ['#/build/lib/curl.lib']
 
-def create_dir_if_needed(dirname):
-    try:
-        os.makedirs(dirname)
-    except OSError:
-        pass
 
 def build_curl_for_windows(target,source,env):
     curdir = os.getcwd()
@@ -38,11 +32,8 @@ def build_curl_for_windows(target,source,env):
       print 'copying curl.lib'
       shutil.copyfile(Dir(vpath + libpath).abspath+ '\libcurl_a.lib', targetfile)
     os.chdir(curdir)
-
-
-
-if not os.path.exists(Dir('#/build/include/curl').abspath):
-    build_curl_for_windows(make_products,Dir('#/build/include/curl').abspath,env)
-    print 'copying include/curl'
     shutil.copytree(Dir(vpath + incpath).abspath, Dir('#/build/include/curl').abspath)
-print 'Done: curl for windows'
+
+
+
+env.Command(make_products, Dir('#/build/include/curl').abspath, build_curl_for_windows)

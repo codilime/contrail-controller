@@ -1,9 +1,9 @@
 # -*- mode: python; -*-
-print 'enter gunit..'
 import platform
 import os
 import subprocess
-import shutil
+from distutils.dir_util import copy_tree
+from shutil import copyfile
 
 default = DefaultEnvironment()
 env = default.Clone()
@@ -25,49 +25,26 @@ include = [
 env.VariantDir(Dir('.').abspath + '/gtest', gtest_path + '/src')
 env.VariantDir(Dir('.').abspath + '/gmock', gmock_path + '/src')
 
-gmocklibname = 'gmock.lib'
-gtestlibname = 'gtest{d}.lib'.format(d='d' if env['TARGET_CONFIG'] =='debug' else  '')
+output_gmock = File('#/build/lib/gmock.lib')
+output_gtest = File('#/build/lib/gtestd.lib')
 
-gmocklibpath = os.path.join(Dir('#/build/lib').abspath, gmocklibname)
-gtestlibpath = os.path.join(Dir('#/build/lib').abspath, gtestlibname)
+def gtest_build(target, source, env):
+    msbuild = [os.environ['MSBUILD'], 'gtest.sln', '/Build']
+    copy_tree(Dir('#/controller/lib/gunit/msvc15').abspath, Dir(gtest_path).abspath + r'\msvc')
+    subprocess.call(msbuild, cwd=os.path.join(Dir(gtest_path).abspath,'msvc'))
+    fromfile = os.path.join(Dir(gtest_path).abspath , r'msvc\gtest\Debug\gtestd.lib')
+    copyfile(fromfile, output_gtest.abspath)
 
-def create_dir_if_needed(dirname):
-    try:
-        os.makedirs(dirname)
-    except OSError:
-        pass
+env.Command(output_gtest, Dir(gtest_path), gtest_build)
 
-if not os.path.exists(gtestlibpath):
-    cmd = 'copy ' + Dir('.').srcnode().abspath + '\msvc15\* ' + Dir(gtest_path).abspath + '\msvc /y'
-    print Dir('.').abspath
-    print cmd
-    subprocess.call(cmd, shell=True)
-    #build googletest
-    gpath = os.path.join(Dir(gtest_path).abspath,'msvc')
-    os.chdir(gpath)
-    assert os.path.isdir(gpath)
-    print os.getcwd()
-    subprocess.call("devenv gtest.sln /Build", shell=True)
-    fromfile = os.path.join(Dir(gtest_path).abspath , 'msvc','gtest', '{direct}'.format(direct='Debug' if env['TARGET_CONFIG'] =='debug' else 'Release'),  gtestlibname)
-    print 'copying ' + fromfile + ' to ' + gtestlibpath
-    create_dir_if_needed(Dir('#/build/lib').abspath)
-    shutil.copyfile(fromfile, gtestlibpath)
+def gmock_build(target, source, env):
+    msbuild = [os.environ['MSBUILD'], 'gmock.sln', '/Build']
+    copy_tree(Dir('#/controller/lib/gunit/msvc15/gmock').abspath, Dir(gmock_path).abspath + r'\msvc\2015')
+    subprocess.call(msbuild, cwd=os.path.join(Dir(gmock_path).abspath, r'/msvc/2015'))
+    fromfile = os.path.join(Dir(gmock_path).abspath, r'msvc\2015\Debug\gmock.lib')
+    copyfile(fromfile, output_gmock.abspath)
 
-
-if not os.path.exists(gmocklibpath):
-   cmd = 'copy ' + Dir('.').srcnode().abspath + r'\msvc15\gmock* ' + Dir(gmock_path).abspath + r'\msvc\2015\ /y'
-   print Dir('.').abspath
-   print cmd
-   subprocess.call(cmd, shell=True)
-   #build googlemock
-   os.chdir(Dir(gmock_path).abspath+ '/msvc/2015')
-   print os.getcwd()
-   subprocess.call("devenv gmock.sln /Build", shell=True)
-   fromfile = os.path.join(Dir(gmock_path).abspath , 'msvc','2015', '{direct}'.format(direct='Debug' if env['TARGET_CONFIG'] =='debug' else 'Release'),  gmocklibname)
-   print 'copying ' + fromfile + ' to ' + gmocklibpath
-   create_dir_if_needed(Dir('#/build/lib').abspath)
-   shutil.copyfile(fromfile, gmocklibpath)
-
+env.Command(output_gmock, Dir(gmock_path), gmock_build)
 
 print 'leave gunit'
 

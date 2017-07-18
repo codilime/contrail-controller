@@ -4,7 +4,6 @@ import subprocess
 import sys
 import shutil
 
-print 'install openvswitch'
 vpath = '#/third_party/openvswitch-2.6.0'
 
 env = DefaultEnvironment()
@@ -25,24 +24,12 @@ openvswitch = env.Command('config.status', str(Dir(vpath)), cmd)
 
 env.SideEffect(libs, openvswitch)
 
-def Symlink(target, source):
-    parent = os.path.dirname(target[0].abspath)
-    if not os.path.exists(parent):
-        os.makedirs(parent)
-
-    if not os.path.exists(target[0].abspath):
-        os.symlink(source[0].abspath, target[0].abspath)
-
 srcdir = Dir(vpath).abspath
 destdir = Dir('#/build/include/openvswitch').abspath
 
-if not os.path.exists(destdir + '/include'):
-  print 'copying to inc' + destdir 
-  shutil.copytree(srcdir+'/include', destdir+'/include')
+def copy_openvswitch(target, source, env):
+    shutil.copytree(srcdir+'/include', destdir+'/include')
+    shutil.copytree(srcdir+'/include', destdir+'/lib')
 
-if not os.path.exists(destdir + '/lib'):
-  print 'copying to lib' + destdir 
-  shutil.copytree(srcdir+'/include', destdir+'/lib')
+env.Command([Dir(destdir+'/lib'), Dir(destdir+'/include')], Dir(srcdir+'/include'), copy_openvswitch)
 
-
-print 'done installing openvswitch'
