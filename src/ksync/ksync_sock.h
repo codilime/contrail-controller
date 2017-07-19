@@ -375,8 +375,13 @@ public:
     static void NetlinkDecoder(char *data, SandeshContext *ctxt);
     static void NetlinkBulkDecoder(char *data, SandeshContext *ctxt, bool more);
     static void Init(boost::asio::io_service &ios, int protocol);
+
 private:
-    //WINDOWS boost::asio::netlink::raw::socket sock_;
+#ifndef _WINDOWS
+    boost::asio::netlink::raw::socket sock_;
+#else
+    boost::asio::windows::stream_handle pipe_;
+#endif
 };
 
 //udp socket class for interacting with user vrouter

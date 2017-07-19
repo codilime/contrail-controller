@@ -41,10 +41,12 @@
 #include "vr_types.h"
 
 using namespace boost::asio;
-#define SO_RCVBUFFORCE  33 //WINDOWSFIX
+
+#ifndef _WINDOWS
 /* Note SO_RCVBUFFORCE is supported only for linux version 2.6.14 and above */
 typedef boost::asio::detail::socket_option::integer<SOL_SOCKET,
         SO_RCVBUFFORCE> ReceiveBuffForceSize;
+#endif
 
 int KSyncSock::vnsw_netlink_family_id_;
 AgentSandeshContext *KSyncSock::agent_sandesh_ctx_;
@@ -80,25 +82,33 @@ static uint32_t IoVectorToData(char *data, KSyncBufferList *iovec) {
 /////////////////////////////////////////////////////////////////////////////
 // Netlink utilities
 /////////////////////////////////////////////////////////////////////////////
+#ifndef _WINDOWS
 static uint32_t GetNetlinkSeqno(char *data) {
-#if 0 //WINDOWSFIX
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return nlh->nlmsg_seq;
-#endif
-	return 0;
 }
+#else
+static uint32_t GetNetlinkSeqno(char *data) {
+    // TODO JW-413: implement SEQ_NO in kernel
+    return 0;
+}
+#endif
 
+#ifndef _WINDOWS
 static bool NetlinkMsgDone(char *data) {
-#if 0 //WINDOWSFIX
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return ((nlh->nlmsg_flags & NLM_F_MULTI) != 0);
-#endif
-	return false;
 }
+#else
+static bool NetlinkMsgDone(char *data) {
+    struct ksync_response_header *krh = (struct ksync_response_header *)data;
+    return krh->type != KSYNC_RESPONSE_MULTIPLE;
+}
+#endif
 
 // Common validation for netlink messages
+#ifndef _WINDOWS
 static bool ValidateNetlink(char *data) {
-#if 0 //WINDOWSFIX
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     if (nlh->nlmsg_type == NLMSG_ERROR) {
         LOG(ERROR, "Netlink error for seqno " << nlh->nlmsg_seq << " len "
@@ -139,12 +149,24 @@ static bool ValidateNetlink(char *data) {
         assert(0);
         return false;
     }
-#endif
     return true;
 }
+#else
+static bool ValidateNetlink(char *data) {
+    struct ksync_response_header *krh = (struct ksync_response_header *)data;
+    if (krh->len + sizeof(struct ksync_response_header) > KSyncSock::kBufLen) {
+        LOG(ERROR, "Length of " << (krh->len + sizeof(struct ksync_response_header)) <<
+            " is more than expected length of " << KSyncSock::kBufLen);
+        assert(0);
+        return false;
+    }
 
+    return true;
+}
+#endif
+
+#ifndef _WINDOWS
 static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
-#if 0 //WINDOWSFIX
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     int len = 0;
     if (nlh->nlmsg_type == NLMSG_DONE) {
@@ -155,34 +177,35 @@ static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
 
     *buf = data + len;
     *buf_len = nlh->nlmsg_len - len;
-#endif
 }
+#else
+static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
+    struct ksync_response_header *krh = (struct ksync_response_header *)data;
+
+    *buf = data + sizeof(ksync_response_header);
+    *buf_len = krh->len;
+}
+#endif
 
 static void InitNetlink(nl_client *client) {
-#if 0 //WINDOWSFIX
     nl_init_generic_client_req(client, KSyncSock::GetNetlinkFamilyId());
     unsigned char *nl_buf;
     uint32_t nl_buf_len;
     assert(nl_build_header(client, &nl_buf, &nl_buf_len) >= 0);
-#endif
 }
 
 static void ResetNetlink(nl_client *client) {
-#if 0 //WINDOWSFIX
     unsigned char *nl_buf;
     uint32_t nl_buf_len;
     client->cl_buf_offset = 0;
     nl_build_header(client, &nl_buf, &nl_buf_len);
-#endif
 }
 
 static void UpdateNetlink(nl_client *client, uint32_t len, uint32_t seq_no) {
-#if 0 //WINDOWSFIX
     nl_update_header(client, len);
     struct nlmsghdr *nlh = (struct nlmsghdr *)client->cl_buf;
     nlh->nlmsg_pid = KSyncSock::GetPid();
     nlh->nlmsg_seq = seq_no;
-#endif
 }
 
 static void DecodeSandeshMessages(char *buf, uint32_t buf_len,
@@ -209,7 +232,6 @@ KSyncSock::KSyncSock() :
     max_bulk_msg_count_(kMaxBulkMsgCount), max_bulk_buf_size_(kMaxBulkMsgSize),
     bulk_seq_no_(kInvalidBulkSeqNo), tx_count_(0), err_count_(0),
     read_inline_(true) {
-#if 0 //WINDOWSFIX
     TaskScheduler *scheduler = TaskScheduler::GetInstance();
     uint32_t task_id = 0;
     for(int i = 0; i < IoContext::MAX_WORK_QUEUES; i++) {
@@ -222,13 +244,13 @@ KSyncSock::KSyncSock() :
         sprintf(name, "KSync Receive Queue-%d", i);
         receive_work_queue[i]->set_name(name);
     }
+
     task_id = scheduler->GetTaskId("Ksync::AsyncSend");
     nl_client_ = (nl_client *)malloc(sizeof(nl_client));
-    bzero(nl_client_, sizeof(nl_client));
+    memset(nl_client_, 0, sizeof(nl_client));
     rx_buff_ = NULL;
     seqno_ = 0;
     uve_seqno_ = 0;
-#endif
 }
 
 KSyncSock::~KSyncSock() {
@@ -607,13 +629,37 @@ bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
 	return false;
 }
 
+#ifdef _WINDOWS
+std::string GetFormattedWindowsErrorMsg() {
+    DWORD error = GetLastError();
+    LPSTR message = NULL;
+
+    DWORD flags = (FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                   FORMAT_MESSAGE_FROM_SYSTEM |
+                   FORMAT_MESSAGE_IGNORE_INSERTS);
+    DWORD lang_id = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+    DWORD ret = FormatMessageA(flags, NULL, error, lang_id, (LPSTR)message, 0, NULL);
+
+    std::ostringstream sstr;
+
+    if (ret != 0) {
+        sstr << message << " ";
+    }
+
+    sstr << "[" << error << "]";
+    LocalFree(message);
+
+    return sstr.str();
+}
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // KSyncSockNetlink routines
 /////////////////////////////////////////////////////////////////////////////
-KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol) 
-//WINDOWSFIX    : sock_(ios, protocol) 
+#ifndef _WINDOWS
+KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
+    : sock_(ios, protocol)
 {
-#if 0 //WINDOWSFIX
     ReceiveBuffForceSize set_rcv_buf;
     set_rcv_buf = KSYNC_SOCK_RECV_BUFF_SIZE;
     boost::system::error_code ec;
@@ -627,10 +673,38 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
     boost::system::error_code ec1;
     sock_.get_option(rcv_buf_size, ec);
     LOG(INFO, "Current receive sock buffer size is " << rcv_buf_size.value());
-#endif
 }
+#else
+KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
+    : pipe_(ios)
+{
+    DWORD access_flags = GENERIC_READ | GENERIC_WRITE;
+    DWORD attrs = OPEN_EXISTING;
+
+    nl_client_->cl_win_pipe = CreateFile(KSYNC_PATH, access_flags, 0, NULL, attrs, 0, NULL);
+    if (nl_client_->cl_win_pipe == INVALID_HANDLE_VALUE) {
+        LOG(ERROR, "Error while opening KSync pipe: " << GetFormattedWindowsErrorMsg());
+        assert(0);
+    }
+
+    boost::system::error_code ec;
+    pipe_.assign(nl_client_->cl_win_pipe, ec);
+    if (ec) {
+        LOG(ERROR, "Error while assigning KSync pipe: " << ec);
+        assert(0);
+    }
+}
+#endif
 
 KSyncSockNetlink::~KSyncSockNetlink() {
+#ifdef _WINDOWS
+    boost::system::error_code ec;
+    pipe_.close(ec);
+    if (ec) {
+        LOG(ERROR, "Error closing KSync pipe: " << ec);
+        assert(0);
+    }
+#endif
 }
 
 void KSyncSockNetlink::Init(io_service &ios, int protocol) {
@@ -653,40 +727,42 @@ bool KSyncSockNetlink::Validate(char *data) {
 //netlink socket class for interacting with kernel
 void KSyncSockNetlink::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
                                    HandlerCb cb) {
-#if 0 //WINDOWSFIX
     ResetNetlink(nl_client_);
     KSyncBufferList::iterator it = iovec->begin();
     iovec->insert(it, buffer((char *)nl_client_->cl_buf,
                              nl_client_->cl_buf_offset));
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
 
+#ifndef _WINDOWS
     boost::asio::netlink::raw::endpoint ep;
     sock_.async_send_to(*iovec, ep, cb);
+#else
+    boost::asio::async_write(pipe_, *iovec, cb);
 #endif
 }
 
 size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
-#ifndef _WINDOWS //WINDOWSFIX
-
     ResetNetlink(nl_client_);
     KSyncBufferList::iterator it = iovec->begin();
     iovec->insert(it, buffer((char *)nl_client_->cl_buf,
                              nl_client_->cl_buf_offset));
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
+
+#ifndef _WINDOWS
+    boost::asio::netlink::raw::endpoint ep;
+    return sock_.send_to(*iovec, ep);
+#else
+    return boost::asio::write(pipe_, *iovec);
 #endif
-    //WINDOWSFIX boost::asio::netlink::raw::endpoint ep;
-	return 0;//WINDOWSFIX sock_.send_to(*iovec, ep);
 }
 
 // Static method to decode non-bulk message
 void KSyncSockNetlink::NetlinkDecoder(char *data, SandeshContext *ctxt) {
-#ifndef _WINDOWS //WINDOWSFIX
     assert(ValidateNetlink(data));
     char *buf = NULL;
     uint32_t buf_len = 0;
     GetNetlinkPayload(data, &buf, &buf_len);
     DecodeSandeshMessages(buf, buf_len, ctxt, NLA_ALIGNTO);
-#endif
 }
 
 bool KSyncSockNetlink::Decoder(char *data, AgentSandeshContext *context) {
@@ -697,7 +773,6 @@ bool KSyncSockNetlink::Decoder(char *data, AgentSandeshContext *context) {
 // Static method used in ksync_sock_user only
 void KSyncSockNetlink::NetlinkBulkDecoder(char *data, SandeshContext *ctxt,
                                           bool more) {
-#if 0 //WINDOWSFIX
     assert(ValidateNetlink(data));
     char *buf = NULL;
     uint32_t buf_len = 0;
@@ -705,27 +780,29 @@ void KSyncSockNetlink::NetlinkBulkDecoder(char *data, SandeshContext *ctxt,
     KSyncBulkSandeshContext *bulk_context =
         dynamic_cast<KSyncBulkSandeshContext *>(ctxt);
     bulk_context->Decoder(buf, buf_len, NLA_ALIGNTO, more);
-#endif
 }
 
 bool KSyncSockNetlink::BulkDecoder(char *data,
                                    KSyncBulkSandeshContext *bulk_context) {
-#if 0 //WINDOWSFIX
     // Get sandesh buffer and buffer-length
     uint32_t buf_len = 0;
     char *buf = NULL;
     GetNetlinkPayload(data, &buf, &buf_len);
     return bulk_context->Decoder(buf, buf_len, NLA_ALIGNTO, IsMoreData(data));
-#endif
-	return false;
 }
 
+#ifndef _WINDOWS
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
-    //WINDOWSFIX sock_.async_receive(buf, cb);
+    sock_.async_receive(buf, cb);
 }
+#else
+void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
+    pipe_.async_read_some(buf, cb); // TODO: JW-408
+}
+#endif
 
+#ifndef _WINDOWS
 void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
-#if 0 //WINDOWSFIX
     sock_.receive(buf);
     struct nlmsghdr *nlh = buffer_cast<struct nlmsghdr *>(buf);
     if (nlh->nlmsg_type == NLMSG_ERROR) {
@@ -733,8 +810,13 @@ void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
                 << " len " << nlh->nlmsg_len);
         assert(0);
     }
-#endif
 }
+#else
+void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
+    pipe_.read_some(buf); // TODO: JW-408
+}
+#endif
+
 
 /////////////////////////////////////////////////////////////////////////////
 // KSyncSockUdp routines
