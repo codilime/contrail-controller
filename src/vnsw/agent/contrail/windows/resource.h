@@ -12,3 +12,5 @@
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
+#define IDS_CONTRAIL_RPM_VERSION   500
+#define IDS_CONTRAIL_BUILD_NUM     501
