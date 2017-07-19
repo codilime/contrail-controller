@@ -104,6 +104,7 @@ if sys.platform.startswith('freebsd'):
 elif sys.platform.startswith('linux'):
     platform_dependent = 'linux/pkt0_interface.cc'
 elif sys.platform.startswith('win'):
+    env.Prepend(LIBS=['DbgHelp'])
     platform_dependent = ['windows/pkt0_interface.cc','#build/lib/windowsstubs.lib', env.RES('windows/resource.rc')]
 
 contrail_vrouter_agent = env.Program(target = 'contrail-vrouter-agent',
