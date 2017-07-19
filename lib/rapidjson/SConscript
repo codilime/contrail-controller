@@ -3,12 +3,10 @@ import sys
 from distutils.dir_util import copy_tree
 
 env = DefaultEnvironment()
-rapidjson_path = '#/third_party/rapidjson-1.1.0'
-
-libpath = Dir(rapidjson_path).abspath
+rapidjson_path = '#/third_party/rapidjson-1.1.0/include/rapidjson'
 
 def copy_rapidjson(target, source, env):
-    copy_tree(Dir(rapidjson_path + '/include/rapidjson').abspath, Dir('#/build/include/rapidjson').abspath)
+    copy_tree(Dir(rapidjson_path).abspath, Dir('#/build/include/rapidjson').abspath)
 
-env.Command(Dir('#/build/include/rapidjson'), Dir(rapidjson_path + '/include/rapidjson'), copy_rapidjson)
+env.Command([Dir('#/build/include/rapidjson'), '#/build/include/rapidjson/document.h'], Dir(rapidjson_path), copy_rapidjson)
 

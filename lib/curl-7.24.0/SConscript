@@ -1,7 +1,8 @@
 # -*- mode: python; -*-
 import os
 import subprocess
-import shutil
+from distutils.dir_util import copy_tree
+from shutil import copyfile
 
 # path to the sources
 vpath = '#/third_party/curl-curl-7_51_0'
@@ -10,7 +11,7 @@ env = DefaultEnvironment().Clone()
 binaries_path = '/builds/libcurl-vc-x64-release-static-ipv6-sspi-winssl/'
 binpath = binaries_path + 'bin/'
 libpath = binaries_path + 'lib/'
-incpath = binaries_path + '/include/curl/'
+incpath = binaries_path + 'include/curl/'
 
 VariantDir(vpath + '/src', '#/' + Dir('.').path + '/src')
 
@@ -18,22 +19,12 @@ make_products = ['#/build/lib/curl.lib']
 
 
 def build_curl_for_windows(target,source,env):
-    curdir = os.getcwd()
-    os.chdir(Dir(vpath).abspath+ '\winbuild')
-    subprocess.call('nmake /f Makefile.vc mode=static', shell=True)
-    targetfile = Dir('#/build/bin').abspath+'\curl.exe'
-    if not os.path.exists(targetfile):
-      os.makedirs(os.path.dirname(targetfile))
-      print 'copying curl.exe'
-      shutil.copyfile(Dir(vpath + binpath).abspath+ '\curl.exe', Dir('#/build/bin').abspath+'\curl.exe')
+    subprocess.call(['nmake', '/f', 'Makefile.vc', 'mode=static', 'MACHINE=x64'], cwd=os.path.join(Dir(vpath).abspath, 'winbuild'))
+    copyfile(Dir(vpath + binpath).abspath+ '\curl.exe', os.path.join(Dir('#/build/bin').abspath, 'curl.exe'))
     targetfile = Dir('#/build/lib').abspath+'\curl.lib'
-    if not os.path.exists(targetfile):
-      create_dir_if_needed(os.path.dirname(targetfile))
-      print 'copying curl.lib'
-      shutil.copyfile(Dir(vpath + libpath).abspath+ '\libcurl_a.lib', targetfile)
-    os.chdir(curdir)
-    shutil.copytree(Dir(vpath + incpath).abspath, Dir('#/build/include/curl').abspath)
+    copyfile(Dir(vpath + libpath).abspath+ '\libcurl_a.lib', targetfile)
+    copy_tree(Dir(vpath + incpath).abspath, Dir('#/build/include/curl').abspath)
 
 
 
-env.Command(make_products, Dir('#/build/include/curl').abspath, build_curl_for_windows)
+env.Command(make_products, Dir(vpath), build_curl_for_windows)

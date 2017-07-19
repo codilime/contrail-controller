@@ -40,5 +40,5 @@ def build_tbb_for_windows(target,source,env):
 #shutil.copytree()
 
 #os.symcopy(Dir(vpath + '/include/tbb').abspath, Dir('#/build/include/tbb').abspath)
-env.Command('#build/lib/tbb_debug.lib', Dir(vpath), build_tbb_for_windows)
+env.Command(['#build/lib/tbb_debug.lib', Dir('#/build/include/tbb')], Dir(vpath), build_tbb_for_windows)
 

@@ -12,6 +12,8 @@ abs_vpath = Dir(vpath).abspath
 abs_toppath = Dir('#').abspath
 thriftcmd = env.Dir(env['TOP_BIN']).abspath + r'\thrift.exe'
 
+msbuild = os.environ['MSBUILD']
+
 def build_thrift_exe_for_windows(target,source,env):
    cmd = 'xcopy ' + Dir('.').srcnode().abspath + r'\controller\lib\thrift\msvc15\0_8_0\compiler\cpp\* ' + abs_vpath + r'\compiler\cpp /e /y'
    print cmd
@@ -19,7 +21,7 @@ def build_thrift_exe_for_windows(target,source,env):
    curdir = os.getcwd()
    os.chdir(abs_vpath + r'\compiler\cpp')
    print os.getcwd()
-   subprocess.call("msbuild Compiler.sln /p:Configuration=Debug /p:Platform=x64", shell=True)
+   subprocess.call([msbuild, 'Compiler.sln', '/p:Configuration=Debug', '/p:Platform=x64', '/p:PlatformToolset=v140'])
 #  create_if_needed_dir(env.Dir(env['TOP_BIN']).abspath)
    cmd = 'copy ' +  abs_vpath + r'\compiler\cpp' + r'\x64\Debug' + r'\thrift.exe ' +  env.Dir(env['TOP_BIN']).abspath + r'\thrift.exe'
    print cmd
@@ -34,7 +36,7 @@ def build_thrift_libs_for_windows(target,source,env):
    curdir = os.getcwd()
    os.chdir(abs_vpath + r'\lib\cpp')
    print os.getcwd()
-   subprocess.call("msbuild thrift.sln /p:Configuration=Debug /p:Platform=x64", shell=True)
+   subprocess.call([msbuild, 'thrift.sln', '/p:Configuration=Debug', '/p:Platform=x64', '/p:PlatformToolset=v140'])
 #   create_if_needed_dir(env.Dir(env['TOP_LIB']).abspath)
    cmd = 'copy ' +  abs_vpath + r'\lib\cpp' + r'\x64\Debug' + r'\libthrift.lib ' +  env.Dir(env['TOP_LIB']).abspath + r'\thrift.lib'
    print cmd
