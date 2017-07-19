@@ -87,7 +87,7 @@ bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
                                        string &build_num) {
 #ifdef _WINDOWS
     assert(0);
-    return false
+    return false;
 #else
     FILE *fp=NULL;
     char line[512];
