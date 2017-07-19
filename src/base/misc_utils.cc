@@ -82,6 +82,7 @@ void MiscUtils::GetCoreFileList(string prog, vector<string> &list) {
     }
 }
 
+//will not be called for windows
 bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
                                        string &build_num) {
     FILE *fp=NULL;
