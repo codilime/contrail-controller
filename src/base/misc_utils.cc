@@ -85,18 +85,22 @@ void MiscUtils::GetCoreFileList(string prog, vector<string> &list) {
 //will not be called for windows
 bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
                                        string &build_num) {
+#ifdef _WINDOWS
+    assert(0);
+    return false
+#else
     FILE *fp=NULL;
     char line[512];
-   //WINDOWS-TEMP fp = popen(cmd.c_str(), "r");
+    fp = popen(cmd.c_str(), "r");
     if (fp == NULL) {
         return false;
     }
     char *ptr = fgets(line, sizeof(line), fp);
     if (ptr == NULL) {
-  //WINDOWS-TEMP      pclose(fp);
+    pclose(fp);
         return false;
     }
-    //WINDOWS-TEMP pclose(fp);
+    pclose(fp);
     ptr = strchr(line, '\n');
     if (ptr != NULL) {
         *ptr = '\0';
@@ -114,6 +118,7 @@ bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
     }
 
     return true;
+#endif
 }
 
 bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,

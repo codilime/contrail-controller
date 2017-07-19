@@ -20,14 +20,13 @@ using namespace std;
 // on all platforms. Note that the positions are numbered 1 through 64, with
 // a return value of 0 indicating that there are no set bits.
 //
-#ifndef _WINDOWS //implemented in winutils.cpp
+#ifndef _WINDOWS //for windows, it is implemented in winutils.cpp 
 static int find_first_set64(uint64_t value) {
     int bit;
 
     int lower = value;
    
-//WINDOWS-TEST
-	if ((bit = ffs(lower)) > 0)
+    if ((bit = ffs(lower)) > 0)
         return bit;
 
     int upper = value >> 32;
