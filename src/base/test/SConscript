@@ -15,7 +15,7 @@ env.Append(LIBPATH = env['TOP'] + '/io')
 
 env.Prepend(LIBS = ['base', 'gtest', 'task_test', 'io', 'sandesh', 'io', 'sandeshvns',
                     'nodeinfo', 'process_info', 'cpuinfo', 'base', 'http',
-                    'http_parser', 'curl', 'pugixml', 'boost_program_options', 'windowsstubs'])
+                    'http_parser', 'curl', 'pugixml', 'boost_program_options', 'windowsstubs', 'Dbghelp'])
 
 if sys.platform not in ['win32', 'darwin']: #works on 64 bit also
     env.Append(LIBS = ['rt'])
