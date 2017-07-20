@@ -5,7 +5,8 @@ import re
 import subprocess
 import sys
 import glob
-import shutil
+from distutils.dir_util import copy_tree
+from shutil import copy
 
 vpath = '#/third_party/tbb2017_20160916oss'
 
@@ -23,22 +24,25 @@ abs_vpath = Dir(vpath).abspath
 def build_tbb_for_windows(target,source,env):
     srcdir = Dir(vpath +'/include/tbb').abspath
     destdir = Dir('#/build/include/tbb').abspath
-    if not os.path.exists(destdir):
-        shutil.copytree(srcdir, destdir)
+    copy_tree(srcdir, destdir)
     BUILD_ENV = {'PATH': env['ENV']['PATH'],
               'tbb_build_dir': Dir('.').abspath,'tbb_root': Dir(vpath).abspath,'runtime':'vc14'
             }
     cwd = os.getcwd()
     os.chdir(abs_vpath)
     subprocess.call("make tbb", shell=True)
-    cmd = 'copy /Y ' +  abs_vpath + bindir + r'\*.dll ' + env.Dir(env['TOP_BIN']).abspath 
-    subprocess.call(cmd, shell=True)
-    cmd = 'copy /Y ' + abs_vpath + bindir + r'\*.lib ' + env.Dir(env['TOP_LIB']).abspath
-    subprocess.call(cmd, shell=True)
+    files = glob.iglob(os.path.join(abs_vpath, bindir, "*.dll"))
+    for file in files:
+        if os.path.isfile(file):
+            copy(file, env.Dir(env['TOP_BIN']).abspath)
+    files = glob.iglob(os.path.join(abs_vpath, bindir, "*.lib"))
+    for file in files:
+        if os.path.isfile(file):
+            copy(file, env.Dir(env['TOP_LIB']).abspath)
     os.chdir(cwd)
 
 #shutil.copytree()
 
 #os.symcopy(Dir(vpath + '/include/tbb').abspath, Dir('#/build/include/tbb').abspath)
-env.Command(['#build/lib/tbb_debug.lib', Dir('#/build/include/tbb')], Dir(vpath), build_tbb_for_windows)
+env.Command(['#build/lib/tbb_debug.lib', '#/build/include/tbb/mutex.h'], Dir(vpath), build_tbb_for_windows)
 

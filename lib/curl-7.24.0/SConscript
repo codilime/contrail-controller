@@ -15,7 +15,7 @@ incpath = binaries_path + 'include/curl/'
 
 VariantDir(vpath + '/src', '#/' + Dir('.').path + '/src')
 
-make_products = ['#/build/lib/curl.lib']
+make_products = ['#/build/lib/curl.lib', '#/build/include/curl/curl.h']
 
 
 def build_curl_for_windows(target,source,env):
