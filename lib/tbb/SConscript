@@ -31,11 +31,15 @@ def build_tbb_for_windows(target,source,env):
     cwd = os.getcwd()
     os.chdir(abs_vpath)
     subprocess.call("make tbb", shell=True)
+    
     if not os.path.exists(env.Dir(env['TOP_BIN']).abspath):
         os.makedirs(env.Dir(env['TOP_BIN']).abspath)
     files = glob.iglob(os.path.join(abs_vpath, bindir, "*.dll"))
     for file in files:
         copy(file, env.Dir(env['TOP_BIN']).abspath)
+    
+    if not os.path.exists(env.Dir(env['TOP_LIB']).abspath):
+        os.makedirs(env.Dir(env['TOP_LIB']).abspath)
     files = glob.iglob(os.path.join(abs_vpath, bindir, "*.lib"))
     for file in files:
         copy(file, env.Dir(env['TOP_LIB']).abspath)

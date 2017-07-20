@@ -10,6 +10,7 @@ vpath = '#/third_party/thrift-0.8.0'
 env = DefaultEnvironment()
 
 abs_vpath = Dir(vpath).abspath
+include_path = os.path.join(env.Dir(env['TOP_INCLUDE']).abspath, r'thrift')
 
 msbuild = os.environ['MSBUILD']
 
@@ -25,8 +26,10 @@ def build_thrift_libs_for_windows(target,source,env):
     copyfile(os.path.join(abs_vpath, r'lib\cpp\x64\Debug\libthrift.lib'), os.path.join(env.Dir(env['TOP_LIB']).abspath, r'thrift.lib'))
     copyfile(os.path.join(abs_vpath, r'lib\cpp\x64\Debug\libthriftnb.lib'), os.path.join(env.Dir(env['TOP_LIB']).abspath, r'thriftnb.lib'))
     files = glob.iglob(os.path.join(abs_vpath, r"lib\cpp\src\*.h"))
+    if not os.path.exists(include_path):
+        os.makedirs(include_path)
     for file in files:
-        copy(file, os.path.join(env.Dir(env['TOP_INCLUDE']).abspath, r'thrift'))
+        copy(file, include_path)
 
 
 thrift_exe = '#/build/bin/thrift.exe'
