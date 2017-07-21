@@ -20,6 +20,11 @@
 #include <boost/algorithm/string/find.hpp>
 #include <boost/algorithm/string/find_iterator.hpp>
 #include <boost/algorithm/string/split.hpp>
+#ifdef _WINDOWS
+#include <sys/times.h>
+#include "cpuutil.h"
+#include "wmi.h"
+#endif
 
 using namespace boost;
 
@@ -29,8 +34,9 @@ static uint32_t NumCpus() {
     if (count != 0) {
         return count;
     }
-
-#ifdef __APPLE__
+#ifdef _WINDOWS
+    return count = GetWindowsOSProcessorCount();
+#elif defined(__APPLE__)
     size_t len = sizeof(count);
     sysctlbyname("hw.logicalcpu", &count, &len, NULL, 0);
     return count;
@@ -49,7 +55,6 @@ static uint32_t NumCpus() {
 }
 
 static void LoadAvg(CpuLoad &load) {
-#if 0 //WINDOWS-TEMP
     double averages[3];
     uint32_t num_cpus = NumCpus();
     getloadavg(averages, 3);
@@ -58,11 +63,12 @@ static void LoadAvg(CpuLoad &load) {
         load.five_min_avg = averages[1]/num_cpus;
         load.fifteen_min_avg = averages[2]/num_cpus;
     }
-#endif
 }
 
 static void ProcessMemInfo(ProcessMemInfo &info) {
-#ifdef __APPLE__
+#ifdef _WINDOWS
+    //TBD
+#elif defined(__APPLE__)
     struct task_basic_info t_info;
     mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
     if (KERN_SUCCESS != task_info(mach_task_self(),
@@ -105,6 +111,9 @@ static void ProcessMemInfo(ProcessMemInfo &info) {
 }
 
 static void SystemMemInfo(SystemMemInfo &info) {
+#ifdef _WINDOWS
+    //TBD
+#else
     std::ifstream file("/proc/meminfo");
     std::string tmp;
     // MemTotal:       132010576 kB
@@ -117,12 +126,13 @@ static void SystemMemInfo(SystemMemInfo &info) {
     file >> tmp; file >> info.cached;
     // Used = Total - Free
     info.used = info.total - info.free;
+#endif
 }
 
 static clock_t snapshot, prev_sys_cpu, prev_user_cpu;
 
 static void ProcessCpuShare(double &percentage) {
-#if 0 //WINDOWS-TEMP
+
     struct tms cpu_taken;
     clock_t now;
 
@@ -140,7 +150,7 @@ static void ProcessCpuShare(double &percentage) {
     snapshot = now;
     prev_sys_cpu = cpu_taken.tms_stime;
     prev_user_cpu = cpu_taken.tms_utime;
-#endif
+
 }
 
 void CpuLoadData::GetCpuLoadInfo(CpuInfo &info, bool system) {
@@ -156,12 +166,10 @@ void CpuLoadData::GetCpuLoadInfo(CpuInfo &info, bool system) {
 }
 
 void CpuLoadData::Init() {
-#if 0 //WINDOWS-TEMP
     struct tms cpu_taken;
     snapshot = times(&cpu_taken);
     prev_sys_cpu = cpu_taken.tms_stime;
     prev_user_cpu = cpu_taken.tms_utime;
-#endif
 }
 
 void CpuLoadData::FillCpuInfo(CpuLoadInfo &cpu_load_info, bool system) {
