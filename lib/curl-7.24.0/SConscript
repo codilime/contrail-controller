@@ -8,10 +8,7 @@ from shutil import copyfile
 vpath = '#/third_party/curl-curl-7_51_0'
 env = DefaultEnvironment().Clone()
 
-binaries_path = '/builds/libcurl-vc-x64-release-static-ipv6-sspi-winssl/'
-binpath = binaries_path + 'bin/'
-libpath = binaries_path + 'lib/'
-incpath = binaries_path + 'include/curl/'
+binaries_path = 'builds/libcurl-vc-x64-release-static-ipv6-sspi-winssl/'
 
 VariantDir(vpath + '/src', '#/' + Dir('.').path + '/src')
 
@@ -20,10 +17,7 @@ make_products = ['#/build/lib/curl.lib', '#/build/include/curl/curl.h']
 
 def build_curl_for_windows(target,source,env):
     subprocess.call(['nmake', '/f', 'Makefile.vc', 'mode=static', 'MACHINE=x64'], cwd=os.path.join(Dir(vpath).abspath, 'winbuild'))
-    copyfile(Dir(vpath + binpath).abspath+ '\curl.exe', os.path.join(Dir('#/build/bin').abspath, 'curl.exe'))
-    targetfile = Dir('#/build/lib').abspath+'\curl.lib'
-    copyfile(Dir(vpath + libpath).abspath+ '\libcurl_a.lib', targetfile)
-    copy_tree(Dir(vpath + incpath).abspath, Dir('#/build/include/curl').abspath)
+    copy_tree(Dir(os.path.join(vpath,binaries_path)).abspath, Dir('#/build').abspath)
 
 
 
