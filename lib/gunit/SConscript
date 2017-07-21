@@ -44,4 +44,3 @@ def gmock_build(target, source, env):
     copyfile(fromfile, output_gmock.abspath)
 
 env.Command(output_gmock, Dir(gmock_path), gmock_build)
-
