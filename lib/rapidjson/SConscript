@@ -1,25 +1,13 @@
 import os
 import sys
-import shutil
+from distutils.dir_util import copy_tree
 
-print 'install rapidjson'
 env = DefaultEnvironment()
-rapidjson_path = '#/third_party/rapidjson-1.1.0'
+vpath = '#/third_party/rapidjson-1.1.0'
+rapidjson_path = os.path.join(vpath, 'include/rapidjson')
 
-def Symlink(target, source):
-    parent = os.path.dirname(target[0].abspath)
-    if not os.path.exists(parent):
-        os.makedirs(parent)
+def copy_rapidjson(target, source, env):
+    copy_tree(Dir(rapidjson_path).abspath, Dir('#/build/include/rapidjson').abspath)
 
-    if not os.path.exists(target[0].abspath):
-        os.symlink(source[0].abspath, target[0].abspath)
-
-libpath = Dir(rapidjson_path).abspath
-if not os.path.exists(libpath):
-    print '%s not present' % libpath
-    sys.exit(1)
-
-if not os.path.exists(Dir('#/build/include/rapidjson').abspath):
-  shutil.copytree(Dir(rapidjson_path + '/include/rapidjson').abspath, Dir('#/build/include/rapidjson').abspath)
-print 'done installing rapidjson'
+env.Command('#/build/include/rapidjson/document.h', Dir(rapidjson_path), copy_rapidjson)
 

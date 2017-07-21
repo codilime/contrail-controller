@@ -1,48 +1,25 @@
 # -*- mode: python; -*-
 import os
 import subprocess
-import shutil
+from distutils.dir_util import copy_tree
+from shutil import copyfile
 
 # path to the sources
 vpath = '#/third_party/curl-curl-7_51_0'
-print 'curl for windows'
 env = DefaultEnvironment().Clone()
 
-binaries_path = '/builds/libcurl-vc-x64-release-static-ipv6-sspi-winssl/'
-binpath = binaries_path + 'bin/'
-libpath = binaries_path + 'lib/'
-incpath = binaries_path + '/include/curl/'
+binaries_path = 'builds/libcurl-vc-x64-release-static-ipv6-sspi-winssl/'
 
 VariantDir(vpath + '/src', '#/' + Dir('.').path + '/src')
 
-make_products = ['#/build/lib/curl.lib']
+make_products = ['#/build/lib/curl.lib', '#/build/include/curl/curl.h']
 
-def create_dir_if_needed(dirname):
-    try:
-        os.makedirs(dirname)
-    except OSError:
-        pass
 
 def build_curl_for_windows(target,source,env):
-    curdir = os.getcwd()
-    os.chdir(Dir(vpath).abspath+ '\winbuild')
-    subprocess.call('nmake /f Makefile.vc mode=static', shell=True)
-    targetfile = Dir('#/build/bin').abspath+'\curl.exe'
-    if not os.path.exists(targetfile):
-      os.makedirs(os.path.dirname(targetfile))
-      print 'copying curl.exe'
-      shutil.copyfile(Dir(vpath + binpath).abspath+ '\curl.exe', Dir('#/build/bin').abspath+'\curl.exe')
-    targetfile = Dir('#/build/lib').abspath+'\curl.lib'
-    if not os.path.exists(targetfile):
-      create_dir_if_needed(os.path.dirname(targetfile))
-      print 'copying curl.lib'
-      shutil.copyfile(Dir(vpath + libpath).abspath+ '\libcurl_a.lib', targetfile)
-    os.chdir(curdir)
+    subprocess.call(['nmake', '/f', 'Makefile.vc', 'mode=static', 'MACHINE=x64'], cwd=os.path.join(Dir(vpath).abspath, 'winbuild'))
+    copy_tree(Dir(os.path.join(vpath,binaries_path)).abspath, Dir('#/build').abspath)
+    os.rename(File('#/build/lib/libcurl_a.lib').abspath, File('#/build/lib/curl.lib').abspath)
 
 
 
-if not os.path.exists(Dir('#/build/include/curl').abspath):
-    build_curl_for_windows(make_products,Dir('#/build/include/curl').abspath,env)
-    print 'copying include/curl'
-    shutil.copytree(Dir(vpath + incpath).abspath, Dir('#/build/include/curl').abspath)
-print 'Done: curl for windows'
+env.Command(make_products, Dir(vpath), build_curl_for_windows)

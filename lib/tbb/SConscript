@@ -4,10 +4,8 @@ import os
 import re
 import subprocess
 import sys
-import glob
-import shutil
-
-print 'building windows tbb'
+from distutils.dir_util import copy_tree
+from shutil import copyfile
 
 vpath = '#/third_party/tbb2017_20160916oss'
 
@@ -19,37 +17,29 @@ else:
    arch = 'intel64'
 
 vcversion = 'vc14'
-bindir = r'\build\windows_' + arch + '_cl_' + vcversion +'_' + env['TARGET_CONFIG'] #debug is default for now
+bindir = r'build\windows_' + arch + '_cl_' + vcversion +'_' + env['TARGET_CONFIG'] #debug is default for now
 abs_vpath = Dir(vpath).abspath
 
 def build_tbb_for_windows(target,source,env):
-     BUILD_ENV = {'PATH': env['ENV']['PATH'],
+    srcdir = Dir(vpath +'/include/tbb').abspath
+    destdir = Dir('#/build/include/tbb').abspath
+    copy_tree(srcdir, destdir)
+    BUILD_ENV = {'PATH': env['ENV']['PATH'],
               'tbb_build_dir': Dir('.').abspath,'tbb_root': Dir(vpath).abspath,'runtime':'vc14'
             }
-     cwd = os.getcwd()
-     os.chdir(abs_vpath)
-     print os.getcwd()
-#     proc = subprocess.Popen("make info",stdout = subprocess.PIPE)
-#     (output, _) = proc.communicate()
-#     print output
-     subprocess.call("make tbb", shell=True)
-     cmd = 'copy /Y ' +  abs_vpath + bindir + r'\*.dll ' + env.Dir(env['TOP_BIN']).abspath 
-     print cmd
-     subprocess.call(cmd, shell=True)
-     cmd = 'copy /Y ' + abs_vpath + bindir + r'\*.lib ' + env.Dir(env['TOP_LIB']).abspath
-     print cmd
-     subprocess.call(cmd, shell=True)
-     os.chdir(cwd)
+    cwd = os.getcwd()
+    os.chdir(abs_vpath)
+    subprocess.call("make tbb", shell=True)
+    
+    if not os.path.exists(env.Dir(env['TOP_BIN']).abspath):
+        os.makedirs(env.Dir(env['TOP_BIN']).abspath)
+    copyfile(os.path.join(abs_vpath, bindir, "tbb_debug.dll"), os.path.join(env.Dir(env['TOP_BIN']).abspath, 'tbb_debug.dll'))
+    copyfile(os.path.join(abs_vpath, bindir, "tbb_debug.lib"), os.path.join(env.Dir(env['TOP_LIB']).abspath, 'tbb_debug.lib'))
+    
+    os.chdir(cwd)
 
 #shutil.copytree()
 
-srcdir = Dir(vpath +'/include/tbb').abspath
-destdir = Dir('#/build/include/tbb').abspath
-
-if not os.path.exists(destdir):
-  shutil.copytree(srcdir, destdir)
-
 #os.symcopy(Dir(vpath + '/include/tbb').abspath, Dir('#/build/include/tbb').abspath)
-env.Command('#build/lib/tbb_debug.lib', str(Dir(vpath)) , build_tbb_for_windows)
+env.Command(['#build/lib/tbb_debug.lib', '#/build/include/tbb/mutex.h'], Dir(vpath), build_tbb_for_windows)
 
-     

@@ -21,8 +21,8 @@ buildinfo_dep_libs = ['../../dns/cfg/dns_cfg.lib', '../../dns/mgr/mgr.lib', '../
                   ]
 
 cmn_sources = ['dns.cc', 'dns_options.cc']
-buildinfoh = Dir('.').path+'\\buildinfo.h'
-buildinfocc = Dir('.').path+'\\buildinfo.cc'
+buildinfoh = Dir('.').path+'\\cmnbuildinfo.h'
+buildinfocc = Dir('.').path+'\\cmnbuildinfo.cc'
 print 'buildinfoh=', buildinfoh
 env.GenerateBuildInfoCode(
     target = ['cmnbuildinfo.h', 'cmnbuildinfo.cc'],
