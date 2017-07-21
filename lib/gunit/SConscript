@@ -37,23 +37,6 @@ def create_dir_if_needed(dirname):
     except OSError:
         pass
 
-if not os.path.exists(gtestlibpath):
-    cmd = 'copy ' + Dir('.').srcnode().abspath + '\msvc15\* ' + Dir(gtest_path).abspath + '\msvc /y'
-    print Dir('.').abspath
-    print cmd
-    subprocess.call(cmd, shell=True)
-    #build googletest
-    gpath = os.path.join(Dir(gtest_path).abspath,'msvc')
-    os.chdir(gpath)
-    assert os.path.isdir(gpath)
-    print os.getcwd()
-    subprocess.call("devenv gtest.sln /Build", shell=True)
-    fromfile = os.path.join(Dir(gtest_path).abspath , 'msvc','gtest', '{direct}'.format(direct='Debug' if env['TARGET_CONFIG'] =='debug' else 'Release'),  gtestlibname)
-    print 'copying ' + fromfile + ' to ' + gtestlibpath
-    create_dir_if_needed(Dir('#/build/lib').abspath)
-    shutil.copyfile(fromfile, gtestlibpath)
-
-
 if not os.path.exists(gmocklibpath):
    cmd = 'copy ' + Dir('.').srcnode().abspath + r'\msvc15\gmock* ' + Dir(gmock_path).abspath + r'\msvc\2015\ /y'
    print Dir('.').abspath
@@ -62,8 +45,8 @@ if not os.path.exists(gmocklibpath):
    #build googlemock
    os.chdir(Dir(gmock_path).abspath+ '/msvc/2015')
    print os.getcwd()
-   subprocess.call("devenv gmock.sln /Build", shell=True)
-   fromfile = os.path.join(Dir(gmock_path).abspath , 'msvc','2015', '{direct}'.format(direct='Debug' if env['TARGET_CONFIG'] =='debug' else 'Release'),  gmocklibname)
+   subprocess.call([os.environ['MSBUILD'], 'gmock.vcxproj', '/p:Configuration=Debug', '/p:Platform=x64'])
+   fromfile = os.path.join(Dir(gmock_path).abspath , r'msvc\2015\x64\Debug',  gmocklibname)
    print 'copying ' + fromfile + ' to ' + gmocklibpath
    create_dir_if_needed(Dir('#/build/lib').abspath)
    shutil.copyfile(fromfile, gmocklibpath)

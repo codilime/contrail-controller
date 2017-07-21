@@ -5,6 +5,7 @@
 #ifndef vnsw_agent_prouter_uve_table_test_h
 #define vnsw_agent_prouter_uve_table_test_h
 
+#include <boost/asio.hpp>
 #include <uve/prouter_uve_table.h>
 
 class ProuterUveTableTest : public ProuterUveTable {

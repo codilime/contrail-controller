@@ -5,6 +5,7 @@
 #ifndef vnsw_agent_vm_uve_table_test_h
 #define vnsw_agent_vm_uve_table_test_h
 
+#include <boost/asio.hpp>
 #include <uve/vm_uve_table.h>
 
 class VmUveTableTest : public VmUveTable {

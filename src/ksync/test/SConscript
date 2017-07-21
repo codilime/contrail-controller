@@ -24,11 +24,10 @@ env.Prepend(LIBS=['thrift','xmpp', 'peer_sandesh', 'table_sandesh',
                   'bgp_schema', 'ifmap_vnc', 'ifmap_agent', 'ifmap_common',
                   'sandeshflow', 'sandesh', 'httpc', 'http', 'http_parser', 'curl',
                   'process_info', 'db', 'base', 'task_test', 'io', 'sandeshvns', 'net',
-                  'gunit', 'boost_regex', 'boost_filesystem',
-                  'cpuinfo', 'pugixml'])
+                  'boost_regex', 'boost_filesystem',
+                  'cpuinfo', 'pugixml', 'windowsstubs', 'gmock'])
 
 if sys.platform != 'darwin':
-    env.Append(LIBS=['rt'])
     env.Prepend(LIBS=['ksync', 'ksyncnl'])
 
 libs = MapBuildDir(['db', 'bgp', 'xmpp', 'xml', 'pugixml', 'io', 'ksync',
