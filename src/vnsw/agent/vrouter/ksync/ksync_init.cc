@@ -90,6 +90,7 @@ void KSync::RegisterDBClients(DB *db) {
 }
 
 void KSync::Init(bool create_vhost) {
+#ifndef _WINDOWS
     NetlinkInit();
     VRouterInterfaceSnapshot();
     InitFlowMem();
@@ -97,13 +98,16 @@ void KSync::Init(bool create_vhost) {
     if (create_vhost) {
         CreateVhostIntf();
     }
+#endif
     interface_ksync_obj_.get()->Init();
+#ifndef _WINDOWS
     for (uint16_t i = 0; i < flow_table_ksync_obj_list_.size(); i++) {
         FlowTable *flow_table = agent_->pkt()->get_flow_proto()->GetTable(i);
         flow_table->set_ksync_object(flow_table_ksync_obj_list_[i]);
         flow_table_ksync_obj_list_[i]->Init();
     }
     ksync_flow_memory_.get()->Init();
+#endif
 }
 
 void KSync::InitDone() {
