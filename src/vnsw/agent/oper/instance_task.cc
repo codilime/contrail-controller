@@ -89,7 +89,7 @@ bool InstanceTaskExecvp::Run() {
 	//WINDOWS-TEMP  pid_ = vfork();
 #if 0 //WINDOWS-TEMP
     if (pid_ == 0) {
-        close(err[0]);
+        //WINDOWS-TEMP close(err[0]);
         if (pipe_stdout_) {
             dup2(err[1], STDOUT_FILENO);
         } else {
@@ -109,13 +109,13 @@ bool InstanceTaskExecvp::Run() {
 
         _exit(127);
     }
-#endif
     close(err[1]);
+#endif
 
     start_time_ = time(NULL);
 #if 0 //WINDOWS-TEMP
     int fd = ::dup(err[0]);
-    close(err[0]);
+    //WINDOWS-TEMP close(err[0]);
     if (fd == -1) {
         //is_running_ is still true indicating the child process is
         //running. Caller needs to verify the status before acting on

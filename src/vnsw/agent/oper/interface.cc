@@ -437,14 +437,8 @@ void Interface::GetOsParams(Agent *agent) {
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(ifr));
     strncpy(ifr.ifr_name, name.c_str(), IF_NAMESIZE);
-#ifdef _WINDOWS
-    // TODO (Windows-Juniper)
-    // Temporary modification. Socket created just to bypass an assert below.
-    // It should be decided what is the best replacement for UNIX socket here.
-    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-#else
+#ifndef _WINDOWS
     int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-#endif
     assert(fd >= 0);
     if (ioctl(fd, SIOCGIFHWADDR, (void *)&ifr) < 0) {
         LOG(ERROR, "Error <" << errno << ": " << strerror(errno) <<
@@ -464,12 +458,14 @@ void Interface::GetOsParams(Agent *agent) {
         close(fd);
         return;
     }
-
+#endif
     os_oper_state_ = false;
     if ((ifr.ifr_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING)) {
         os_oper_state_ = true;
     }
+#ifndef _WINDOWS
     close(fd);
+#endif
 
 #if defined(__linux__)
     mac_ = ifr.ifr_hwaddr;
