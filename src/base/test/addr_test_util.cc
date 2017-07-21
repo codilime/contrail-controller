@@ -7,6 +7,7 @@
 #endif
 
 
+#include <boost/asio.hpp>
 #include "base/test/addr_test_util.h"
 
 namespace task_util {

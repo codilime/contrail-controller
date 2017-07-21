@@ -6,6 +6,7 @@
 #include <windows.h>
 #endif
 
+#include <boost/asio.hpp>
 #include "base/test/task_test_util.h"
 
 #include <boost/asio/deadline_timer.hpp>

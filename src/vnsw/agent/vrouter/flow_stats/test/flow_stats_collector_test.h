@@ -5,6 +5,7 @@
 #ifndef vnsw_agent_flow_stats_collector_test_h
 #define vnsw_agent_flow_stats_collector_test_h
 
+#include <boost/asio.hpp>
 #include <vector>
 #include <vrouter/flow_stats/flow_stats_collector.h>
 #include <sandesh/common/flow_types.h>
