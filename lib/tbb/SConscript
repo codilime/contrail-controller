@@ -4,9 +4,8 @@ import os
 import re
 import subprocess
 import sys
-import glob
 from distutils.dir_util import copy_tree
-from shutil import copy
+from shutil import copyfile
 
 vpath = '#/third_party/tbb2017_20160916oss'
 
@@ -32,17 +31,9 @@ def build_tbb_for_windows(target,source,env):
     os.chdir(abs_vpath)
     subprocess.call("make tbb", shell=True)
     
-    if not os.path.exists(env.Dir(env['TOP_BIN']).abspath):
-        os.makedirs(env.Dir(env['TOP_BIN']).abspath)
-    files = glob.iglob(os.path.join(abs_vpath, bindir, "*.dll"))
-    for file in files:
-        copy(file, env.Dir(env['TOP_BIN']).abspath)
+    copyfile(os.path.join(abs_vpath, bindir, "tbb_debug.dll"), os.path.join(env.Dir(env['TOP_BIN']).abspath, 'tbb_debug.dll'))
+    copyfile(os.path.join(abs_vpath, bindir, "tbb_debug.lib"), os.path.join(env.Dir(env['TOP_LIB']).abspath, 'tbb_debug.lib'))
     
-    if not os.path.exists(env.Dir(env['TOP_LIB']).abspath):
-        os.makedirs(env.Dir(env['TOP_LIB']).abspath)
-    files = glob.iglob(os.path.join(abs_vpath, bindir, "*.lib"))
-    for file in files:
-        copy(file, env.Dir(env['TOP_LIB']).abspath)
     os.chdir(cwd)
 
 #shutil.copytree()

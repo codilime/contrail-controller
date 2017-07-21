@@ -1,5 +1,4 @@
 # -*- mode: python; -*-
-import platform
 import os
 import subprocess
 from distutils.dir_util import copy_tree
@@ -45,6 +44,4 @@ def gmock_build(target, source, env):
     copyfile(fromfile, output_gmock.abspath)
 
 env.Command(output_gmock, Dir(gmock_path), gmock_build)
-
-print 'leave gunit'
 

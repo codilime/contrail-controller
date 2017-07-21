@@ -24,12 +24,12 @@ openvswitch = env.Command('config.status', str(Dir(vpath)), cmd)
 
 env.SideEffect(libs, openvswitch)
 
-srcdir = Dir(vpath).abspath
+srcdir = os.path.join(Dir(vpath).abspath, 'include')
 destdir = Dir('#/build/include/openvswitch').abspath
 
 def copy_openvswitch(target, source, env):
-    shutil.copytree(srcdir+'/include', destdir+'/include')
-    shutil.copytree(srcdir+'/include', destdir+'/lib')
+    shutil.copytree(srcdir, destdir+'/include')
+    shutil.copytree(srcdir, destdir+'/lib')
 
-env.Command([Dir(destdir+'/lib'), Dir(destdir+'/include')], Dir(srcdir+'/include'), copy_openvswitch)
+env.Command([Dir(destdir+'/lib'), Dir(destdir+'/include')], Dir(srcdir), copy_openvswitch)
 
