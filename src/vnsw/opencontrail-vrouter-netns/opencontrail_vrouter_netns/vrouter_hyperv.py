@@ -228,7 +228,7 @@ class SNATVirtualMachine(object):
             retry_num += 1
             time.sleep(self.WAIT_FOR_VM_TIME_SEC)
             try:
-                call_powershell([inject_ip_script_path,
+                call_powershell(["&", inject_ip_script_path,
                                  "-SwitchName", mgmt_switch_name,
                                  "-Name", self.wingw_name,
                                  "-IPAddress", str(mgmt_ip),
@@ -275,7 +275,8 @@ class SNATVirtualMachine(object):
     def _exists(self):
         """calls powershell to check whether vm exists"""
         try:
-            call_powershell(["Get-VM", "-Name", self.wingw_name])
+            call_powershell(["Get-VM", "-Name", self.wingw_name, "-ErrorAction",
+                             "SilentlyContinue", "|", "Out-Null"])
         except subprocess.CalledProcessError:
             return False
         return True

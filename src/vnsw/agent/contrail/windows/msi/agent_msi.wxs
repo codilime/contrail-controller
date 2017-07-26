@@ -15,6 +15,7 @@
                         </Component>
                         <Component Id="VRouterHyperv" Guid="2E5ED884-4461-4852-B841-CF6FE4E1E6B7" Win64="yes">
                             <File Id="VRouterHypervScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv.py" />
+                            <File Id="VRouterCommonScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/common.py" />
                             <File Id="VRouterHypervInjectIPScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv_inject_ip.ps1" />
                         </Component>
                     </Directory>
