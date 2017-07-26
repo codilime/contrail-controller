@@ -25,6 +25,9 @@
 #include "oper/interface_common.h"
 #include "port_ipc/port_ipc_handler.h"
 #include "port_ipc/port_ipc_types.h"
+#ifdef _WINDOWS
+#include "winnw.h"
+#endif
 
 using namespace std;
 namespace fs = boost::filesystem;
@@ -498,12 +501,16 @@ bool PortIpcHandler::GetPortInfo(const string &uuid_str, string &info) const {
 }
 
 bool PortIpcHandler::InterfaceExists(const std::string &name) const {
-#if 0 //WINDOWS-TEMP
-    int indx  = osspecific_if_nametoindex(name.c_str());
+
+#ifdef _WINDOWS
+    int indx  = windows_if_nametoindex(name.c_str());
+#else
+    int indx = if_nametoindex(name.c_str());
+#endif
     if (indx == 0) {
         return false;
     }
-#endif
+
     return true;
 }
 

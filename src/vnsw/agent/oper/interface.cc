@@ -478,8 +478,13 @@ void Interface::GetOsParams(Agent *agent) {
 #elif defined(__FreeBSD__)
     mac_ = ifr.ifr_addr;
 #endif
+    
+#ifdef _WINDOWS
+    int idx = windows_if_nametoindex(name.c_str());
+#else
+    int idx = if_nametoindex(name.c_str());
+#endif
 
-    int idx = osspecific_if_nametoindex(name.c_str());
     if (idx)
         os_index_ = idx;
 }
