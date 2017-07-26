@@ -90,24 +90,29 @@ void KSync::RegisterDBClients(DB *db) {
 }
 
 void KSync::Init(bool create_vhost) {
-#ifndef _WINDOWS
     NetlinkInit();
     VRouterInterfaceSnapshot();
-    InitFlowMem();
+    // TODO: JW-882: uncomment the code
+    /* InitFlowMem(); */
     ResetVRouter(true);
+
+    /* On Windows, vhost interface is created when Hyper-V switch is created */
+    #ifndef _WINDOWS
     if (create_vhost) {
         CreateVhostIntf();
     }
-#endif
+    #endif
+
     interface_ksync_obj_.get()->Init();
-#ifndef _WINDOWS
+    // TODO: JW-882: uncomment the code
+    /*
     for (uint16_t i = 0; i < flow_table_ksync_obj_list_.size(); i++) {
         FlowTable *flow_table = agent_->pkt()->get_flow_proto()->GetTable(i);
         flow_table->set_ksync_object(flow_table_ksync_obj_list_[i]);
         flow_table_ksync_obj_list_[i]->Init();
     }
     ksync_flow_memory_.get()->Init();
-#endif
+    */
 }
 
 void KSync::InitDone() {
@@ -361,9 +366,7 @@ void GenericNetlinkInit() {
     KSyncSock::SetNetlinkFamilyId(family);
     nl_free_client(cl);
 #else
-    // Value is unused under Windows, but method
-    // initializes internal structures
-    KSyncSock::SetNetlinkFamilyId(0);
+    KSyncSock::SetNetlinkFamilyId(VR_NETLINK_PROTO_DEFAULT);
 #endif
 }
 
