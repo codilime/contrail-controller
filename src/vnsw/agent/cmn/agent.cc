@@ -472,8 +472,11 @@ static bool interface_exist(string &name)
 	struct if_nameindex *head = NULL;
 	bool ret = false;
 	string tname = "";
-
-	ifs = osspecific_if_nameindex();
+#ifdef _WINDOWS
+	ifs = windows_if_nameindex();
+#else
+    ifs = if_nameindex();
+#endif
 	if (ifs == NULL) {
 		LOG(INFO, "No interface exists!");
 		return ret;
@@ -488,7 +491,11 @@ static bool interface_exist(string &name)
 		}
 		ifs++;
 	}
-	osspecific_if_freenameindex(head);
+#ifdef _WINDOWS
+	windows_if_freenameindex(head);
+#else
+    if_freenameindex(head);
+#endif
 	return ret;
 }
 
