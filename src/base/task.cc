@@ -837,7 +837,8 @@ int TaskScheduler::CountThreadsPerPid(pid_t pid) {
     }
     file.close();
 #else
-//WINDOWS-TEMP#error "TaskScheduler::CountThreadsPerPid() - unsupported platform."
+    Sleep(3000);
+    return 1; // WINDOWS-TEMP
 #endif
 
     return threads;
