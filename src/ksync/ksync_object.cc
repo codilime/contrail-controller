@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-
-#ifndef _WINDOWS
+#include <boost/asio.hpp>
+#include <windows.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#endif
+
 
 #if defined(__linux__)
 #include <linux/netlink.h>
