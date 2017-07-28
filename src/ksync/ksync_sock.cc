@@ -465,18 +465,14 @@ size_t KSyncSock::BlockingSend(char *msg, int msg_len) {
 }
 
 void KSyncSock::GenericSend(IoContext *ioc) {
-#ifndef _WINDOWS //WINDOWSFIX
     send_queue_.Enqueue(ioc);
-#endif
 }
 
 void KSyncSock::SendAsync(KSyncEntry *entry, int msg_len, char *msg,
                           KSyncEntry::KSyncEvent event) {
-#ifndef _WINDOWS //WINDOWSFIX
     uint32_t seq = AllocSeqNo(false);
     KSyncIoContext *ioc = new KSyncIoContext(entry, msg_len, msg, seq, event);
     send_queue_.Enqueue(ioc);
-#endif
 }
 
 // Write handler registered with boost::asio
@@ -661,7 +657,16 @@ KSyncSockNetlink::~KSyncSockNetlink() {
 
 void KSyncSockNetlink::Init(io_service &ios, int protocol) {
     KSyncSock::SetSockTableEntry(new KSyncSockNetlink(ios, protocol));
-    KSyncSock::Init(false);
+
+#ifndef _WINDOWS
+    const bool use_work_queue = false;
+#else
+    // Windows doesn't support event_fd mechanism, so use (slower) work_queue.
+    // See comment in ksync_tx_queue for more info.
+    const bool use_work_queue = true;
+#endif
+
+    KSyncSock::Init(use_work_queue);
 }
 
 uint32_t KSyncSockNetlink::GetSeqno(char *data) {
