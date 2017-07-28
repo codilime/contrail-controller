@@ -473,7 +473,7 @@ static bool interface_exist(string &name)
 	bool ret = false;
 	string tname = "";
 #ifdef _WINDOWS
-	ifs = windows_if_nameindex();
+    ifs = windows_if_nameindex();
 #else
     ifs = if_nameindex();
 #endif
@@ -492,7 +492,7 @@ static bool interface_exist(string &name)
 		ifs++;
 	}
 #ifdef _WINDOWS
-	windows_if_freenameindex(head);
+    windows_if_freenameindex(head);
 #else
     if_freenameindex(head);
 #endif
