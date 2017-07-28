@@ -892,6 +892,13 @@ void IFMapChannel::SetArcSocketOptions() {
     }
 #endif
 
+// TCP_KEEPCNT and TCP_KEEPINTVL are not supported on our windows. But boost tries to set them, causing
+// an exception. See:
+// https://msdn.microsoft.com/en-us/library/windows/desktop/ms738596(v=vs.85).aspx
+// Issue similar to this one:
+// https://git.openstack.org/cgit/openstack/python-keystoneclient/commit/?id=33b24a6984c8de2f26af7900202bb85b6b5db125
+#ifndef _WINDOWS
+
 #ifdef TCP_KEEPINTVL
     boost::asio::detail::socket_option::integer<IPPROTO_TCP, TCP_KEEPINTVL>
         keepalive_interval_option(kSessionKeepaliveInterval);
@@ -910,6 +917,8 @@ void IFMapChannel::SetArcSocketOptions() {
         IFMAP_PEER_WARN(IFMapServerConnection, "Error setting keepalive probes",
                         ec.message());
     }
+#endif
+
 #endif
 
 #ifdef TCP_USER_TIMEOUT
