@@ -119,7 +119,7 @@ env.Default(contrail_vrouter_agent)
 
 if sys.platform.startswith('win'):
     #Use WiX for MSI generation
-    agent_msi = env.WiX('contrail-vrouter-agent.msi', ['msi/agent_msi.wxs'])
+    agent_msi = env.WiX('contrail-vrouter-agent.msi', ['windows/msi/agent_msi.wxs'])
     env.Depends(agent_msi, contrail_vrouter_agent)
 
     env.Alias('contrail-vrouter-agent.msi', agent_msi)
