@@ -9,11 +9,6 @@ print 'installing thrift'
 vpath = '#/third_party/thrift-0.8.0'
 env = DefaultEnvironment()
 
-if sys.platform.startswith('win'):
-    for index, flag in enumerate(env['CCFLAGS']):
-        if flag == '/MDd':
-            env['CCFLAGS'][index] = '/MTd'
-
 abs_vpath = Dir(vpath).abspath
 include_path = os.path.join(env.Dir(env['TOP_INCLUDE']).abspath, r'thrift')
 
