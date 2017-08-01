@@ -103,6 +103,7 @@ int main(int argc, char *argv[]) {
 
     string build_info;
     GetBuildInfo(build_info);
+    MiscUtils::LogVersionInfo(build_info, Category::VROUTER);
 
     init.set_agent_param(&params);
     // kick start initialization
@@ -110,8 +111,6 @@ int main(int argc, char *argv[]) {
     if ((ret = init.Start()) != 0) {
         return ret;
     }
-
-    MiscUtils::LogVersionInfo(build_info, Category::VROUTER);
 
     Agent *agent = init.agent();
     agent->event_manager()->Run();

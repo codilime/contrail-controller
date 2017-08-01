@@ -240,7 +240,6 @@ KSyncSock::KSyncSock() :
         sprintf(name, "KSync Receive Queue-%d", i);
         receive_work_queue[i]->set_name(name);
     }
-
     task_id = scheduler->GetTaskId("Ksync::AsyncSend");
     nl_client_ = (nl_client *)malloc(sizeof(nl_client));
     memset(nl_client_, 0, sizeof(nl_client));
