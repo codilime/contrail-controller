@@ -437,7 +437,7 @@ void Interface::GetOsParams(Agent *agent) {
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(ifr));
     strncpy(ifr.ifr_name, name.c_str(), IF_NAMESIZE);
-#ifndef _WINDOWS
+#ifndef _WINDOWS //WINDOWS-TEMP
     int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
     assert(fd >= 0);
     if (ioctl(fd, SIOCGIFHWADDR, (void *)&ifr) < 0) {

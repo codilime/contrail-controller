@@ -375,7 +375,6 @@ public:
     static void NetlinkDecoder(char *data, SandeshContext *ctxt);
     static void NetlinkBulkDecoder(char *data, SandeshContext *ctxt, bool more);
     static void Init(boost::asio::io_service &ios, int protocol);
-
 private:
 #ifndef _WINDOWS
     boost::asio::netlink::raw::socket sock_;

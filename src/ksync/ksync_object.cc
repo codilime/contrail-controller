@@ -5,8 +5,6 @@
 #include <windows.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-
-
 #if defined(__linux__)
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
