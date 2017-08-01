@@ -464,24 +464,19 @@ size_t KSyncSock::BlockingSend(char *msg, int msg_len) {
 }
 
 void KSyncSock::GenericSend(IoContext *ioc) {
-#ifndef _WINDOWS //WINDOWSFIX
     send_queue_.Enqueue(ioc);
-#endif
 }
 
 void KSyncSock::SendAsync(KSyncEntry *entry, int msg_len, char *msg,
                           KSyncEntry::KSyncEvent event) {
-#ifndef _WINDOWS //WINDOWSFIX
     uint32_t seq = AllocSeqNo(false);
     KSyncIoContext *ioc = new KSyncIoContext(entry, msg_len, msg, seq, event);
     send_queue_.Enqueue(ioc);
-#endif
 }
 
 // Write handler registered with boost::asio
 void KSyncSock::WriteHandler(const boost::system::error_code& error,
                              size_t bytes_transferred) {
-#if 0 //WINDOWSFIX
     if (error) {
         LOG(ERROR, "Ksync sock write error : " <<
             boost::system::system_error(error).what());
@@ -489,12 +484,10 @@ void KSyncSock::WriteHandler(const boost::system::error_code& error,
             assert(0);
         }
     }
-#endif
 }
 
 // End of messages in the work-queue. Send messages pending in bulk context
 void KSyncSock::OnEmptyQueue(bool done) {
-#if 0 //WINDOWSFIX
     if (bulk_seq_no_ == kInvalidBulkSeqNo)
         return;
     tbb::mutex::scoped_lock lock(mutex_);
@@ -502,13 +495,11 @@ void KSyncSock::OnEmptyQueue(bool done) {
     assert(it != wait_tree_.end());
     KSyncBulkSandeshContext *bulk_context = &it->second;
     SendBulkMessage(bulk_context, bulk_seq_no_);
-#endif
 }
 
 // Send messages accumilated in bulk context
 int KSyncSock::SendBulkMessage(KSyncBulkSandeshContext *bulk_context,
                                uint32_t seqno) {
-#if 0 //WINDOWSFIX
     KSyncBufferList iovec;
     // Get all buffers to send into single io-vector
     bulk_context->Data(&iovec);
@@ -531,14 +522,12 @@ int KSyncSock::SendBulkMessage(KSyncBulkSandeshContext *bulk_context,
         } while(more_data);
     }
     bulk_seq_no_ = kInvalidBulkSeqNo;
-#endif
     return true;
 }
 
 // Get the bulk-context for sequence-number
 KSyncBulkSandeshContext *KSyncSock::LocateBulkContext(uint32_t seqno,
                               IoContext::IoContextWorkQId io_context_type) {
-#if 0 //WINDOWSFIX
     tbb::mutex::scoped_lock lock(mutex_);
     if (bulk_seq_no_ == kInvalidBulkSeqNo) {
         bulk_seq_no_ = seqno;
@@ -551,8 +540,6 @@ KSyncBulkSandeshContext *KSyncSock::LocateBulkContext(uint32_t seqno,
     WaitTree::iterator it = wait_tree_.find(bulk_seq_no_);
     assert(it != wait_tree_.end());
     return &it->second;
-#endif
-	return nullptr;
 }
 
 // Try adding an io-context to bulk context. Returns
@@ -560,7 +547,6 @@ KSyncBulkSandeshContext *KSyncSock::LocateBulkContext(uint32_t seqno,
 //  - false : if message cannot be added to bulk context
 bool KSyncSock::TryAddToBulk(KSyncBulkSandeshContext *bulk_context,
                              IoContext *ioc) {
-#if 0 //WINDOWSFIX
     if ((bulk_buf_size_ + ioc->GetMsgLen()) > max_bulk_buf_size_)
         return false;
 
@@ -576,12 +562,9 @@ bool KSyncSock::TryAddToBulk(KSyncBulkSandeshContext *bulk_context,
 
     bulk_context->Insert(ioc);
     return true;
-#endif
-	return false;
 }
 
 bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
-#if 0 //WINDOWSFIX
     KSyncBulkSandeshContext *bulk_context = LocateBulkContext(ioc->GetSeqno(),
                                             ioc->GetWorkQId());
     // Try adding message to bulk-message list
@@ -598,8 +581,6 @@ bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
                                      ioc->GetWorkQId());
     assert(TryAddToBulk(bulk_context, ioc));
     return true;
-#endif
-	return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -660,7 +641,16 @@ KSyncSockNetlink::~KSyncSockNetlink() {
 
 void KSyncSockNetlink::Init(io_service &ios, int protocol) {
     KSyncSock::SetSockTableEntry(new KSyncSockNetlink(ios, protocol));
-    KSyncSock::Init(false);
+
+#ifndef _WINDOWS
+    const bool use_work_queue = false;
+#else
+    // Windows doesn't support event_fd mechanism, so use (slower) work_queue.
+    // See comment in ksync_tx_queue for more info.
+    const bool use_work_queue = true;
+#endif
+
+    KSyncSock::Init(use_work_queue);
 }
 
 uint32_t KSyncSockNetlink::GetSeqno(char *data) {
