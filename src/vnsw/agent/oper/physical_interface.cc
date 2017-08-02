@@ -106,6 +106,7 @@ void PhysicalInterface::PostAdd() {
         }
     }
 
+#ifndef _WINDOWS //WINDOWS-TEMP
     int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
     assert(fd >= 0);
 
@@ -128,6 +129,7 @@ void PhysicalInterface::PostAdd() {
     }
 
     close(fd);
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////

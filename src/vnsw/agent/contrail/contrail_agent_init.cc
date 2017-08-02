@@ -96,7 +96,7 @@ void ContrailAgentInit::CreateModules() {
     // TODO (Juniper-Windows)
     // Ksync is temporarily not created due to it's ifdefed functionality that
     // currently causes crashes in Agent initialization.
-    // ksync_.reset(AgentObjectFactory::Create<KSync>(agent()));
+    ksync_.reset(AgentObjectFactory::Create<KSync>(agent()));
     agent()->set_ksync(ksync_.get());
 
     port_ipc_handler_.reset(new PortIpcHandler(agent(),
