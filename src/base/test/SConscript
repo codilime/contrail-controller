@@ -13,12 +13,16 @@ env.Append(LIBPATH = env['TOP'] + '/base')
 env.Append(LIBPATH = env['TOP'] + '/base/test')
 env.Append(LIBPATH = env['TOP'] + '/io')
 
-env.Prepend(LIBS = ['base', 'gunit', 'task_test', 'io', 'sandesh', 'io', 'sandeshvns',
+env.Prepend(LIBS = ['base', 'gtestd', 'task_test', 'io', 'sandesh', 'io', 'sandeshvns',
                     'nodeinfo', 'process_info', 'cpuinfo', 'base', 'http',
-                    'http_parser', 'curl', 'pugixml', 'boost_program_options'])
+                    'http_parser', 'curl', 'pugixml', 'boost_program_options', 'Dbghelp'])
 
-if sys.platform != 'darwin':
+if sys.platform not in ['win32', 'darwin']: #works on 64 bit also
     env.Append(LIBS = ['rt'])
+
+if sys.platform = 'win32':
+    env.Append(LIBS = ['windowstubs'])
+
 
 libtask_test = env.Library('task_test',
                            ['task_test_util.cc',

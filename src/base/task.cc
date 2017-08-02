@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+#define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 #include <boost/asio.hpp>
 #include <windows.h>
 #include <assert.h>
@@ -19,7 +20,9 @@
 #include <sandesh/sandesh_types.h>
 #include <sandesh/sandesh.h>
 #include <base/sandesh/task_types.h>
-
+#ifdef _WINDOWS
+#include "taskutil.h"
+#endif
 #if defined(__FreeBSD__)
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -837,7 +840,8 @@ int TaskScheduler::CountThreadsPerPid(pid_t pid) {
     }
     file.close();
 #else
-//WINDOWS-TEMP#error "TaskScheduler::CountThreadsPerPid() - unsupported platform."
+    threads = CountProcessThreads(pid);
+    //WINDOWS-CHECK
 #endif
 
     return threads;
@@ -851,7 +855,11 @@ void TaskScheduler::WaitForTerminateCompletion() {
 
     int count = 0;
     int threadsRunning;
+#ifdef _WINDOWS
+    pid_t pid = windows_getpid();
+#else
     pid_t pid = getpid();
+#endif
 
     while (count++ < 12000) {
         threadsRunning = CountThreadsPerPid(pid);
@@ -875,8 +883,18 @@ void TaskScheduler::Terminate() {
         usleep(1000);
     }
     assert(IsEmpty());
+#ifndef _WINDOWS
     singleton_->task_scheduler_.terminate();
     WaitForTerminateCompletion();
+#else
+    try {
+        singleton_->task_scheduler_.blocking_terminate();
+        // Intel TBB worker threads are terminated at this point.
+    }
+    catch (const std::runtime_error&) {
+        std::cerr << "Failed to terminate the worker threads." << std::endl;
+    }
+#endif
     singleton_.reset(NULL);
 }
 

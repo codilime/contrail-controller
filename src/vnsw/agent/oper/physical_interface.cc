@@ -115,7 +115,11 @@ void PhysicalInterface::PostAdd() {
     if (ioctl(fd, SIOCGIFFLAGS, (void *)&ifr) < 0) {
         LOG(ERROR, "Error <" << errno << ": " << strerror(errno) <<
             "> setting promiscuous flag for interface <" << interface_name << ">");
+#ifdef _WINDOWS
+        closesocket(fd);
+#else
         close(fd);
+#endif
         return;
     }
 
@@ -123,12 +127,18 @@ void PhysicalInterface::PostAdd() {
     if (ioctl(fd, SIOCSIFFLAGS, (void *)&ifr) < 0) {
         LOG(ERROR, "Error <" << errno << ": " << strerror(errno) <<
             "> setting promiscuous flag for interface <" << interface_name << ">");
+#ifdef _WINDOWS
+        closesocket(fd);
+#else
         close(fd);
-        return;
+#endif        return;
     }
 
+#ifdef _WINDOWS
+    closesocket(fd);
+#else
     close(fd);
-}
+#endif}
 
 /////////////////////////////////////////////////////////////////////////////
 // PhysicalInterfaceKey routines

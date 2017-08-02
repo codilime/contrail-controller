@@ -3,6 +3,7 @@
  */
 
 #include <boost/foreach.hpp>
+#include <boost/thread.hpp>
 #include "base/label_block.h"
 #include "base/logging.h"
 #include "testing/gunit.h"
@@ -155,19 +156,18 @@ static void *ConcurrencyThreadRun(void *objp) {
 }
 
 TEST_F(LabelBlockTest, LocateBlockConcurrency) {
-    std::vector<pthread_t> thread_ids;
-    pthread_t tid;
-
+    std::vector<boost::thread*> thread_ids;
+    boost::thread * thd = nullptr;
     int thread_count = 1024;
     char *str = getenv("THREAD_COUNT");
     if (str) thread_count = strtoul(str, NULL, 0);
 
     for (int i = 0; i < thread_count; i++) {
-        pthread_create(&tid, NULL, &ConcurrencyThreadRun, this);
-        thread_ids.push_back(tid);
+        thd = new boost::thread(ConcurrencyThreadRun, this);
+        thread_ids.push_back(thd);
     }
 
-    BOOST_FOREACH(tid, thread_ids) { pthread_join(tid, NULL); }
+    BOOST_FOREACH(boost::thread * tid, thread_ids) { tid->join(); delete tid; }
     EXPECT_EQ(0, BlockCount());
 }
 

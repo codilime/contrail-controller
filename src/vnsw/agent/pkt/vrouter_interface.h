@@ -10,7 +10,7 @@
 #include "vr_defs.h"
 #include "vr_mpls.h"
 #ifdef _WINDOWS
-#include "winutils.h"
+#include <winnw.h>
 #endif
 
 // VrouterControlInterface is implementation of ControlInterface for platforms

@@ -30,7 +30,7 @@
 
 #ifndef ctrlplane_task_h
 #define ctrlplane_task_h
-
+#define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 #include <boost/scoped_ptr.hpp>
 #include <boost/intrusive/list.hpp>
 #include <map>
