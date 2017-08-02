@@ -18,6 +18,12 @@
                             <File Id="VRouterCommonScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/common.py" />
                             <File Id="VRouterHypervInjectIPScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv_inject_ip.ps1" />
                         </Component>
+                        <Component Id="AgentDlls" Guid="3DD82F1D-E1C5-4CF6-8C53-AB0E047D1B0B" Win64="yes">
+                            <File Id="TBBDebug" Source="build/bin/tbb_debug.dll"/>
+                        </Component>
+                        <Component Id="SampleConfig" Guid="5E840E9E-96D6-41F4-A384-1500A089CAEB" Win64="yes">
+                            <File Id="SampleConfig" Name="contrail-vrouter-agent.conf.sample" Source="controller/src/vnsw/agent/contrail-vrouter-agent.conf"/>
+                        </Component>
                     </Directory>
                 </Directory>
             </Directory>
@@ -26,6 +32,8 @@
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="ApplicationFiles"/>
             <ComponentRef Id="VRouterHyperv"/>
+            <ComponentRef Id="AgentDlls"/>
+            <ComponentRef Id="SampleConfig"/>
         </Feature>
     </Product>
 </Wix>
