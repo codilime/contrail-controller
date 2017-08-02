@@ -29,9 +29,9 @@ output_gtest = File('#/build/lib/gtestd.lib')
 
 def gtest_build(target, source, env):
     msbuild = [os.environ['MSBUILD'], 'gtest.sln']
-    copy_tree(Dir('#/controller/lib/gunit/msvc15').abspath, Dir(gtest_path).abspath + r'\msvc')
+    copy_tree(Dir('#/controller/lib/gunit/msvc15/gtest').abspath, Dir(gtest_path).abspath + r'\msvc')
     subprocess.call(msbuild, cwd=os.path.join(Dir(gtest_path).abspath,'msvc'))
-    fromfile = os.path.join(Dir(gtest_path).abspath , r'msvc\gtest\Debug\gtestd.lib')
+    fromfile = os.path.join(Dir(gtest_path).abspath , r'msvc\x64\Debug\gtest.lib')
     copyfile(fromfile, output_gtest.abspath)
 
 env.Command(output_gtest, Dir(gtest_path), gtest_build)

@@ -21,7 +21,7 @@ if sys.platform not in ['win32', 'darwin']: #works on 64 bit also
     env.Append(LIBS = ['rt'])
 
 if sys.platform.startswith('win'):
-    env.Append(LIBS = ['windowstubs'])
+    env.Append(LIBS = ['windowsstubs'])
 
 
 libtask_test = env.Library('task_test',
