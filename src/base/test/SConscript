@@ -20,7 +20,7 @@ env.Prepend(LIBS = ['base', 'gtestd', 'task_test', 'io', 'sandesh', 'io', 'sande
 if sys.platform not in ['win32', 'darwin']: #works on 64 bit also
     env.Append(LIBS = ['rt'])
 
-if sys.platform = 'win32':
+if sys.platform.startswith('win'):
     env.Append(LIBS = ['windowstubs'])
 
 

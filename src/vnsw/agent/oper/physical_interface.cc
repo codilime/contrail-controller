@@ -131,14 +131,16 @@ void PhysicalInterface::PostAdd() {
         closesocket(fd);
 #else
         close(fd);
-#endif        return;
+#endif        
+    return;
     }
 
 #ifdef _WINDOWS
     closesocket(fd);
 #else
     close(fd);
-#endif}
+#endif
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // PhysicalInterfaceKey routines
