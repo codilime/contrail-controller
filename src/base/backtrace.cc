@@ -13,7 +13,8 @@
 ssize_t BackTrace::ToString(void * const* callstack, int frames, char *buf,
                             size_t buf_len) {
 #ifdef _WINDOWS
-	return 0;
+    assert(0);//should not be called
+    return 0;
 #elif defined(DARWIN)
     return 0;
 #else
@@ -67,7 +68,8 @@ ssize_t BackTrace::ToString(void * const* callstack, int frames, char *buf,
 
 int BackTrace::Get(void * const* &callstack) {
 #ifdef _WINDOWS
-	return 0;
+     assert(0);
+     return 0;
 #else
     callstack = (void * const *) calloc(1024, sizeof(void *));
     return backtrace((void **) callstack, 1024);
@@ -76,6 +78,10 @@ int BackTrace::Get(void * const* &callstack) {
 
 void BackTrace::Log(void * const* callstack, int frames,
                     const std::string &msg) {
+#ifdef _WINDOWS
+    assert(0); //should not be called for windows
+    return;
+#endif
     char buf[10240];
 
     ToString(callstack, frames, buf, sizeof(buf));
@@ -85,8 +91,14 @@ void BackTrace::Log(void * const* callstack, int frames,
 }
 
 void BackTrace::Log(const std::string &msg) {
+#ifndef _WINDOWS
     void * const*callstack;
 
     int frames = Get(callstack);
     Log(callstack, frames, msg);
+#else
+    std::string str;
+    GetCallStack(str);//ignoring return value
+    LOG(DEBUG, msg << "BackTrace:" << str);
+#endif
 }

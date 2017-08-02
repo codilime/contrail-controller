@@ -43,7 +43,9 @@
 #include <sandesh/common/vns_types.h>
 #include <sandesh/common/vns_constants.h>
 #include <filter/acl.h>
-
+#ifdef _WINDOWS
+#include <winnw.h>
+#endif
 using namespace std;
 using namespace boost::uuids;
 using boost::assign::map_list_of;
@@ -451,7 +453,7 @@ void Interface::GetOsParams(Agent *agent) {
             "> querying mac-address for interface <" << name << "> " <<
             "Agent-index <" << id_ << ">");
         os_oper_state_ = false;
-        close(fd);
+        closesocket(fd);
         return;
     }
 
@@ -461,7 +463,7 @@ void Interface::GetOsParams(Agent *agent) {
             "> querying flags for interface <" << name << "> " <<
             "Agent-index <" << id_ << ">");
         os_oper_state_ = false;
-        close(fd);
+        closesocket(fd);
         return;
     }
 
@@ -469,15 +471,20 @@ void Interface::GetOsParams(Agent *agent) {
     if ((ifr.ifr_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING)) {
         os_oper_state_ = true;
     }
-    close(fd);
+    closesocket(fd);
 
 #if defined(__linux__)
     mac_ = ifr.ifr_hwaddr;
 #elif defined(__FreeBSD__)
     mac_ = ifr.ifr_addr;
 #endif
-
+    
+#ifdef _WINDOWS
+    int idx = windows_if_nametoindex(name.c_str());
+#else
     int idx = if_nametoindex(name.c_str());
+#endif
+
     if (idx)
         os_index_ = idx;
 }

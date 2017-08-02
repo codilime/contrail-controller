@@ -1,19 +1,23 @@
 import os
 import subprocess
-from shutil import copyfile
+import sys
+import fnmatch
 
-vpath = '#/windows/windowsstubs'
+print 'Enter windowslib'
 
-env = DefaultEnvironment()
 
-abs_vpath = Dir(vpath).abspath
-windowsstubs_lib = '#build/lib/windowsstubs.lib'
 
-def build_windowsstubs_lib(target, source, env):
-   msbuildcmd = [os.environ['MSBUILD'], 'WindowsStubs.sln', '/p:platform=x64', '/p:Configuration=Debug']
-   subprocess.call(msbuildcmd, cwd = abs_vpath)
-   copyfile(File('#/windows/windowsstubs/x64/debug/windowsstubs.lib').abspath, File(windowsstubs_lib).abspath)
+env = DefaultEnvironment().Clone()
+env.AppendUnique(CCFLAGS='/DUNICODE')#both are needed by the compiler
+env.AppendUnique(CCFLAGS='/D_UNICODE')
 
-sources = ['#windows/winutils.cc', '#windows/windowsstubs/windowsstubs/timeutils.cc', '#windows/windowsstubs/windowsstubs/agentconstants.cc', '#windows/windowsstubs/windowsstubs/wmi.cc' , '#windows/windowsstubs/windowsstubs/cpuinfo.cc']
-env.Command(windowsstubs_lib, sources , build_windowsstubs_lib)
-env.Alias('windowsstubs', windowsstubs_lib)
+vpath = '#windows/src'
+env.VariantDir('#/' + Dir('.').path + '/src', vpath,0)
+windows_buildpath = Dir('.').abspath + '/src'
+
+print windows_buildpath
+files = Glob(windows_buildpath +'/*.cc')
+libsources = ['#windows/src/agentconstants.cc','#windows/src/cpuutil.cc','#windows/src/taskutil.cc', '#windows/src/timeutils.cc', '#windows/src/winnw.cc' , '#windows/src/wmi.cc']
+windowsstubs_lib = env.Library('windowsstubs', files)
+env.Install('#/build/lib/', 'windowsstubs.lib')
+env.Alias('windowsstubs', '#/build/lib/windowsstubs.lib')

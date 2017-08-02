@@ -1,8 +1,9 @@
 # -*- mode: python; -*-
+print 'enter gunit..'
+import platform
 import os
 import subprocess
-from distutils.dir_util import copy_tree
-from shutil import copyfile
+import shutil
 
 default = DefaultEnvironment()
 env = default.Clone()
@@ -24,24 +25,59 @@ include = [
 env.VariantDir(Dir('.').abspath + '/gtest', gtest_path + '/src')
 env.VariantDir(Dir('.').abspath + '/gmock', gmock_path + '/src')
 
-output_gmock = File('#/build/lib/gmock.lib')
-output_gtest = File('#/build/lib/gtestd.lib')
+gmocklibname = 'gmock.lib'
+gtestlibname = 'gtest.lib'
 
-def gtest_build(target, source, env):
-    msbuild = [os.environ['MSBUILD'], 'gtest.sln']
-    copy_tree(Dir('#/controller/lib/gunit/msvc15').abspath, Dir(gtest_path).abspath + r'\msvc')
-    subprocess.call(msbuild, cwd=os.path.join(Dir(gtest_path).abspath,'msvc'))
-    fromfile = os.path.join(Dir(gtest_path).abspath , r'msvc\gtest\Debug\gtestd.lib')
-    copyfile(fromfile, output_gtest.abspath)
+gmocklibpath = os.path.join(Dir('#/build/lib').abspath, gmocklibname)
+gtestlibpath = os.path.join(Dir('#/build/lib').abspath, gtestlibname)
 
-env.Command(output_gtest, Dir(gtest_path), gtest_build)
+vsconfig = env['TARGET_CONFIG']
+vsplatform = env['TARGET_ARCH']
+buildgtestcmd = 'msbuild gtest.sln /p:Configuration={conf}  /p:Platform={platform}'.format(conf=vsconfig,platform=vsplatform)
+print buildgtestcmd
+buildgmockcmd = 'msbuild gmock.sln /p:Configuration={conf}  /p:Platform={platform}'.format(conf=vsconfig,platform=vsplatform)
+print buildgmockcmd
+#'{direct}'.format(direct='Debug' if vsconfig =='debug' else 'Release')
 
-def gmock_build(target, source, env):
-    msbuild = [os.environ['MSBUILD'], 'gmock.sln']
-    copy_tree(Dir('#/controller/lib/gunit/msvc15/gmock').abspath, Dir(gmock_path).abspath + r'\msvc\2015')
-    subprocess.call(msbuild, cwd=os.path.join(Dir(gmock_path).abspath, r'/msvc/2015'))
-    fromfile = os.path.join(Dir(gmock_path).abspath, r'msvc\2015\Debug\gmock.lib')
-    copyfile(fromfile, output_gmock.abspath)
+def create_dir_if_needed(dirname):
+    try:
+        os.makedirs(dirname)
+    except OSError:
+        pass
 
-env.Command(output_gmock, Dir(gmock_path), gmock_build)
+if not os.path.exists(gtestlibpath):
+    togt = os.path.join(Dir(gtest_path).abspath ,'msvc')
+    fromgt = os.path.join(Dir('.').srcnode().abspath , 'msvc15', 'gtest')
+    cmd = 'copy ' + fromgt + ' ' + togt + ' /y'
+    print Dir('.').abspath
+    print cmd
+    subprocess.call(cmd, shell=True)
+    #build googletest
+    os.chdir(os.path.join(Dir(gtest_path).abspath,'msvc'))
+    print os.getcwd()
+    subprocess.call(buildgtestcmd, shell=True)
+    fromfile = os.path.join(Dir(gtest_path).abspath , 'msvc',vsplatform, vsconfig,  gtestlibname)
+    print 'copying ' + fromfile + ' to ' + gtestlibpath
+    create_dir_if_needed(Dir('#/build/lib').abspath)
+    shutil.copyfile(fromfile, gtestlibpath)
+
+
+if not os.path.exists(gmocklibpath):
+   togm = os.path.join(Dir(gmock_path).abspath, 'msvc', '2015')
+   fromgm = os.path.join(Dir('.').srcnode().abspath, 'msvc15','gmock')
+   cmd = 'copy ' + fromgm + ' ' + togm + ' /y'
+   print Dir('.').abspath
+   print cmd
+   subprocess.call(cmd, shell=True)
+   #build googlemock
+   os.chdir(os.path.join(Dir(gmock_path).abspath, 'msvc', '2015'))
+   print os.getcwd()
+   subprocess.call(buildgmockcmd, shell=True)
+   fromfile = os.path.join(Dir(gmock_path).abspath , 'msvc','2015',vsplatform, vsconfig,  gmocklibname)
+   print 'copying ' + fromfile + ' to ' + gmocklibpath
+   create_dir_if_needed(Dir('#/build/lib').abspath)
+   shutil.copyfile(fromfile, gmocklibpath)
+
+
+print 'leave gunit'
 

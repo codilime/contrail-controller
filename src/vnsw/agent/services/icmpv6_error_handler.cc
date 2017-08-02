@@ -15,6 +15,7 @@
 #include <services/icmpv6_proto.h>
 #ifdef _WINDOWS
 #include <netinet/ip6.h>
+#include <winnw.h>
 #endif
 
 extern SandeshTraceBufferPtr Icmpv6TraceBuf; 

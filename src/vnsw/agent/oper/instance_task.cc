@@ -109,9 +109,8 @@ bool InstanceTaskExecvp::Run() {
 
         _exit(127);
     }
-#endif
     close(err[1]);
-
+#endif
     start_time_ = time(NULL);
 #if 0 //WINDOWS-TEMP
     int fd = ::dup(err[0]);
