@@ -41,10 +41,12 @@
 
 #include <cmn/agent_factory.h>
 #include <base/task_tbbkeepawake.h>
-#include<net/if.h>
+#include <net/if.h>
+
 #ifdef _WINDOWS
-    #include <winnw.h>
+#include <winnw.h>
 #endif
+
 const std::string Agent::null_string_ = "";
 const std::set<std::string> Agent::null_string_list_;
 const std::string Agent::fabric_vn_name_ =

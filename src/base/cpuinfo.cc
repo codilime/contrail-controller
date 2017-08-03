@@ -132,7 +132,6 @@ static void SystemMemInfo(SystemMemInfo &info) {
 static clock_t snapshot, prev_sys_cpu, prev_user_cpu;
 
 static void ProcessCpuShare(double &percentage) {
-
     struct tms cpu_taken;
     clock_t now;
 
@@ -150,7 +149,6 @@ static void ProcessCpuShare(double &percentage) {
     snapshot = now;
     prev_sys_cpu = cpu_taken.tms_stime;
     prev_user_cpu = cpu_taken.tms_utime;
-
 }
 
 void CpuLoadData::GetCpuLoadInfo(CpuInfo &info, bool system) {

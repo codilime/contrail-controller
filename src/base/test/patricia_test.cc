@@ -201,7 +201,7 @@ TEST_F(PatriciaBaseTest, RandomInsert) {
     Route *route;
     Route *route_next;
     bool    ret;
-    std::unique_ptr<Rt[]> rt_int (new Rt[rt_size]);
+    Rt      rt_int[rt_size];
 
     for (i = 0; i < rt_size; i++) {
         rt_int[i] = rt[i];

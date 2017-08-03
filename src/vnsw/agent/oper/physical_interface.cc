@@ -132,7 +132,7 @@ void PhysicalInterface::PostAdd() {
 #else
         close(fd);
 #endif        
-    return;
+        return;
     }
 
 #ifdef _WINDOWS

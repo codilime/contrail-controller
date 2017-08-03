@@ -11,8 +11,9 @@
 
 #include "base/util.h"
 #include "base/string_util.h"
+
 #ifdef _WINDOWS
-    #include "winutils.h"
+#include "winutils.h"
 #endif
 
 using namespace std;
@@ -34,7 +35,6 @@ static int find_first_set64(uint64_t value) {
     int upper = value >> 32;
     if ((bit = ffs(upper)) > 0)
         return 32 + bit;
-
     return 0;
 }
 #endif

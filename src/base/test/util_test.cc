@@ -8,7 +8,9 @@
 #include "base/util.h"
 #include "base/logging.h"
 #include "base/time_util.h"
+#ifdef _WINDOWS
 #include <winsock2.h>
+#endif
 
 namespace {
 

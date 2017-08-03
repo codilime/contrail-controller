@@ -12,7 +12,6 @@
 #include "base/logging.h"
 #include "base/queue_task.h"
 #include "base/test/task_test_util.h"
-#include <iostream>
 
 class EnqueueTask : public Task {
 public:
@@ -770,8 +769,6 @@ TEST_F(QueueTaskTest, ProcessWaterMarksParallelTest) {
     scheduler->Enqueue(etask);
     task_util::WaitForIdle();
     TASK_UTIL_EXPECT_TRUE(VerifyWaterMarkIndexes());
-    //WINDOWS-TEMP
-    std::cout << std::endl << "wm_cb_type_=" << wm_cb_type_ << std::endl << "  wm_cb_qsize_=" << wm_cb_qsize_ << std::endl << std::endl;
     EXPECT_TRUE((wm_cb_type_ == WaterMarkTestCbType::LWM3 &&
                  wm_cb_qsize_ == 5000) ||
                 (wm_cb_type_ == WaterMarkTestCbType::INVALID &&

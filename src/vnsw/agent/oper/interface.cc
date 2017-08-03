@@ -454,7 +454,7 @@ void Interface::GetOsParams(Agent *agent) {
             "Agent-index <" << id_ << ">");
         os_oper_state_ = false;
 #ifdef _WINDOWS
-        closesocket(fd); //or we can define closesocket as close in linux
+        closesocket(fd);
 #else
         close(fd);
 #endif
@@ -480,9 +480,9 @@ void Interface::GetOsParams(Agent *agent) {
         os_oper_state_ = true;
     }
 #ifdef _WINDOWS
-        closesocket(fd);
+    closesocket(fd);
 #else
-        close(fd);
+    close(fd);
 #endif
 #if defined(__linux__)
     mac_ = ifr.ifr_hwaddr;

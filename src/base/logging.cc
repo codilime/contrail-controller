@@ -13,8 +13,9 @@
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+
 #ifdef _WINDOWS
-    #include "taskutil.h"
+#include "taskutil.h"
 #endif
 
 using namespace log4cplus;
