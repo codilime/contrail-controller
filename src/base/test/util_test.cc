@@ -8,6 +8,9 @@
 #include "base/util.h"
 #include "base/logging.h"
 #include "base/time_util.h"
+#ifdef _WINDOWS
+#include <winsock2.h>
+#endif
 
 namespace {
 
@@ -16,8 +19,8 @@ static inline uint64_t UTCgettimeofday() {
     if (gettimeofday(&tv, (struct timezone *)0) != 0) {
         assert(0);
     }
-
-    return tv.tv_sec * 1000000 + tv.tv_usec;
+    //ULL is needed in windows to prevent overflow
+    return tv.tv_sec * 1000000ULL + tv.tv_usec;
 }
 
 static boost::posix_time::ptime epoch_ptime(boost::gregorian::date(1970,1,1));

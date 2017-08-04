@@ -108,8 +108,11 @@ class TestEnvironment : public ::testing::Environment {
 };
 
 int main(int argc, char *argv[]) {
+   
     LoggingInit();
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::AddGlobalTestEnvironment(new TestEnvironment());
-    return RUN_ALL_TESTS();
+//    int count = CountProcessThreads(GetCurrentProcessId());
+    RUN_ALL_TESTS();
+//    int endcount = CountProcessThreads(GetCurrentProcessId());
 }
