@@ -23,17 +23,10 @@ env = DefaultEnvironment()
 stagedir = Dir('#').abspath;
 stagedir += '/build/third_party/boost_1_62_0'
 
-if env['TARGET_ARCH']=='x64':
-   adrmodelbits = '64'
-   adrmodeldir = '/address-model-64/'
-else:
-   adrmodelbits = '32'
-   adrmodeldir = '/'
-
-boostlibdirprefix = '/build/msvc-14.0/debug' + adrmodeldir + 'link-static/threading-multi/'
+boostlibdirprefix = '/build/msvc-14.0/debug/address-model-64/link-static/threading-multi/'
 
 
-boostcmd = 'b2 -j4 toolset=msvc-14.0 --build-type=complete   architecture=x86 address-model=' + adrmodelbits +' stage --stagedir='+ stagedir
+boostcmd = 'b2 -j4 toolset=msvc-14.0 --build-type=complete architecture=x86 address-model=64 stage --stagedir=' + stagedir
 print boostcmd
 exit
 buildlibdir = Dir('#build/lib').abspath + '/'
