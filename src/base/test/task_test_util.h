@@ -15,7 +15,7 @@
 #ifdef _WINDOWS
 #include "taskutil.h"
 #include "winutils.h"
-#endif _WINDOWS
+#endif
 
 class EventManager;
 
