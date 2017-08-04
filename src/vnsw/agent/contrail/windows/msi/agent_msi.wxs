@@ -3,7 +3,7 @@
     <Product Id="0BA1E738-4DB7-4871-898C-545F16426BAF" UpgradeCode="488D475D-E73D-46AF-BEE6-173BE24FAF33" Name="Agent" Version="0.0.1" Manufacturer="Juniper Networks" Language="1033">
         <Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" Platform="x64"/>
         <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
- 
+
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFiles64Folder">
                 <Directory Id="ManufacturerFolder" Name="Juniper Networks">
@@ -35,7 +35,7 @@
                 </Directory>
             </Directory>
         </Directory>
- 
+
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="AgentMainExe"/>
             <ComponentRef Id="VRouterHypervScript"/>
