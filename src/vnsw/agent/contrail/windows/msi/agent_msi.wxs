@@ -8,18 +8,25 @@
             <Directory Id="ProgramFiles64Folder">
                 <Directory Id="ManufacturerFolder" Name="Juniper Networks">
                     <Directory Id="INSTALLDIR" Name="Agent">
-                        <Component Id="ApplicationFiles" Guid="0AA4E35B-89F0-4E60-8D1C-F79BFBE49F78" Win64="yes">
+                        <Component Id="AgentMainExe" Guid="0AA4E35B-89F0-4E60-8D1C-F79BFBE49F78" Win64="yes">
                             <File Id="AgentMainExe" Source="build/debug/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
                             <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="shareProcess" Start="auto" ErrorControl="normal"/>
                             <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="uninstall"/>
                         </Component>
-                        <Component Id="VRouterHyperv" Guid="2E5ED884-4461-4852-B841-CF6FE4E1E6B7" Win64="yes">
+                        <Component Id="VRouterHypervScript" Guid="2E5ED884-4461-4852-B841-CF6FE4E1E6B7" Win64="yes">
                             <File Id="VRouterHypervScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv.py" />
+                        </Component>
+                        <Component Id="VRouterCommonScript" Guid="13E44DF5-A03F-4DD3-A16B-F85C55538401" Win64="yes">
                             <File Id="VRouterCommonScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/common.py" />
+                        </Component>
+                        <Component Id="VRouterHypervInjectIPScript" Guid="B52AFC26-A7E3-4FB7-9740-747765BEA5BC" Win64="yes">
                             <File Id="VRouterHypervInjectIPScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv_inject_ip.ps1" />
                         </Component>
-                        <Component Id="AgentDlls" Guid="3DD82F1D-E1C5-4CF6-8C53-AB0E047D1B0B" Win64="yes">
-                            <File Id="TBBDebug" Source="build/bin/tbb_debug.dll"/>
+                        <Component Id="TbbDebugDll" Guid="3DD82F1D-E1C5-4CF6-8C53-AB0E047D1B0B" Win64="yes">
+                            <File Id="TbbDebugDll" Source="build/bin/tbb_debug.dll"/>
+                        </Component>
+                        <Component Id="CurlDll" Guid="BE814CFF-7812-4D99-8E69-94A19185563F" Win64="yes">
+                            <File Id="CurlDll" Source="build/bin/libcurl.dll"/>
                         </Component>
                         <Component Id="SampleConfig" Guid="5E840E9E-96D6-41F4-A384-1500A089CAEB" Win64="yes">
                             <File Id="SampleConfig" Name="contrail-vrouter-agent.conf.sample" Source="controller/src/vnsw/agent/contrail-vrouter-agent.conf"/>
@@ -30,9 +37,12 @@
         </Directory>
  
         <Feature Id="DefaultFeature" Level="1">
-            <ComponentRef Id="ApplicationFiles"/>
-            <ComponentRef Id="VRouterHyperv"/>
-            <ComponentRef Id="AgentDlls"/>
+            <ComponentRef Id="AgentMainExe"/>
+            <ComponentRef Id="VRouterHypervScript"/>
+            <ComponentRef Id="VRouterCommonScript"/>
+            <ComponentRef Id="VRouterHypervInjectIPScript"/>
+            <ComponentRef Id="TbbDebugDll"/>
+            <ComponentRef Id="CurlDll"/>
             <ComponentRef Id="SampleConfig"/>
         </Feature>
     </Product>
