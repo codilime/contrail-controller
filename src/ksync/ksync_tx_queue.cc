@@ -63,10 +63,13 @@ void KSyncTxQueue::Init(bool use_work_queue) {
             (boost::bind(&KSyncSock::OnEmptyQueue, sock_, _1));
         return;
     }
-   //WINDOWS-TEMP assert((event_fd_ = eventfd(0, (FD_CLOEXEC | EFD_SEMAPHORE))) >= 0);
+
+    #ifndef _WINDOWS
+    assert((event_fd_ = eventfd(0, (FD_CLOEXEC | EFD_SEMAPHORE))) >= 0);
 
     KSyncTxQueueTask *task = new KSyncTxQueueTask(scheduler, this);
     scheduler->Enqueue(task);
+    #endif
 }
 
 void KSyncTxQueue::Shutdown() {
@@ -79,8 +82,9 @@ void KSyncTxQueue::Shutdown() {
         return;
     }
 
+    #ifndef _WINDOWS
     uint64_t u = 1;
-    //WINDOWS-TEMP assert(write(event_fd_, &u, sizeof(u)) == sizeof(u));
+    assert(write(event_fd_, &u, sizeof(u)) == sizeof(u));
     while (queue_len_ != 0) {
         usleep(1);
     }
@@ -88,7 +92,8 @@ void KSyncTxQueue::Shutdown() {
     while(ksync_tx_queue_task_done_ != true) {
         usleep(1);
     }
-   //WINDOWS-TEMP close(event_fd_);
+    close(event_fd_);
+    #endif
 }
 
 bool KSyncTxQueue::EnqueueInternal(IoContext *io_context) {

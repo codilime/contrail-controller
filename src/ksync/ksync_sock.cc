@@ -87,8 +87,8 @@ static uint32_t GetNetlinkSeqno(char *data) {
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return nlh->nlmsg_seq;
 #else
-    // TODO JW-413: implement SEQ_NO in kernel
-    return 0;
+    struct ksync_response_header *krh = (struct ksync_response_header *)data;
+    return krh->seq;
 #endif
 }
 
@@ -323,25 +323,15 @@ void KSyncSock::SetNetlinkFamilyId(int id) {
 }
 
 uint32_t KSyncSock::WaitTreeSize() const {
-#ifndef _WINDOWS //WINDOWSFIX
-
     return wait_tree_.size();
-#endif
-	return 0;
 }
 
 void KSyncSock::SetSeqno(uint32_t seq) {
-#ifndef _WINDOWS //WINDOWSFIX
-
     seqno_ = seq;
     uve_seqno_ = seq;
-#endif
-
 }
 
 uint32_t KSyncSock::AllocSeqNo(bool is_uve) {
-#ifndef _WINDOWS //WINDOWSFIX
-
     uint32_t seq;
     if (is_uve) {
         seq = uve_seqno_.fetch_and_add(2);
@@ -353,8 +343,6 @@ uint32_t KSyncSock::AllocSeqNo(bool is_uve) {
         return AllocSeqNo(is_uve);
     }
     return seq;
-#endif
-	return 0;
 }
 
 KSyncSock *KSyncSock::Get(DBTablePartBase *partition) {
@@ -367,8 +355,6 @@ KSyncSock *KSyncSock::Get(int idx) {
 }
 
 bool KSyncSock::ValidateAndEnqueue(char *data) {
-#ifndef _WINDOWS //WINDOWSFIX
-
     Validate(data);
     IoContext::IoContextWorkQId q_id;
     if ((GetSeqno(data) & KSYNC_DEFAULT_Q_ID_SEQ) ==
@@ -378,7 +364,6 @@ bool KSyncSock::ValidateAndEnqueue(char *data) {
         q_id = IoContext::UVE_Q_ID;
     }
     receive_work_queue[q_id]->Enqueue(data);
-#endif
     return true;
 }
 
