@@ -5,7 +5,12 @@
 #define AUTOGEN_UTIL_H_
 
 #include <stdint.h>
+
+#ifdef _WIN64
+#include <posix_time.h>
+#else
 #include <time.h>
+#endif
 
 #include <sstream>
 #include <string>
