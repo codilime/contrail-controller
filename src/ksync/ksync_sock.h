@@ -220,7 +220,7 @@ public:
     const static unsigned kBufLen = (4*1024);
 
     // Number of messages that can be bunched together
-    // TODO(sodar): Only for debug/dev purposes. Remove when merging.
+    // TODO: JW-990: Windows implementation currently supports singular message transfers
     #ifndef _WINDOWS
     const static unsigned kMaxBulkMsgCount = 16;
     #else
