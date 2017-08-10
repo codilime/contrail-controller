@@ -374,6 +374,10 @@ void KSyncDBObject::Notify(DBTablePartBase *partition, DBEntryBase *e) {
         static_cast<KSyncDBEntry *>(entry->GetState(table, id_));
     DBFilterResp resp = DBFilterAccept;
 
+    if (ksync == NULL) {
+        printf("ksync == NULL\n");
+    }
+
     // cleanup is in-process, ignore All db notifications.
     if (delete_scheduled()) {
         return;

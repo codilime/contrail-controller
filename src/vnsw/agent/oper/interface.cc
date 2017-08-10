@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <net/ethernet.h>
 #include <netinet/ether.h>
-#include<net/if.h>
+#include <net/if.h>
 #include <boost/uuid/uuid_io.hpp>
 #include <tbb/mutex.h>
 
@@ -45,6 +45,7 @@
 #include <filter/acl.h>
 #ifdef _WINDOWS
 #include <winnw.h>
+#include <Iphlpapi.h>
 #endif
 using namespace std;
 using namespace boost::uuids;
@@ -436,28 +437,77 @@ void Interface::GetOsParams(Agent *agent) {
         return;
     }
 
+#ifdef _WINDOWS
+    /* TODO(sodar): Refactor quering interface configuration */
+
+    NET_LUID intf_luid;
+    NET_IFINDEX intf_os_index;
+    std::string intf_name;
+
+    // Try getting LUID by alias
+    {
+        size_t wname_size = name.length() + 1;
+        wchar_t *wname = new wchar_t[wname_size];
+        memset(wname, 0, sizeof(wchar_t) * wname_size);
+
+        {
+            size_t ret;
+            errno_t status = mbstowcs_s(&ret, wname, wname_size, name.c_str(), _TRUNCATE);
+            assert(status == 0);
+        }
+
+        {
+            NETIO_STATUS status = ConvertInterfaceAliasToLuid(wname, &intf_luid);
+            if (status != NO_ERROR) {
+                printf("ERROR: on converting interface name to LUID: %d\b", status);
+                assert(0);
+            }
+        }
+    }
+
+    // Get interface index
+    {
+        NETIO_STATUS status = ConvertInterfaceLuidToIndex(&intf_luid, &intf_os_index);
+        if (status != NO_ERROR) {
+            printf("ERROR: on converting LUID to index: %d\n", status);
+            assert(0);
+        }
+    }
+
+    // Get interface `ifName` using its index
+    {
+        char if_name[1024] = { 0 };
+
+        NETIO_STATUS status = ConvertInterfaceLuidToNameA(&intf_luid, if_name, sizeof(if_name));
+        if (status != NO_ERROR) {
+            printf("ERROR: on converting LUID to index: %d\n", status);
+            assert(0);
+        }
+
+        intf_name = std::string(if_name);
+    }
+
+    os_index_ = intf_os_index;
+    /* If interface is physical, then use ifName as a name */
+    if (type_ == Interface::PHYSICAL) {
+        name_ = intf_name;
+    }
+
+#else
+    //
+    // Linux/FreeBSD specific implementation
+    //
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(ifr));
     strncpy(ifr.ifr_name, name.c_str(), IF_NAMESIZE);
-#ifdef _WINDOWS
-    // TODO (Windows-Juniper)
-    // Temporary modification. Socket created just to bypass an assert below.
-    // It should be decided what is the best replacement for UNIX socket here.
-    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-#else
     int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-#endif
     assert(fd >= 0);
     if (ioctl(fd, SIOCGIFHWADDR, (void *)&ifr) < 0) {
         LOG(ERROR, "Error <" << errno << ": " << strerror(errno) <<
             "> querying mac-address for interface <" << name << "> " <<
             "Agent-index <" << id_ << ">");
         os_oper_state_ = false;
-#ifdef _WINDOWS
-        closesocket(fd);
-#else
         close(fd);
-#endif
         return;
     }
 
@@ -467,11 +517,7 @@ void Interface::GetOsParams(Agent *agent) {
             "> querying flags for interface <" << name << "> " <<
             "Agent-index <" << id_ << ">");
         os_oper_state_ = false;
-#ifdef _WINDOWS
-        closesocket(fd);
-#else
         close(fd);
-#endif
         return;
     }
 
@@ -479,25 +525,17 @@ void Interface::GetOsParams(Agent *agent) {
     if ((ifr.ifr_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING)) {
         os_oper_state_ = true;
     }
-#ifdef _WINDOWS
-    closesocket(fd);
-#else
     close(fd);
-#endif
 #if defined(__linux__)
     mac_ = ifr.ifr_hwaddr;
 #elif defined(__FreeBSD__)
     mac_ = ifr.ifr_addr;
 #endif
     
-#ifdef _WINDOWS
-    int idx = windows_if_nametoindex(name.c_str());
-#else
     int idx = if_nametoindex(name.c_str());
-#endif
-
     if (idx)
         os_index_ = idx;
+#endif
 }
 
 void Interface::SetKey(const DBRequestKey *key) {

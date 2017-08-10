@@ -103,8 +103,8 @@ static bool NetlinkMsgDone(char *data) {
 }
 
 // Common validation for netlink messages
-#ifndef _WINDOWS
 static bool ValidateNetlink(char *data) {
+#ifndef _WINDOWS
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     if (nlh->nlmsg_type == NLMSG_ERROR) {
         LOG(ERROR, "Netlink error for seqno " << nlh->nlmsg_seq << " len "
@@ -146,9 +146,7 @@ static bool ValidateNetlink(char *data) {
         return false;
     }
     return true;
-}
 #else
-static bool ValidateNetlink(char *data) {
     struct ksync_response_header *krh = (struct ksync_response_header *)data;
     if (krh->len + sizeof(struct ksync_response_header) > KSyncSock::kBufLen) {
         LOG(ERROR, "Length of " << (krh->len + sizeof(struct ksync_response_header)) <<
@@ -158,11 +156,11 @@ static bool ValidateNetlink(char *data) {
     }
 
     return true;
-}
 #endif
+}
 
-#ifndef _WINDOWS
 static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
+#ifndef _WINDOWS
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     int len = 0;
     if (nlh->nlmsg_type == NLMSG_DONE) {
@@ -173,15 +171,13 @@ static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
 
     *buf = data + len;
     *buf_len = nlh->nlmsg_len - len;
-}
 #else
-static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
     struct ksync_response_header *krh = (struct ksync_response_header *)data;
 
     *buf = data + sizeof(ksync_response_header);
     *buf_len = krh->len;
-}
 #endif
+}
 
 static void InitNetlink(nl_client *client) {
     nl_init_generic_client_req(client, KSyncSock::GetNetlinkFamilyId());
@@ -250,7 +246,6 @@ KSyncSock::KSyncSock() :
 }
 
 KSyncSock::~KSyncSock() {
-#ifndef _WINDOWS //WINDOWSFIX
     assert(wait_tree_.size() == 0);
 
     if (rx_buff_) {
@@ -267,16 +262,12 @@ KSyncSock::~KSyncSock() {
         free(nl_client_->cl_buf);
     }
     free(nl_client_);
-#endif
 }
 
 void KSyncSock::Shutdown() {
-#ifndef _WINDOWS //WINDOWSFIX
-
     shutdown_ = true;
     sock_->send_queue_.Shutdown();
     sock_.release();
-#endif
 }
 
 void KSyncSock::Init(bool use_work_queue) {
@@ -394,8 +385,6 @@ void KSyncSock::ReadHandler(const boost::system::error_code& error,
 // Process kernel data - executes in the task specified by IoContext
 // Currently only Agent::KSync and Agent::Uve are possibilities
 bool KSyncSock::ProcessKernelData(char *data) {
-#ifndef _WINDOWS //WINDOWSFIX
-
     uint32_t seqno = GetSeqno(data);
     WaitTree::iterator it;
     {
@@ -415,7 +404,7 @@ bool KSyncSock::ProcessKernelData(char *data) {
         wait_tree_.erase(it);
     }
     delete[] data;
-#endif
+
     return true;
 }
 
@@ -615,14 +604,12 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
 #endif
 
 KSyncSockNetlink::~KSyncSockNetlink() {
-#ifdef _WINDOWS
     boost::system::error_code ec;
     pipe_.close(ec);
     if (ec) {
         LOG(ERROR, "Error closing KSync pipe: " << ec);
         assert(0);
     }
-#endif
 }
 
 void KSyncSockNetlink::Init(io_service &ios, int protocol) {
@@ -733,18 +720,16 @@ bool KSyncSockNetlink::BulkDecoder(char *data,
     return bulk_context->Decoder(buf, buf_len, NLA_ALIGNTO, IsMoreData(data));
 }
 
-#ifndef _WINDOWS
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
-    sock_.async_receive(buf, cb);
-}
+#ifndef _WINDOWS
+    sock_.async_receive(buf, cb);s
 #else
-void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
     pipe_.async_read_some(buf, cb); // TODO: JW-408
-}
 #endif
+}
 
-#ifndef _WINDOWS
 void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
+#ifndef _WINDOWS
     sock_.receive(buf);
     struct nlmsghdr *nlh = buffer_cast<struct nlmsghdr *>(buf);
     if (nlh->nlmsg_type == NLMSG_ERROR) {
@@ -752,12 +737,10 @@ void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
                 << " len " << nlh->nlmsg_len);
         assert(0);
     }
-}
 #else
-void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
     pipe_.read_some(buf); // TODO: JW-408
-}
 #endif
+}
 
 
 /////////////////////////////////////////////////////////////////////////////
