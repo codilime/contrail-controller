@@ -396,6 +396,139 @@ void Interface::SetPciIndex(Agent *agent) {
     os_oper_state_ = true;
 }
 
+#ifdef _WIN32
+/* This function assumes that name will have the following format:
+        Container NIC xxxxxxxx
+*/
+static NET_LUID GetVmInterfaceLuidFromName(const std::string& name) {
+    std::stringstream ss;
+    ss << "vEthernet (" << name << ")";
+
+    const std::string alias = ss.str();
+
+    const size_t mb_name_buffer_size = alias.length() + 1;
+    wchar_t *mb_name = new wchar_t[mb_name_buffer_size];
+    memset(mb_name, 0, sizeof(*mb_name) * mb_name_buffer_size);
+
+    size_t converted_chars;
+    errno_t status = mbstowcs_s(&converted_chars, mb_name, mb_name_buffer_size,
+                                alias.c_str(), _TRUNCATE);
+    if (status != 0) {
+        LOG(ERROR, "on converting interface name to wchar: name='" << name << "'");
+        assert(0);
+    }
+
+    const int MAX_RETRIES = 10;
+    const int TIMEOUT = 1000;
+    int retries = 0;
+    while (retries < MAX_RETRIES) {
+        NET_LUID intf_luid;
+        NETIO_STATUS net_error = ConvertInterfaceAliasToLuid(mb_name, &intf_luid);
+        if (net_error == NO_ERROR) {
+            delete mb_name;
+            return intf_luid;
+        }
+
+        Sleep(TIMEOUT);
+        ++retries;
+    }
+
+    LOG(ERROR, "could not retrieve LUID for interface name='" << name << "'");
+    assert(0);
+}
+
+/* This function assumes that name will be an `ifName` of the interface */
+static NET_LUID GetPhysicalInterfaceLuidFromName(const std::string& name) {
+    const int MAX_RETRIES = 10;
+    const int TIMEOUT = 1000;
+    int retries = 0;
+    while (retries < MAX_RETRIES) {
+        NET_LUID intf_luid;
+        NETIO_STATUS net_error = ConvertInterfaceNameToLuidA(name.c_str(), &intf_luid);
+        if (net_error == NO_ERROR)
+            return intf_luid;
+
+        Sleep(TIMEOUT);
+        ++retries;
+    }
+
+    LOG(ERROR, "could not retrieve LUID for interface name='" << name << "'");
+    assert(0);
+}
+
+NET_LUID GetInterfaceLuidFromName(const std::string& name, const Interface::Type intf_type) {
+    NET_LUID intf_luid;
+
+    if (intf_type == Interface::VM_INTERFACE) {
+        intf_luid = GetVmInterfaceLuidFromName(name);
+    } else {
+        intf_luid = GetPhysicalInterfaceLuidFromName(name);
+    }
+
+    return intf_luid;
+}
+
+NET_IFINDEX GetInterfaceIndexFromLuid(NET_LUID intf_luid) {
+    NET_IFINDEX intf_os_index;
+
+    NETIO_STATUS status = ConvertInterfaceLuidToIndex(&intf_luid, &intf_os_index);
+    if (status != NO_ERROR) {
+        printf("ERROR: on converting LUID to index: %d\n", status);
+        assert(0);
+    }
+
+    return intf_os_index;
+}
+
+std::string GetInterfaceNameFromLuid(NET_LUID intf_luid) {
+    char if_name[1024] = { 0 };
+
+    NETIO_STATUS status = ConvertInterfaceLuidToNameA(&intf_luid, if_name, sizeof(if_name));
+    if (status != NO_ERROR) {
+        printf("ERROR: on converting LUID to index: %d\n", status);
+        assert(0);
+    }
+
+    return std::string(if_name);
+}
+
+MacAddress GetMacAddressFromIndex(NET_IFINDEX intf_index) {
+    DWORD ret;
+
+    ULONG flags = GAA_FLAG_INCLUDE_PREFIX
+                  | GAA_FLAG_INCLUDE_ALL_INTERFACES
+                  | GAA_FLAG_INCLUDE_ALL_COMPARTMENTS;
+    ULONG family = AF_UNSPEC;
+    ULONG buffer_size = 0;
+
+    ret = GetAdaptersAddresses(family, flags, NULL, NULL, &buffer_size);
+    assert(ret == ERROR_BUFFER_OVERFLOW);
+
+    PIP_ADAPTER_ADDRESSES adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(buffer_size);
+    ret = GetAdaptersAddresses(family, flags, NULL, adapter_addresses, &buffer_size);
+    assert(ret == ERROR_SUCCESS);
+
+    PIP_ADAPTER_ADDRESSES iter = adapter_addresses;
+    while (iter != NULL) {
+        if (iter->IfIndex == intf_index) {
+            assert(iter->PhysicalAddressLength == 6);
+            return MacAddress(iter->PhysicalAddress[0],
+                              iter->PhysicalAddress[1],
+                              iter->PhysicalAddress[2],
+                              iter->PhysicalAddress[3],
+                              iter->PhysicalAddress[4],
+                              iter->PhysicalAddress[5]);
+        }
+
+        iter = iter->Next;
+    }
+
+    /* TODO(sodar): Proper error handling */
+    printf("ERROR: mac address not found for index %d\n", intf_index);
+    assert(0);
+}
+#endif
+
 void Interface::GetOsParams(Agent *agent) {
     if (agent->test_mode()) {
         static int dummy_ifindex = 0;
@@ -437,61 +570,21 @@ void Interface::GetOsParams(Agent *agent) {
         return;
     }
 
-#ifdef _WINDOWS
-    /* TODO(sodar): Refactor quering interface configuration */
-
-    NET_LUID intf_luid;
-    NET_IFINDEX intf_os_index;
-    std::string intf_name;
-
-    // Try getting LUID by alias
-    {
-        size_t wname_size = name.length() + 1;
-        wchar_t *wname = new wchar_t[wname_size];
-        memset(wname, 0, sizeof(wchar_t) * wname_size);
-
-        {
-            size_t ret;
-            errno_t status = mbstowcs_s(&ret, wname, wname_size, name.c_str(), _TRUNCATE);
-            assert(status == 0);
-        }
-
-        {
-            NETIO_STATUS status = ConvertInterfaceAliasToLuid(wname, &intf_luid);
-            if (status != NO_ERROR) {
-                printf("ERROR: on converting interface name to LUID: %d\b", status);
-                assert(0);
-            }
-        }
+#ifdef _WIN32
+    if (type_ == PACKET) {
+        /* TODO: Handle pkt0 interface */
+        return;
     }
 
-    // Get interface index
-    {
-        NETIO_STATUS status = ConvertInterfaceLuidToIndex(&intf_luid, &intf_os_index);
-        if (status != NO_ERROR) {
-            printf("ERROR: on converting LUID to index: %d\n", status);
-            assert(0);
-        }
+    if (!intf_luid_) {
+        intf_luid_ = GetInterfaceLuidFromName(name, type_);
     }
 
-    // Get interface `ifName` using its index
-    {
-        char if_name[1024] = { 0 };
-
-        NETIO_STATUS status = ConvertInterfaceLuidToNameA(&intf_luid, if_name, sizeof(if_name));
-        if (status != NO_ERROR) {
-            printf("ERROR: on converting LUID to index: %d\n", status);
-            assert(0);
-        }
-
-        intf_name = std::string(if_name);
-    }
-
-    os_index_ = intf_os_index;
-    /* If interface is physical, then use ifName as a name */
-    if (type_ == Interface::PHYSICAL) {
-        name_ = intf_name;
-    }
+    /* We assume that interface is UP */
+    os_oper_state_ = true;
+    os_index_ = GetInterfaceIndexFromLuid(*intf_luid_);
+    name_ = GetInterfaceNameFromLuid(*intf_luid_);
+    mac_ = GetMacAddressFromIndex(os_index_);
 
 #else
     //

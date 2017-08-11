@@ -35,7 +35,9 @@ void Pkt0Interface::InitControlInterface() {
     DWORD attrs = OPEN_EXISTING;
     DWORD flags = FILE_FLAG_OVERLAPPED;
 
-    HANDLE handle = CreateFile(PKT0_PATH, access_flags, 0, NULL, attrs, flags, NULL);
+    /* TODO(sodar): Compile with /DUNICODE and /D_UNICODE
+                    PKT0_PATH has `char *` */
+    HANDLE handle = CreateFileA((LPCSTR)PKT0_PATH, access_flags, 0, NULL, attrs, flags, NULL);
     if (handle == INVALID_HANDLE_VALUE) {
         LOG(ERROR, "Error while opening Pkt0 pipe: " << GetFormattedWindowsErrorMsg());
         assert(0);

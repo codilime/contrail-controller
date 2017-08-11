@@ -14,6 +14,10 @@
 #include <cmn/index_vector.h>
 #include <oper_db.h>
 
+#ifdef _WIN32
+#include <Ifdef.h>
+#endif
+
 struct InterfaceData;
 class VmInterface;
 class IFMapDependencyManager;
@@ -170,6 +174,10 @@ protected:
     NextHopConstRef flow_key_nh_;
     Transport transport_;
     AgentQosConfigConstRef qos_config_;
+
+    #ifdef _WIN32
+    boost::optional<NET_LUID> intf_luid_;
+    #endif
 
 private:
     friend class InterfaceTable;

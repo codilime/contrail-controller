@@ -587,8 +587,11 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
     DWORD attrs = OPEN_EXISTING;
     DWORD config_flags = FILE_FLAG_OVERLAPPED;
 
-    nl_client_->cl_win_pipe = CreateFile(KSYNC_PATH, access_flags, 0, NULL,
-                                         attrs, config_flags, NULL);
+    /* TODO(sodar): Compile with /DUNICODE and /D_UNICODE
+                    KSYNC_PATH has type `wchar_t *`.
+    */
+    nl_client_->cl_win_pipe = CreateFileW((LPCWSTR)KSYNC_PATH, access_flags, 0, NULL,
+                                          attrs, config_flags, NULL);
     if (nl_client_->cl_win_pipe == INVALID_HANDLE_VALUE) {
         LOG(ERROR, "Error while opening KSync pipe: " << GetFormattedWindowsErrorMsg());
         assert(0);
