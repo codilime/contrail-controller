@@ -272,7 +272,7 @@ void KSyncSock::Shutdown() {
 void KSyncSock::Init(bool use_work_queue) {
     sock_->send_queue_.Init(use_work_queue);
     // TODO: Introduce common interface for getpid, for Windows and Linux
-#ifndef _WINDOWS
+#ifndef _WIN32
     pid_ = getpid();
 #else
     pid_ = GetCurrentProcessId();

@@ -382,7 +382,7 @@ public:
     static void Init(boost::asio::io_service &ios, int protocol);
 
 private:
-#ifndef _WINDOWS
+#ifndef _WIN32
     boost::asio::netlink::raw::socket sock_;
 #else
     boost::asio::windows::stream_handle pipe_;
