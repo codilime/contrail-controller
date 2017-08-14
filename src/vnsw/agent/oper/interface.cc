@@ -43,7 +43,7 @@
 #include <sandesh/common/vns_types.h>
 #include <sandesh/common/vns_constants.h>
 #include <filter/acl.h>
-#ifdef _WINDOWS
+#ifdef _WIN32
 #include <winnw.h>
 #include <Iphlpapi.h>
 #endif

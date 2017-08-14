@@ -64,7 +64,7 @@ void KSyncTxQueue::Init(bool use_work_queue) {
         return;
     }
 
-    #ifndef _WINDOWS
+    #ifndef _WIN32
     assert((event_fd_ = eventfd(0, (FD_CLOEXEC | EFD_SEMAPHORE))) >= 0);
 
     KSyncTxQueueTask *task = new KSyncTxQueueTask(scheduler, this);
@@ -82,7 +82,7 @@ void KSyncTxQueue::Shutdown() {
         return;
     }
 
-    #ifndef _WINDOWS
+    #ifndef _WIN32
     uint64_t u = 1;
     assert(write(event_fd_, &u, sizeof(u)) == sizeof(u));
     while (queue_len_ != 0) {

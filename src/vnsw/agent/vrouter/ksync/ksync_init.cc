@@ -97,7 +97,7 @@ void KSync::Init(bool create_vhost) {
     ResetVRouter(true);
 
     /* On Windows, vhost interface is created when Hyper-V switch is created */
-    #ifndef _WINDOWS
+    #ifndef _WIN32
     if (create_vhost) {
         CreateVhostIntf();
     }
@@ -353,7 +353,7 @@ void KSync::Shutdown() {
 }
 
 void GenericNetlinkInit() {
-#ifndef _WINDOWS
+#ifndef _WIN32
     struct nl_client    *cl;
     int    family;
 

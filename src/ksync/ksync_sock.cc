@@ -42,7 +42,7 @@
 
 using namespace boost::asio;
 
-#ifndef _WINDOWS
+#ifndef _WIN32
 /* Note SO_RCVBUFFORCE is supported only for linux version 2.6.14 and above */
 typedef boost::asio::detail::socket_option::integer<SOL_SOCKET,
         SO_RCVBUFFORCE> ReceiveBuffForceSize;
@@ -83,7 +83,7 @@ static uint32_t IoVectorToData(char *data, KSyncBufferList *iovec) {
 // Netlink utilities
 /////////////////////////////////////////////////////////////////////////////
 static uint32_t GetNetlinkSeqno(char *data) {
-#ifndef _WINDOWS
+#ifndef _WIN32
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return nlh->nlmsg_seq;
 #else
@@ -93,7 +93,7 @@ static uint32_t GetNetlinkSeqno(char *data) {
 }
 
 static bool NetlinkMsgDone(char *data) {
-#ifndef _WINDOWS
+#ifndef _WIN32
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return ((nlh->nlmsg_flags & NLM_F_MULTI) != 0);
 #else
@@ -104,7 +104,7 @@ static bool NetlinkMsgDone(char *data) {
 
 // Common validation for netlink messages
 static bool ValidateNetlink(char *data) {
-#ifndef _WINDOWS
+#ifndef _WIN32
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     if (nlh->nlmsg_type == NLMSG_ERROR) {
         LOG(ERROR, "Netlink error for seqno " << nlh->nlmsg_seq << " len "
@@ -160,7 +160,7 @@ static bool ValidateNetlink(char *data) {
 }
 
 static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
-#ifndef _WINDOWS
+#ifndef _WIN32
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     int len = 0;
     if (nlh->nlmsg_type == NLMSG_DONE) {
@@ -271,7 +271,7 @@ void KSyncSock::Shutdown() {
 
 void KSyncSock::Init(bool use_work_queue) {
     sock_->send_queue_.Init(use_work_queue);
-    // TODO: Use some more generalised version
+    // TODO: Introduce common interface for getpid, for Windows and Linux
 #ifndef _WINDOWS
     pid_ = getpid();
 #else
@@ -560,7 +560,7 @@ bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
 /////////////////////////////////////////////////////////////////////////////
 // KSyncSockNetlink routines
 /////////////////////////////////////////////////////////////////////////////
-#ifndef _WINDOWS
+#ifndef _WIN32
 KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
     : sock_(ios, protocol)
 {
@@ -614,7 +614,7 @@ KSyncSockNetlink::~KSyncSockNetlink() {
 void KSyncSockNetlink::Init(io_service &ios, int protocol) {
     KSyncSock::SetSockTableEntry(new KSyncSockNetlink(ios, protocol));
 
-#ifndef _WINDOWS
+#ifndef _WIN32
     const bool use_work_queue = false;
 #else
     // Windows doesn't support event_fd mechanism, so use (slower) work_queue.
@@ -631,7 +631,7 @@ uint32_t KSyncSockNetlink::GetSeqno(char *data) {
 
 bool KSyncSockNetlink::IsMoreData(char *data) {
     // TODO: Possibly should return ` !NetlinkMsgDone ` on both platforms??
-#ifndef _WINDOWS
+#ifndef _WIN32
     return NetlinkMsgDone(data);
 #else
     return !NetlinkMsgDone(data);
@@ -651,7 +651,7 @@ void KSyncSockNetlink::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
                              nl_client_->cl_buf_offset));
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
 
-#ifndef _WINDOWS
+#ifndef _WIN32
     boost::asio::netlink::raw::endpoint ep;
     sock_.async_send_to(*iovec, ep, cb);
 #else
@@ -659,7 +659,7 @@ void KSyncSockNetlink::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
 #endif
 }
 
-#ifdef _WINDOWS
+#ifdef _WIN32
 static std::vector<uint8_t> CollectKSyncBufferList(KSyncBufferList& list) {
     std::vector<uint8_t> data(boost::asio::buffer_size(list));
     boost::asio::buffer_copy(boost::asio::buffer(data), list);
@@ -675,10 +675,14 @@ size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
     printf("DEBUG: iovec->size() = %u\n", iovec->size());
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
 
-#ifndef _WINDOWS
+#ifndef _WIN32
     boost::asio::netlink::raw::endpoint ep;
     return sock_.send_to(*iovec, ep);
 #else
+    /* On Windows, KSync pipe assumes that one message comes in one write call, thus
+       buffers (which contain parts of the same message) must be collected before
+       sending
+    */
     auto collected_data = CollectKSyncBufferList(*iovec);
     return boost::asio::write(pipe_, boost::asio::buffer(collected_data));
 #endif
@@ -720,15 +724,15 @@ bool KSyncSockNetlink::BulkDecoder(char *data,
 }
 
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
-#ifndef _WINDOWS
-    sock_.async_receive(buf, cb);s
+#ifndef _WIN32
+    sock_.async_receive(buf, cb);
 #else
     pipe_.async_read_some(buf, cb);
 #endif
 }
 
 void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
-#ifndef _WINDOWS
+#ifndef _WIN32
     sock_.receive(buf);
     struct nlmsghdr *nlh = buffer_cast<struct nlmsghdr *>(buf);
     if (nlh->nlmsg_type == NLMSG_ERROR) {

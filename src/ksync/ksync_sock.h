@@ -221,7 +221,7 @@ public:
 
     // Number of messages that can be bunched together
     // TODO: JW-990: Windows implementation currently supports singular message transfers
-    #ifndef _WINDOWS
+    #ifndef _WIN32
     const static unsigned kMaxBulkMsgCount = 16;
     #else
     const static unsigned kMaxBulkMsgCount = 1;

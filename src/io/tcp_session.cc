@@ -725,7 +725,7 @@ boost::system::error_code TcpSession::SetSocketKeepaliveOptions(int keepalive_ti
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms738596(v=vs.85).aspx
 // Issue similar to this one:
 // https://git.openstack.org/cgit/openstack/python-keystoneclient/commit/?id=33b24a6984c8de2f26af7900202bb85b6b5db125
-#ifndef _WINDOWS
+#ifndef _WIN32
 
 #ifdef TCP_KEEPINTVL
     typedef boost::asio::detail::socket_option::integer< IPPROTO_TCP, TCP_KEEPINTVL > keepalive_interval;

@@ -93,9 +93,6 @@ void ContrailAgentInit::CreateModules() {
                               agent()->params()->flow_cache_timeout());
     agent()->set_flow_stats_manager(flow_stats_manager_.get());
 
-    // TODO (Juniper-Windows)
-    // Ksync is temporarily not created due to it's ifdefed functionality that
-    // currently causes crashes in Agent initialization.
     ksync_.reset(AgentObjectFactory::Create<KSync>(agent()));
     agent()->set_ksync(ksync_.get());
 
