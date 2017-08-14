@@ -175,9 +175,9 @@ protected:
     Transport transport_;
     AgentQosConfigConstRef qos_config_;
 
-    #ifdef _WIN32
+#ifdef _WIN32
     boost::optional<NET_LUID> intf_luid_;
-    #endif
+#endif
 
 private:
     friend class InterfaceTable;
