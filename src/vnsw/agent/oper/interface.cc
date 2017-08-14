@@ -353,7 +353,8 @@ Interface::Interface(Type type, const uuid &uuid, const string &name,
     metadata_ip_active_(true), metadata_l2_active_(true),
     l2_active_(true), id_(kInvalidIndex), dhcp_enabled_(true),
     dns_enabled_(true), mac_(), os_index_(kInvalidIndex), os_oper_state_(true),
-    admin_state_(true), test_oper_state_(true), transport_(TRANSPORT_INVALID) {
+    admin_state_(true), test_oper_state_(true), transport_(TRANSPORT_INVALID),
+    intf_luid_() {
 }
 
 Interface::~Interface() {
@@ -473,7 +474,7 @@ NET_IFINDEX GetInterfaceIndexFromLuid(NET_LUID intf_luid) {
 
     NETIO_STATUS status = ConvertInterfaceLuidToIndex(&intf_luid, &intf_os_index);
     if (status != NO_ERROR) {
-        printf("ERROR: on converting LUID to index: %d\n", status);
+        LOG(ERROR, "ERROR: on converting LUID to index: " << status);
         assert(0);
     }
 
@@ -485,7 +486,7 @@ std::string GetInterfaceNameFromLuid(NET_LUID intf_luid) {
 
     NETIO_STATUS status = ConvertInterfaceLuidToNameA(&intf_luid, if_name, sizeof(if_name));
     if (status != NO_ERROR) {
-        printf("ERROR: on converting LUID to index: %d\n", status);
+        LOG(ERROR, "on converting LUID to index: " << status);
         assert(0);
     }
 
@@ -506,7 +507,10 @@ MacAddress GetMacAddressFromIndex(NET_IFINDEX intf_index) {
 
     PIP_ADAPTER_ADDRESSES adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(buffer_size);
     ret = GetAdaptersAddresses(family, flags, NULL, adapter_addresses, &buffer_size);
-    assert(ret == ERROR_SUCCESS);
+    if (ret != ERROR_SUCCESS) {
+        LOG(ERROR, "could not retrieve adapters information");
+        assert(0);
+    }
 
     PIP_ADAPTER_ADDRESSES iter = adapter_addresses;
     while (iter != NULL) {
@@ -523,8 +527,7 @@ MacAddress GetMacAddressFromIndex(NET_IFINDEX intf_index) {
         iter = iter->Next;
     }
 
-    /* TODO(sodar): Proper error handling */
-    printf("ERROR: mac address not found for index %d\n", intf_index);
+    LOG(ERROR, "mac address not found for ifIndex " << intf_index);
     assert(0);
 }
 #endif
@@ -572,7 +575,7 @@ void Interface::GetOsParams(Agent *agent) {
 
 #ifdef _WIN32
     if (type_ == PACKET) {
-        /* TODO: Handle pkt0 interface */
+        /* TODO: JW-425: Handle pkt0 interface */
         return;
     }
 

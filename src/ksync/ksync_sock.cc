@@ -236,7 +236,6 @@ KSyncSock::KSyncSock() :
         sprintf(name, "KSync Receive Queue-%d", i);
         receive_work_queue[i]->set_name(name);
     }
-
     task_id = scheduler->GetTaskId("Ksync::AsyncSend");
     nl_client_ = (nl_client *)malloc(sizeof(nl_client));
     memset(nl_client_, 0, sizeof(nl_client));
@@ -587,11 +586,8 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
     DWORD attrs = OPEN_EXISTING;
     DWORD config_flags = FILE_FLAG_OVERLAPPED;
 
-    /* TODO(sodar): Compile with /DUNICODE and /D_UNICODE
-                    KSYNC_PATH has type `wchar_t *`.
-    */
-    nl_client_->cl_win_pipe = CreateFileW((LPCWSTR)KSYNC_PATH, access_flags, 0, NULL,
-                                          attrs, config_flags, NULL);
+    nl_client_->cl_win_pipe = CreateFile(KSYNC_PATH, access_flags, 0, NULL,
+                                         attrs, config_flags, NULL);
     if (nl_client_->cl_win_pipe == INVALID_HANDLE_VALUE) {
         LOG(ERROR, "Error while opening KSync pipe: " << GetFormattedWindowsErrorMsg());
         assert(0);
@@ -727,7 +723,7 @@ void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
 #ifndef _WINDOWS
     sock_.async_receive(buf, cb);s
 #else
-    pipe_.async_read_some(buf, cb); // TODO: JW-408
+    pipe_.async_read_some(buf, cb);
 #endif
 }
 
@@ -741,7 +737,7 @@ void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
         assert(0);
     }
 #else
-    pipe_.read_some(buf); // TODO: JW-408
+    pipe_.read_some(buf);
 #endif
 }
 

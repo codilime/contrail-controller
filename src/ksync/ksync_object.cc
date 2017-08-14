@@ -5,8 +5,6 @@
 #include <windows.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-
-
 #if defined(__linux__)
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -373,10 +371,6 @@ void KSyncDBObject::Notify(DBTablePartBase *partition, DBEntryBase *e) {
     KSyncDBEntry *ksync =
         static_cast<KSyncDBEntry *>(entry->GetState(table, id_));
     DBFilterResp resp = DBFilterAccept;
-
-    if (ksync == NULL) {
-        printf("ksync == NULL\n");
-    }
 
     // cleanup is in-process, ignore All db notifications.
     if (delete_scheduled()) {
