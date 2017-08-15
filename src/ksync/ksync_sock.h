@@ -220,7 +220,12 @@ public:
     const static unsigned kBufLen = (4*1024);
 
     // Number of messages that can be bunched together
+    // TODO: JW-990: Windows implementation currently supports singular message transfers
+    #ifndef _WIN32
     const static unsigned kMaxBulkMsgCount = 16;
+    #else
+    const static unsigned kMaxBulkMsgCount = 1;
+    #endif
     // Max size of buffer that can be bunched together
     const static unsigned kMaxBulkMsgSize = (4*1024);
     // Sequence number to denote invalid builk-context
@@ -375,8 +380,13 @@ public:
     static void NetlinkDecoder(char *data, SandeshContext *ctxt);
     static void NetlinkBulkDecoder(char *data, SandeshContext *ctxt, bool more);
     static void Init(boost::asio::io_service &ios, int protocol);
+
 private:
-    //WINDOWS boost::asio::netlink::raw::socket sock_;
+#ifndef _WIN32
+    boost::asio::netlink::raw::socket sock_;
+#else
+    boost::asio::windows::stream_handle pipe_;
+#endif
 };
 
 //udp socket class for interacting with user vrouter

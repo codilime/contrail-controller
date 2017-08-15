@@ -92,18 +92,27 @@ void KSync::RegisterDBClients(DB *db) {
 void KSync::Init(bool create_vhost) {
     NetlinkInit();
     VRouterInterfaceSnapshot();
-    InitFlowMem();
+    // TODO: JW-882: uncomment the code
+    /* InitFlowMem(); */
     ResetVRouter(true);
+
+    /* On Windows, vhost interface is created when Hyper-V switch is created */
+    #ifndef _WIN32
     if (create_vhost) {
         CreateVhostIntf();
     }
+    #endif
+
     interface_ksync_obj_.get()->Init();
+    // TODO: JW-882: uncomment the code
+    /*
     for (uint16_t i = 0; i < flow_table_ksync_obj_list_.size(); i++) {
         FlowTable *flow_table = agent_->pkt()->get_flow_proto()->GetTable(i);
         flow_table->set_ksync_object(flow_table_ksync_obj_list_[i]);
         flow_table_ksync_obj_list_[i]->Init();
     }
     ksync_flow_memory_.get()->Init();
+    */
 }
 
 void KSync::InitDone() {
@@ -127,17 +136,16 @@ void KSync::InitFlowMem() {
 }
 
 void KSync::NetlinkInit() {
-#if 0 //WINDOWSFIX
     EventManager *event_mgr;
 
     event_mgr = agent_->event_manager();
     boost::asio::io_service &io = *event_mgr->io_service();
 
-    //WINDOWFIX KSyncSockNetlink::Init(io, NETLINK_GENERIC);
+    KSyncSockNetlink::Init(io, NETLINK_GENERIC);
+
     KSyncSock::SetAgentSandeshContext
         (new KSyncSandeshContext(ksync_flow_memory_.get()));
     GenericNetlinkInit();
-#endif
 }
 
 int KSync::Encode(Sandesh &encoder, uint8_t *buf, int buf_len) {
@@ -345,7 +353,7 @@ void KSync::Shutdown() {
 }
 
 void GenericNetlinkInit() {
-#if 0 //WINDOWSFIX
+#ifndef _WIN32
     struct nl_client    *cl;
     int    family;
 
@@ -357,8 +365,9 @@ void GenericNetlinkInit() {
     LOG(DEBUG, "Vrouter family is " << family);
     KSyncSock::SetNetlinkFamilyId(family);
     nl_free_client(cl);
+#else
+    KSyncSock::SetNetlinkFamilyId(VR_NETLINK_PROTO_DEFAULT);
 #endif
-    return;
 }
 
 KSyncTcp::KSyncTcp(Agent *agent): KSync(agent) {

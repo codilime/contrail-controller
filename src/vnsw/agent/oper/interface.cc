@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <net/ethernet.h>
 #include <netinet/ether.h>
-#include<net/if.h>
+#include <net/if.h>
 #include <boost/uuid/uuid_io.hpp>
 #include <tbb/mutex.h>
 
@@ -43,8 +43,9 @@
 #include <sandesh/common/vns_types.h>
 #include <sandesh/common/vns_constants.h>
 #include <filter/acl.h>
-#ifdef _WINDOWS
+#ifdef _WIN32
 #include <winnw.h>
+#include <Iphlpapi.h>
 #endif
 using namespace std;
 using namespace boost::uuids;
@@ -352,7 +353,8 @@ Interface::Interface(Type type, const uuid &uuid, const string &name,
     metadata_ip_active_(true), metadata_l2_active_(true),
     l2_active_(true), id_(kInvalidIndex), dhcp_enabled_(true),
     dns_enabled_(true), mac_(), os_index_(kInvalidIndex), os_oper_state_(true),
-    admin_state_(true), test_oper_state_(true), transport_(TRANSPORT_INVALID) {
+    admin_state_(true), test_oper_state_(true), transport_(TRANSPORT_INVALID),
+    intf_luid_() {
 }
 
 Interface::~Interface() {
@@ -395,6 +397,141 @@ void Interface::SetPciIndex(Agent *agent) {
     os_oper_state_ = true;
 }
 
+#ifdef _WIN32
+/* This function assumes that name will have the following format:
+        Container NIC xxxxxxxx
+*/
+static NET_LUID GetVmInterfaceLuidFromName(const std::string& name) {
+    std::stringstream ss;
+    ss << "vEthernet (" << name << ")";
+
+    const std::string alias = ss.str();
+
+    const size_t mb_name_buffer_size = alias.length() + 1;
+    wchar_t *mb_name = new wchar_t[mb_name_buffer_size];
+    memset(mb_name, 0, sizeof(*mb_name) * mb_name_buffer_size);
+
+    size_t converted_chars;
+    errno_t status = mbstowcs_s(&converted_chars, mb_name, mb_name_buffer_size,
+                                alias.c_str(), _TRUNCATE);
+    if (status != 0) {
+        LOG(ERROR, "on converting interface name to wchar: name='" << name << "'");
+        assert(0);
+    }
+
+    const int MAX_RETRIES = 10;
+    const int TIMEOUT = 1000;
+    int retries = 0;
+    while (retries < MAX_RETRIES) {
+        NET_LUID intf_luid;
+        NETIO_STATUS net_error = ConvertInterfaceAliasToLuid(mb_name, &intf_luid);
+        if (net_error == NO_ERROR) {
+            delete mb_name;
+            return intf_luid;
+        }
+
+        Sleep(TIMEOUT);
+        ++retries;
+    }
+
+    LOG(ERROR, "could not retrieve LUID for interface name='" << name << "'");
+    assert(0);
+}
+
+/* This function assumes that name will be an `ifName` of the interface */
+static NET_LUID GetPhysicalInterfaceLuidFromName(const std::string& name) {
+    const int MAX_RETRIES = 10;
+    const int TIMEOUT = 1000;
+    int retries = 0;
+    while (retries < MAX_RETRIES) {
+        NET_LUID intf_luid;
+        NETIO_STATUS net_error = ConvertInterfaceNameToLuidA(name.c_str(), &intf_luid);
+        if (net_error == NO_ERROR)
+            return intf_luid;
+
+        Sleep(TIMEOUT);
+        ++retries;
+    }
+
+    LOG(ERROR, "could not retrieve LUID for interface name='" << name << "'");
+    assert(0);
+}
+
+NET_LUID GetInterfaceLuidFromName(const std::string& name, const Interface::Type intf_type) {
+    NET_LUID intf_luid;
+
+    if (intf_type == Interface::VM_INTERFACE) {
+        intf_luid = GetVmInterfaceLuidFromName(name);
+    } else {
+        intf_luid = GetPhysicalInterfaceLuidFromName(name);
+    }
+
+    return intf_luid;
+}
+
+NET_IFINDEX GetInterfaceIndexFromLuid(NET_LUID intf_luid) {
+    NET_IFINDEX intf_os_index;
+
+    NETIO_STATUS status = ConvertInterfaceLuidToIndex(&intf_luid, &intf_os_index);
+    if (status != NO_ERROR) {
+        LOG(ERROR, "ERROR: on converting LUID to index: " << status);
+        assert(0);
+    }
+
+    return intf_os_index;
+}
+
+std::string GetInterfaceNameFromLuid(NET_LUID intf_luid) {
+    char if_name[1024] = { 0 };
+
+    NETIO_STATUS status = ConvertInterfaceLuidToNameA(&intf_luid, if_name, sizeof(if_name));
+    if (status != NO_ERROR) {
+        LOG(ERROR, "on converting LUID to index: " << status);
+        assert(0);
+    }
+
+    return std::string(if_name);
+}
+
+MacAddress GetMacAddressFromIndex(NET_IFINDEX intf_index) {
+    DWORD ret;
+
+    ULONG flags = GAA_FLAG_INCLUDE_PREFIX
+                  | GAA_FLAG_INCLUDE_ALL_INTERFACES
+                  | GAA_FLAG_INCLUDE_ALL_COMPARTMENTS;
+    ULONG family = AF_UNSPEC;
+    ULONG buffer_size = 0;
+
+    ret = GetAdaptersAddresses(family, flags, NULL, NULL, &buffer_size);
+    assert(ret == ERROR_BUFFER_OVERFLOW);
+
+    PIP_ADAPTER_ADDRESSES adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(buffer_size);
+    ret = GetAdaptersAddresses(family, flags, NULL, adapter_addresses, &buffer_size);
+    if (ret != ERROR_SUCCESS) {
+        LOG(ERROR, "could not retrieve adapters information");
+        assert(0);
+    }
+
+    PIP_ADAPTER_ADDRESSES iter = adapter_addresses;
+    while (iter != NULL) {
+        if (iter->IfIndex == intf_index) {
+            assert(iter->PhysicalAddressLength == 6);
+            return MacAddress(iter->PhysicalAddress[0],
+                              iter->PhysicalAddress[1],
+                              iter->PhysicalAddress[2],
+                              iter->PhysicalAddress[3],
+                              iter->PhysicalAddress[4],
+                              iter->PhysicalAddress[5]);
+        }
+
+        iter = iter->Next;
+    }
+
+    LOG(ERROR, "mac address not found for ifIndex " << intf_index);
+    assert(0);
+}
+#endif
+
 void Interface::GetOsParams(Agent *agent) {
     if (agent->test_mode()) {
         static int dummy_ifindex = 0;
@@ -436,28 +573,37 @@ void Interface::GetOsParams(Agent *agent) {
         return;
     }
 
+#ifdef _WIN32
+    if (type_ == PACKET) {
+        /* TODO: JW-425: Handle pkt0 interface */
+        return;
+    }
+
+    if (!intf_luid_) {
+        intf_luid_ = GetInterfaceLuidFromName(name, type_);
+    }
+
+    /* We assume that interface is UP */
+    os_oper_state_ = true;
+    os_index_ = GetInterfaceIndexFromLuid(*intf_luid_);
+    name_ = GetInterfaceNameFromLuid(*intf_luid_);
+    mac_ = GetMacAddressFromIndex(os_index_);
+
+#else
+    //
+    // Linux/FreeBSD specific implementation
+    //
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(ifr));
     strncpy(ifr.ifr_name, name.c_str(), IF_NAMESIZE);
-#ifdef _WINDOWS
-    // TODO (Windows-Juniper)
-    // Temporary modification. Socket created just to bypass an assert below.
-    // It should be decided what is the best replacement for UNIX socket here.
-    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-#else
     int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-#endif
     assert(fd >= 0);
     if (ioctl(fd, SIOCGIFHWADDR, (void *)&ifr) < 0) {
         LOG(ERROR, "Error <" << errno << ": " << strerror(errno) <<
             "> querying mac-address for interface <" << name << "> " <<
             "Agent-index <" << id_ << ">");
         os_oper_state_ = false;
-#ifdef _WINDOWS
-        closesocket(fd);
-#else
         close(fd);
-#endif
         return;
     }
 
@@ -467,11 +613,7 @@ void Interface::GetOsParams(Agent *agent) {
             "> querying flags for interface <" << name << "> " <<
             "Agent-index <" << id_ << ">");
         os_oper_state_ = false;
-#ifdef _WINDOWS
-        closesocket(fd);
-#else
         close(fd);
-#endif
         return;
     }
 
@@ -479,25 +621,17 @@ void Interface::GetOsParams(Agent *agent) {
     if ((ifr.ifr_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING)) {
         os_oper_state_ = true;
     }
-#ifdef _WINDOWS
-    closesocket(fd);
-#else
     close(fd);
-#endif
 #if defined(__linux__)
     mac_ = ifr.ifr_hwaddr;
 #elif defined(__FreeBSD__)
     mac_ = ifr.ifr_addr;
 #endif
     
-#ifdef _WINDOWS
-    int idx = windows_if_nametoindex(name.c_str());
-#else
     int idx = if_nametoindex(name.c_str());
-#endif
-
     if (idx)
         os_index_ = idx;
+#endif
 }
 
 void Interface::SetKey(const DBRequestKey *key) {
