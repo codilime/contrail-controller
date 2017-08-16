@@ -52,14 +52,9 @@ def copyboostlib(tofile, fromfile):
 
 
 def build_boost_for_windows(target,source,env):
-   cwd = os.getcwd()
-   os.chdir(Dir(vpath).abspath)
    assert os.path.isdir(Dir(vpath).abspath)
-   print Dir(vpath).abspath
-   print os.getcwd()
-   subprocess.call("bootstrap.bat", shell=True)
-   subprocess.call(boostcmd, shell=True)
-   os.chdir(cwd)
+   subprocess.call("bootstrap.bat", shell=True, cwd=libpath)
+   subprocess.call(boostcmd, shell=True, cwd=libpath)
    copyboostlib(buildlibdir+'boost_program_options.lib','program_options')
    copyboostlib(buildlibdir+'boost_regex.lib','regex')
    copyboostlib(buildlibdir+'boost_system.lib','system')
