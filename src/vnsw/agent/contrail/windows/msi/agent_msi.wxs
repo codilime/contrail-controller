@@ -25,6 +25,9 @@
                         <Component Id="TbbDebugDll" Guid="3DD82F1D-E1C5-4CF6-8C53-AB0E047D1B0B" Win64="yes">
                             <File Id="TbbDebugDll" Source="build/bin/tbb_debug.dll"/>
                         </Component>
+                        <Component Id="Log4CPlusDll" Guid="27D4F796-4BF8-423C-BF68-25334A963810" Win64="yes">
+                            <File Id="Log4CPlusDll" Source="build/bin/log4cplusD.dll"/>
+                        </Component>
                         <Component Id="CurlDll" Guid="BE814CFF-7812-4D99-8E69-94A19185563F" Win64="yes">
                             <File Id="CurlDll" Source="build/bin/libcurl.dll"/>
                         </Component>
@@ -42,6 +45,7 @@
             <ComponentRef Id="VRouterCommonScript"/>
             <ComponentRef Id="VRouterHypervInjectIPScript"/>
             <ComponentRef Id="TbbDebugDll"/>
+            <ComponentRef Id="Log4CPlusDll"/>
             <ComponentRef Id="CurlDll"/>
             <ComponentRef Id="SampleConfig"/>
         </Feature>
