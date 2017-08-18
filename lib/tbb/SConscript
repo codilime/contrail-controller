@@ -27,16 +27,13 @@ def build_tbb_for_windows(target,source,env):
     BUILD_ENV = {'PATH': env['ENV']['PATH'],
               'tbb_build_dir': Dir('.').abspath,'tbb_root': Dir(vpath).abspath,'runtime':'vc14'
             }
-    cwd = os.getcwd()
-    os.chdir(abs_vpath)
-    subprocess.call("make tbb", shell=True)
+    subprocess.call("make tbb", cwd=abs_vpath)
     
     if not os.path.exists(env.Dir(env['TOP_BIN']).abspath):
         os.makedirs(env.Dir(env['TOP_BIN']).abspath)
     copyfile(os.path.join(abs_vpath, bindir, "tbb_debug.dll"), os.path.join(env.Dir(env['TOP_BIN']).abspath, 'tbb_debug.dll'))
     copyfile(os.path.join(abs_vpath, bindir, "tbb_debug.lib"), os.path.join(env.Dir(env['TOP_LIB']).abspath, 'tbb_debug.lib'))
     
-    os.chdir(cwd)
 
 #shutil.copytree()
 
