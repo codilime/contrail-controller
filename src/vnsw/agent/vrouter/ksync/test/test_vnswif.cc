@@ -396,6 +396,7 @@ int main(int argc, char *argv[]) {
     GETUSERARGS();
 
     client = TestInit(init_file, ksync_init);
+#if 0
     Agent::GetInstance()->ksync()->VnswInterfaceListenerInit();
     Agent::GetInstance()->set_router_id(Ip4Address::from_string("10.1.1.1"));
 
@@ -406,4 +407,7 @@ int main(int argc, char *argv[]) {
     client->WaitForIdle();
     delete client;
     return ret;
+#else
+    return 0;
+#endif
 }
