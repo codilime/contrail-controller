@@ -6,6 +6,7 @@
 #include <windows.h>
 #endif
 
+#include <unistd.h>
 #include <boost/asio.hpp>
 #include "base/test/task_test_util.h"
 

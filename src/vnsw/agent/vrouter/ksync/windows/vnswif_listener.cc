@@ -18,37 +18,32 @@
 #include <vrouter/ksync/interface_ksync.h>
 #include "vnswif_listener.h"
 
-VnswInterfaceListenerWindows::VnswInterfaceListenerWindows(Agent *agent) :
-	VnswInterfaceListenerBase(agent) {
+VnswInterfaceListenerWindows::VnswInterfaceListenerWindows(Agent *agent)
+	: VnswInterfaceListenerBase(agent) {
+	/* TODO(sodar): Implement */
 }
 
 VnswInterfaceListenerWindows::~VnswInterfaceListenerWindows() {
+	/* TODO(sodar): Implement */
 }
+
 int VnswInterfaceListenerWindows::CreateSocket() {
+	/* TODO(sodar): Implement */
 	return 0;
 }
 
 void VnswInterfaceListenerWindows::SyncCurrentState() {
-
+	/* TODO(sodar): Implement */
 }
 
-void VnswInterfaceListenerWindows::UpdateLinkLocalRoute(const Ip4Address &addr, bool del_rt)
-{
-
-
+void VnswInterfaceListenerWindows::UpdateLinkLocalRoute(const Ip4Address &addr, bool del_rt) {
+	/* TODO(sodar): Implement */
 }
 
 void VnswInterfaceListenerWindows::RegisterAsyncReadHandler() {
-	
+	/* TODO(sodar): Implement */
 }
 
-
-void VnswInterfaceListenerWindows::ReadHandler(const boost::system::error_code &, std::size_t length)
-{
-	
+void VnswInterfaceListenerWindows::ReadHandler(const boost::system::error_code &, std::size_t length) {
+	/* TODO(sodar): Implement */
 }
-
-
-
-
-
