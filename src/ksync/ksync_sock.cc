@@ -83,28 +83,17 @@ static uint32_t IoVectorToData(char *data, KSyncBufferList *iovec) {
 // Netlink utilities
 /////////////////////////////////////////////////////////////////////////////
 static uint32_t GetNetlinkSeqno(char *data) {
-#ifndef _WIN32
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return nlh->nlmsg_seq;
-#else
-    struct ksync_response_header *krh = (struct ksync_response_header *)data;
-    return krh->seq;
-#endif
 }
 
 static bool NetlinkMsgDone(char *data) {
-#ifndef _WIN32
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     return ((nlh->nlmsg_flags & NLM_F_MULTI) != 0);
-#else
-    struct ksync_response_header *krh = (struct ksync_response_header *)data;
-    return krh->type == KSYNC_RESPONSE_DONE || krh->type == KSYNC_RESPONSE_SINGLE;
-#endif
 }
 
 // Common validation for netlink messages
 static bool ValidateNetlink(char *data) {
-#ifndef _WIN32
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     if (nlh->nlmsg_type == NLMSG_ERROR) {
         LOG(ERROR, "Netlink error for seqno " << nlh->nlmsg_seq << " len "
@@ -146,21 +135,9 @@ static bool ValidateNetlink(char *data) {
         return false;
     }
     return true;
-#else
-    struct ksync_response_header *krh = (struct ksync_response_header *)data;
-    if (krh->len + sizeof(struct ksync_response_header) > KSyncSock::kBufLen) {
-        LOG(ERROR, "Length of " << (krh->len + sizeof(struct ksync_response_header)) <<
-            " is more than expected length of " << KSyncSock::kBufLen);
-        assert(0);
-        return false;
-    }
-
-    return true;
-#endif
 }
 
 static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
-#ifndef _WIN32
     struct nlmsghdr *nlh = (struct nlmsghdr *)data;
     int len = 0;
     if (nlh->nlmsg_type == NLMSG_DONE) {
@@ -171,12 +148,6 @@ static void GetNetlinkPayload(char *data, char **buf, uint32_t *buf_len) {
 
     *buf = data + len;
     *buf_len = nlh->nlmsg_len - len;
-#else
-    struct ksync_response_header *krh = (struct ksync_response_header *)data;
-
-    *buf = data + sizeof(ksync_response_header);
-    *buf_len = krh->len;
-#endif
 }
 
 static void InitNetlink(nl_client *client) {
@@ -630,12 +601,7 @@ uint32_t KSyncSockNetlink::GetSeqno(char *data) {
 }
 
 bool KSyncSockNetlink::IsMoreData(char *data) {
-    // TODO: Possibly should return ` !NetlinkMsgDone ` on both platforms??
-#ifndef _WIN32
     return NetlinkMsgDone(data);
-#else
-    return !NetlinkMsgDone(data);
-#endif
 }
 
 bool KSyncSockNetlink::Validate(char *data) {

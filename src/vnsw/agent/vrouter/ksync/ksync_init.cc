@@ -366,7 +366,7 @@ void GenericNetlinkInit() {
     KSyncSock::SetNetlinkFamilyId(family);
     nl_free_client(cl);
 #else
-    KSyncSock::SetNetlinkFamilyId(VR_NETLINK_PROTO_DEFAULT);
+    KSyncSock::SetNetlinkFamilyId(FAKE_NETLINK_FAMILY);
 #endif
 }
 
