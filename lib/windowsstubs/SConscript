@@ -17,7 +17,6 @@ windows_buildpath = Dir('.').abspath + '/src'
 
 print windows_buildpath
 files = Glob(windows_buildpath +'/*.cc')
-libsources = ['#windows/src/agentconstants.cc','#windows/src/cpuutil.cc','#windows/src/taskutil.cc', '#windows/src/timeutils.cc', '#windows/src/winnw.cc' , '#windows/src/wmi.cc']
 windowsstubs_lib = env.Library('windowsstubs', files)
 env.Install('#/build/lib/', 'windowsstubs.lib')
 env.Alias('windowsstubs', '#/build/lib/windowsstubs.lib')
