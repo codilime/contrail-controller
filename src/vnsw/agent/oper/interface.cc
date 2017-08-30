@@ -354,7 +354,7 @@ Interface::Interface(Type type, const uuid &uuid, const string &name,
     l2_active_(true), id_(kInvalidIndex), dhcp_enabled_(true),
     dns_enabled_(true), mac_(), os_index_(kInvalidIndex), os_oper_state_(true),
     admin_state_(true), test_oper_state_(true), transport_(TRANSPORT_INVALID),
-    intf_luid_() {
+    os_guid_() {
 }
 
 Interface::~Interface() {
@@ -469,7 +469,38 @@ NET_LUID GetInterfaceLuidFromName(const std::string& name, const Interface::Type
     return intf_luid;
 }
 
-NET_IFINDEX GetInterfaceIndexFromLuid(NET_LUID intf_luid) {
+Interface::IfGuid GetInterfaceGuidFromLuid(const NET_LUID intf_luid) {
+    GUID intf_guid;
+
+    NETIO_STATUS status = ConvertInterfaceLuidToGuid(&intf_luid, &intf_guid);
+    if (status != NO_ERROR) {
+        LOG(ERROR, "ERROR: on converting LUID to GUID:" << status);
+        assert(0);
+    }
+
+    Interface::IfGuid result;
+    memcpy(&result, &intf_guid, sizeof(intf_guid));
+
+    return result;
+}
+
+NET_LUID GetInterfaceLuidFromGuid(const Interface::IfGuid intf_guid) {
+    NET_LUID intf_luid;
+
+    GUID win_guid;
+    assert(sizeof(win_guid) == intf_guid.size());
+    memcpy(&win_guid, &intf_guid, intf_guid.size());
+
+    NETIO_STATUS status = ConvertInterfaceGuidToLuid(&win_guid, &intf_luid);
+    if (status != NO_ERROR) {
+        LOG(ERROR, "ERROR: on converting GUID to LUID:" << status);
+        assert(0);
+    }
+
+    return intf_luid;
+}
+
+NET_IFINDEX GetInterfaceIndexFromLuid(const NET_LUID intf_luid) {
     NET_IFINDEX intf_os_index;
 
     NETIO_STATUS status = ConvertInterfaceLuidToIndex(&intf_luid, &intf_os_index);
@@ -481,7 +512,7 @@ NET_IFINDEX GetInterfaceIndexFromLuid(NET_LUID intf_luid) {
     return intf_os_index;
 }
 
-std::string GetInterfaceNameFromLuid(NET_LUID intf_luid) {
+std::string GetInterfaceNameFromLuid(const NET_LUID intf_luid) {
     char if_name[1024] = { 0 };
 
     NETIO_STATUS status = ConvertInterfaceLuidToNameA(&intf_luid, if_name, sizeof(if_name));
@@ -493,7 +524,7 @@ std::string GetInterfaceNameFromLuid(NET_LUID intf_luid) {
     return std::string(if_name);
 }
 
-MacAddress GetMacAddressFromIndex(NET_IFINDEX intf_index) {
+MacAddress GetMacAddressFromLuid(const NET_LUID intf_luid) {
     DWORD ret;
 
     ULONG flags = GAA_FLAG_INCLUDE_PREFIX
@@ -514,7 +545,7 @@ MacAddress GetMacAddressFromIndex(NET_IFINDEX intf_index) {
 
     PIP_ADAPTER_ADDRESSES iter = adapter_addresses;
     while (iter != NULL) {
-        if (iter->IfIndex == intf_index) {
+        if (iter->Luid.Value == intf_luid.Value) {
             assert(iter->PhysicalAddressLength == 6);
             return MacAddress(iter->PhysicalAddress[0],
                               iter->PhysicalAddress[1],
@@ -527,7 +558,7 @@ MacAddress GetMacAddressFromIndex(NET_IFINDEX intf_index) {
         iter = iter->Next;
     }
 
-    LOG(ERROR, "mac address not found for ifIndex " << intf_index);
+    LOG(ERROR, "mac address not found for LUID " << intf_luid.Value);
     assert(0);
 }
 #endif
@@ -579,15 +610,25 @@ void Interface::GetOsParams(Agent *agent) {
         return;
     }
 
-    if (!intf_luid_) {
-        intf_luid_ = GetInterfaceLuidFromName(name, type_);
+    /* Get interface's GUID. Should only happen on first call of `GetOsParams`. */
+    if (!os_guid_) {
+        NET_LUID net_luid = GetInterfaceLuidFromName(name, type_);
+        os_guid_ = GetInterfaceGuidFromLuid(net_luid);
     }
 
-    /* We assume that interface is UP */
-    os_oper_state_ = true;
-    os_index_ = GetInterfaceIndexFromLuid(*intf_luid_);
-    name_ = GetInterfaceNameFromLuid(*intf_luid_);
-    mac_ = GetMacAddressFromIndex(os_index_);
+    if (os_guid_) {
+        auto net_luid = GetInterfaceLuidFromGuid(*os_guid_);
+
+        os_index_ = GetInterfaceIndexFromLuid(net_luid);
+        name_ = GetInterfaceNameFromLuid(net_luid);
+        mac_ = GetMacAddressFromLuid(net_luid);
+
+        /* We assume that interface is UP */
+        os_oper_state_ = true;
+    } else {
+        LOG(ERROR, "interface GUID not set on " << name);
+        assert(0);
+    }
 
 #else
     //
