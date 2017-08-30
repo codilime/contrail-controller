@@ -4,8 +4,9 @@ env.AppendUnique(CCFLAGS=['/DUNICODE', '/D_UNICODE']) #both are needed by the co
 
 vpath = '#windows/src'
 env.VariantDir('#/' + Dir('.').path + '/src', vpath, duplicate=0)
+buildpath = Dir('.').abspath + '/src'
 
-files = Glob(vpath +'/*.cc') + [vpath + '/sys/ioctl.cc', vpath + '/sys/time.cc']
+files = Glob(buildpath + '/*.cc') + [buildpath + '/sys/ioctl.cc', buildpath + '/sys/time.cc']
 windowsstubs_lib = env.Library('windowsstubs', files)
 env.Install('#/build/lib/', 'windowsstubs.lib')
 env.Alias('windowsstubs', '#/build/lib/windowsstubs.lib')
