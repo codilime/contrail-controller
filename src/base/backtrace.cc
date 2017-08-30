@@ -10,6 +10,10 @@
 
 #include "base/logging.h"
 
+#ifdef _WIN32
+#include <dbghelp.h>
+#endif
+
 ssize_t BackTrace::ToString(void * const* callstack, int frames, char *buf,
                             size_t buf_len) {
 #ifdef _WINDOWS
@@ -93,14 +97,13 @@ void BackTrace::Log(void * const* callstack, int frames,
 void BackTrace::Log(const std::string &msg) {
 #ifndef _WINDOWS
     void * const*callstack;
-
     int frames = Get(callstack);
     Log(callstack, frames, msg);
 #else
 
     //see https://msdn.microsoft.com/en-us/library/windows/desktop/ms680344(v=vs.85).aspx
     //https://msdn.microsoft.com/en-us/library/windows/desktop/ms680578(v=vs.85).aspx
-    std::string str;
+    std::string callstack;
 
     HANDLE hProcess = GetCurrentProcess();//-1 return value is OK and valid, hence no error checking
     const int maxframes = 128;
@@ -130,6 +133,6 @@ void BackTrace::Log(const std::string &msg) {
         callstack = GetFormattedWindowsErrorMsg();//could not get callstack
     }
 
-    LOG(DEBUG, msg << "BackTrace:" << str);
+    LOG(DEBUG, msg << "BackTrace:" << callstack);
 #endif
 }

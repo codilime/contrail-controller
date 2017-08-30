@@ -1,22 +1,11 @@
-import os
-import subprocess
-import sys
-import fnmatch
-
-print 'Enter windowslib'
-
-
-
 env = DefaultEnvironment().Clone()
-env.AppendUnique(CCFLAGS='/DUNICODE')#both are needed by the compiler
-env.AppendUnique(CCFLAGS='/D_UNICODE')
+
+env.AppendUnique(CCFLAGS=['/DUNICODE', '/D_UNICODE']) #both are needed by the compiler
 
 vpath = '#windows/src'
-env.VariantDir('#/' + Dir('.').path + '/src', vpath,0)
-windows_buildpath = Dir('.').abspath + '/src'
+env.VariantDir('#/' + Dir('.').path + '/src', vpath, duplicate=0)
 
-print windows_buildpath
-files = Glob(windows_buildpath +'/*.cc')
+files = Glob(vpath +'/*.cc') + [vpath + '/sys/ioctl.cc', vpath + '/sys/time.cc']
 windowsstubs_lib = env.Library('windowsstubs', files)
 env.Install('#/build/lib/', 'windowsstubs.lib')
 env.Alias('windowsstubs', '#/build/lib/windowsstubs.lib')
