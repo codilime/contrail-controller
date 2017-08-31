@@ -742,7 +742,7 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
 
     /* GUIDs are used as interface identifiers on Windows */
     if (os_guid_) {
-        auto& os_guid = os_guid_.get();
+        Interface::IfGuid& os_guid = os_guid_.get();
 
         std::vector<int8_t> raw_guid(os_guid.size(), 0);
         memcpy(raw_guid.data(), &os_guid, os_guid.size());

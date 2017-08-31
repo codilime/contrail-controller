@@ -484,7 +484,7 @@ Interface::IfGuid GetInterfaceGuidFromLuid(const NET_LUID intf_luid) {
     return result;
 }
 
-NET_LUID GetInterfaceLuidFromGuid(const Interface::IfGuid intf_guid) {
+NET_LUID GetInterfaceLuidFromGuid(const Interface::IfGuid& intf_guid) {
     NET_LUID intf_luid;
 
     GUID win_guid;
