@@ -7,6 +7,11 @@
 
 #include "Thrift.h"
 
+#ifdef _WIN32
+// Thrift defines it incorrectly
+#undef usleep
+#endif
+
 #include "io/event_manager.h"
 #include "base/logging.h"
 #include "io/io_log.h"
