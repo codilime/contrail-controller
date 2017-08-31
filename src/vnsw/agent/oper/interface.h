@@ -179,7 +179,7 @@ protected:
     Transport transport_;
     AgentQosConfigConstRef qos_config_;
 
-    // Used on Windows as operating system identifier
+    // Used on Windows as network interface's identifier
     boost::optional<IfGuid> os_guid_;
 
 private:

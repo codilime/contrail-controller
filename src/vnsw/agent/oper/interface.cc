@@ -401,7 +401,7 @@ void Interface::SetPciIndex(Agent *agent) {
 /* This function assumes that name will have the following format:
         Container NIC xxxxxxxx
 */
-static NET_LUID GetVmInterfaceLuidFromName(const std::string& name) {
+static boost::optional<NET_LUID> GetVmInterfaceLuidFromName(const std::string& name) {
     std::stringstream ss;
     ss << "vEthernet (" << name << ")";
 
@@ -435,11 +435,11 @@ static NET_LUID GetVmInterfaceLuidFromName(const std::string& name) {
     }
 
     LOG(ERROR, "could not retrieve LUID for interface name='" << name << "'");
-    assert(0);
+    return boost::none;
 }
 
 /* This function assumes that name will be an `ifName` of the interface */
-static NET_LUID GetPhysicalInterfaceLuidFromName(const std::string& name) {
+static boost::optional<NET_LUID> GetPhysicalInterfaceLuidFromName(const std::string& name) {
     const int MAX_RETRIES = 10;
     const int TIMEOUT = 1000;
     int retries = 0;
@@ -454,28 +454,29 @@ static NET_LUID GetPhysicalInterfaceLuidFromName(const std::string& name) {
     }
 
     LOG(ERROR, "could not retrieve LUID for interface name='" << name << "'");
-    assert(0);
+    return boost::none;
 }
 
-NET_LUID GetInterfaceLuidFromName(const std::string& name, const Interface::Type intf_type) {
-    NET_LUID intf_luid;
-
+boost::optional<NET_LUID> GetInterfaceLuidFromName(const std::string& name,
+                                                   const Interface::Type intf_type) {
     if (intf_type == Interface::VM_INTERFACE) {
-        intf_luid = GetVmInterfaceLuidFromName(name);
+        return GetVmInterfaceLuidFromName(name);
+    } else if (intf_type == Interface::PHYSICAL || intf_type == Interface::INET) {
+        return GetPhysicalInterfaceLuidFromName(name);
     } else {
-        intf_luid = GetPhysicalInterfaceLuidFromName(name);
+        LOG(ERROR, "ERROR: unsupported interface type interface=" << name
+            << ", type = " << intf_type);
+        return boost::none;
     }
-
-    return intf_luid;
 }
 
-Interface::IfGuid GetInterfaceGuidFromLuid(const NET_LUID intf_luid) {
+boost::optional<Interface::IfGuid> GetInterfaceGuidFromLuid(const NET_LUID intf_luid) {
     GUID intf_guid;
 
     NETIO_STATUS status = ConvertInterfaceLuidToGuid(&intf_luid, &intf_guid);
     if (status != NO_ERROR) {
         LOG(ERROR, "ERROR: on converting LUID to GUID:" << status);
-        assert(0);
+        return boost::none;
     }
 
     Interface::IfGuid result;
@@ -484,47 +485,46 @@ Interface::IfGuid GetInterfaceGuidFromLuid(const NET_LUID intf_luid) {
     return result;
 }
 
-NET_LUID GetInterfaceLuidFromGuid(const Interface::IfGuid& intf_guid) {
-    NET_LUID intf_luid;
-
+boost::optional<NET_LUID> GetInterfaceLuidFromGuid(const Interface::IfGuid& intf_guid) {
     GUID win_guid;
     assert(sizeof(win_guid) == intf_guid.size());
     memcpy(&win_guid, &intf_guid, intf_guid.size());
 
+    NET_LUID intf_luid;
     NETIO_STATUS status = ConvertInterfaceGuidToLuid(&win_guid, &intf_luid);
     if (status != NO_ERROR) {
         LOG(ERROR, "ERROR: on converting GUID to LUID:" << status);
-        assert(0);
+        return boost::none;
     }
 
     return intf_luid;
 }
 
-NET_IFINDEX GetInterfaceIndexFromLuid(const NET_LUID intf_luid) {
+boost::optional<NET_IFINDEX> GetInterfaceIndexFromLuid(const NET_LUID intf_luid) {
     NET_IFINDEX intf_os_index;
 
     NETIO_STATUS status = ConvertInterfaceLuidToIndex(&intf_luid, &intf_os_index);
     if (status != NO_ERROR) {
         LOG(ERROR, "ERROR: on converting LUID to index: " << status);
-        assert(0);
+        return boost::none;
     }
 
     return intf_os_index;
 }
 
-std::string GetInterfaceNameFromLuid(const NET_LUID intf_luid) {
+boost::optional<std::string> GetInterfaceNameFromLuid(const NET_LUID intf_luid) {
     char if_name[1024] = { 0 };
 
     NETIO_STATUS status = ConvertInterfaceLuidToNameA(&intf_luid, if_name, sizeof(if_name));
     if (status != NO_ERROR) {
         LOG(ERROR, "on converting LUID to index: " << status);
-        assert(0);
+        return boost::none;
     }
 
     return std::string(if_name);
 }
 
-MacAddress GetMacAddressFromLuid(const NET_LUID intf_luid) {
+boost::optional<MacAddress> GetMacAddressFromLuid(const NET_LUID intf_luid) {
     DWORD ret;
 
     ULONG flags = GAA_FLAG_INCLUDE_PREFIX
@@ -540,7 +540,7 @@ MacAddress GetMacAddressFromLuid(const NET_LUID intf_luid) {
     ret = GetAdaptersAddresses(family, flags, NULL, adapter_addresses, &buffer_size);
     if (ret != ERROR_SUCCESS) {
         LOG(ERROR, "could not retrieve adapters information");
-        assert(0);
+        return boost::none;
     }
 
     PIP_ADAPTER_ADDRESSES iter = adapter_addresses;
@@ -559,7 +559,17 @@ MacAddress GetMacAddressFromLuid(const NET_LUID intf_luid) {
     }
 
     LOG(ERROR, "mac address not found for LUID " << intf_luid.Value);
-    assert(0);
+    return boost::none;
+}
+
+static std::string LuidToString(const NET_LUID intf_luid) {
+    std::stringstream ss;
+
+    ss << "<IfType = " << intf_luid.Info.IfType
+       << ", NetLuidIndex = " << intf_luid.Info.NetLuidIndex
+       << ", Value = " << intf_luid.Value << ">";
+
+    return ss.str();
 }
 #endif
 
@@ -612,24 +622,61 @@ void Interface::GetOsParams(Agent *agent) {
 
     /* Get interface's GUID. Should only happen on first call of `GetOsParams`. */
     if (!os_guid_) {
-        NET_LUID net_luid = GetInterfaceLuidFromName(name, type_);
-        os_guid_ = GetInterfaceGuidFromLuid(net_luid);
+        auto net_luid = GetInterfaceLuidFromName(name, type_);
+        if (!net_luid) {
+            LOG(ERROR, "Error: on querying LUID by name: name=" << name);
+            os_oper_state_ = false;
+            return;
+        }
+
+        os_guid_ = GetInterfaceGuidFromLuid(*net_luid);
+        if (!os_guid_) {
+            LOG(ERROR, "Error: on querying GUID by LUID: LUID="
+                << LuidToString(*net_luid));
+            os_oper_state_ = false;
+            return;
+        }
     }
 
-    if (os_guid_) {
-        auto net_luid = GetInterfaceLuidFromGuid(*os_guid_);
-
-        os_index_ = GetInterfaceIndexFromLuid(net_luid);
-        name_ = GetInterfaceNameFromLuid(net_luid);
-        mac_ = GetMacAddressFromLuid(net_luid);
-
-        /* We assume that interface is UP */
-        os_oper_state_ = true;
-    } else {
-        LOG(ERROR, "interface GUID not set on " << name);
-        assert(0);
+    auto net_luid = GetInterfaceLuidFromGuid(*os_guid_);
+    if (!net_luid) {
+        LOG(ERROR, "Error: on querying LUID by GUID: GUID=" << *os_guid_);
+        os_oper_state_ = false;
+        return;
     }
 
+    auto os_index = GetInterfaceIndexFromLuid(*net_luid);
+    if (!os_index) {
+        LOG(ERROR, "Error: on querying os_index by GUID: GUID=" << *os_guid_
+            << " LUID=" << LuidToString(*net_luid));
+        os_oper_state_ = false;
+        return;;
+    }
+
+    auto if_name = GetInterfaceNameFromLuid(*net_luid);
+    if (!if_name) {
+        LOG(ERROR, "Error: on querying if_name by GUID: GUID=" << *os_guid_
+            << " LUID=" << LuidToString(*net_luid));
+        os_oper_state_ = false;
+        return;
+    }
+
+    auto mac = GetMacAddressFromLuid(*net_luid);
+    if (!mac) {
+        LOG(ERROR, "Error: on querying MAC address by GUID: GUID=" << *os_guid_
+            << " LUID=" << LuidToString(*net_luid));
+        os_oper_state_ = false;
+        return;
+    }
+
+    os_index_ = *os_index;
+    name_ = *if_name;
+    mac_ = *mac;
+
+    /* We assume that interface is UP */
+    os_oper_state_ = true;
+
+    return;
 #else
     //
     // Linux/FreeBSD specific implementation

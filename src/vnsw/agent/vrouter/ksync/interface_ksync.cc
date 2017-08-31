@@ -117,7 +117,8 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
     no_arp_(false),
     encap_type_(PhysicalInterface::ETHERNET),
     transport_(Interface::TRANSPORT_INVALID),
-    flood_unknown_unicast_(false), qos_config_(NULL),
+    flood_unknown_unicast_(false),
+    qos_config_(NULL),
     os_guid_(intf->os_guid()) {
 
     if (intf->flow_key_nh()) {
