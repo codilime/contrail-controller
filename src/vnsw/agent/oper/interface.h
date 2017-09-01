@@ -24,6 +24,9 @@ class IFMapDependencyManager;
 
 class Interface : AgentRefCount<Interface>, public AgentOperDBEntry {
 public:
+    // Used on Windows as operating system identifier's type
+    using IfGuid = boost::uuids::uuid;
+
     // Type of interfaces supported
     enum Type {
         INVALID,
@@ -140,6 +143,7 @@ public:
     const AgentQosConfig* qos_config() const {
         return qos_config_.get();
     }
+    boost::optional<IfGuid> os_guid() const { return os_guid_; }
 
 protected:
     void SetItfSandeshData(ItfSandeshData &data) const;
@@ -175,9 +179,8 @@ protected:
     Transport transport_;
     AgentQosConfigConstRef qos_config_;
 
-#ifdef _WIN32
-    boost::optional<NET_LUID> intf_luid_;
-#endif
+    // Used on Windows as network interface's identifier
+    boost::optional<IfGuid> os_guid_;
 
 private:
     friend class InterfaceTable;

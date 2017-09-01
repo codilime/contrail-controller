@@ -76,7 +76,8 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
     display_name_(entry->display_name_),
     transport_(entry->transport_),
     flood_unknown_unicast_ (entry->flood_unknown_unicast_),
-    qos_config_(entry->qos_config_){
+    qos_config_(entry->qos_config_),
+    os_guid_(entry->os_guid_) {
 }
 
 InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
@@ -116,7 +117,9 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
     no_arp_(false),
     encap_type_(PhysicalInterface::ETHERNET),
     transport_(Interface::TRANSPORT_INVALID),
-    flood_unknown_unicast_(false), qos_config_(NULL) {
+    flood_unknown_unicast_(false),
+    qos_config_(NULL),
+    os_guid_(intf->os_guid()) {
 
     if (intf->flow_key_nh()) {
         flow_key_nh_id_ = intf->flow_key_nh()->id();
@@ -460,6 +463,12 @@ bool InterfaceKSyncEntry::Sync(DBEntry *e) {
         transport_ = intf->transport();
         ret = true;
     }
+
+    if (os_guid_ != intf->os_guid()) {
+        os_guid_ = intf->os_guid();
+        ret = true;
+    }
+
     return ret;
 }
 
@@ -731,6 +740,16 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     }
     encoder.set_vifr_ip(ip_);
     encoder.set_vifr_nh_id(flow_key_nh_id_);
+
+    /* GUIDs are used as interface identifiers on Windows */
+    if (os_guid_) {
+        Interface::IfGuid& os_guid = os_guid_.get();
+
+        std::vector<int8_t> raw_guid(os_guid.size(), 0);
+        memcpy(raw_guid.data(), &os_guid, os_guid.size());
+
+        encoder.set_vifr_if_guid(raw_guid);
+    }
 
     int error = 0;
     encode_len = encoder.WriteBinary((uint8_t *)buf, buf_len, &error);
