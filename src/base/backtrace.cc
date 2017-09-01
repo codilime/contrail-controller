@@ -5,21 +5,14 @@
 #include "base/backtrace.h"
 
 #include <boost/algorithm/string.hpp>
-//WINDOWSFIX #include <execinfo.h>
+#include <execinfo.h>
 #include <stdio.h>
 
 #include "base/logging.h"
 
-#ifdef _WIN32
-#include <dbghelp.h>
-#endif
-
 ssize_t BackTrace::ToString(void * const* callstack, int frames, char *buf,
                             size_t buf_len) {
-#ifdef _WINDOWS
-    assert(0);//should not be called
-    return 0;
-#elif defined(DARWIN)
+#ifdef DARWIN
     return 0;
 #else
     buf[0] = '\0';
@@ -71,21 +64,12 @@ ssize_t BackTrace::ToString(void * const* callstack, int frames, char *buf,
 }
 
 int BackTrace::Get(void * const* &callstack) {
-#ifdef _WINDOWS
-     assert(0);
-     return 0;
-#else
     callstack = (void * const *) calloc(1024, sizeof(void *));
     return backtrace((void **) callstack, 1024);
-#endif
 }
 
 void BackTrace::Log(void * const* callstack, int frames,
                     const std::string &msg) {
-#ifdef _WINDOWS
-    assert(0); //should not be called for windows
-    return;
-#endif
     char buf[10240];
 
     ToString(callstack, frames, buf, sizeof(buf));
@@ -95,44 +79,8 @@ void BackTrace::Log(void * const* callstack, int frames,
 }
 
 void BackTrace::Log(const std::string &msg) {
-#ifndef _WINDOWS
     void * const*callstack;
+
     int frames = Get(callstack);
     Log(callstack, frames, msg);
-#else
-
-    //see https://msdn.microsoft.com/en-us/library/windows/desktop/ms680344(v=vs.85).aspx
-    //https://msdn.microsoft.com/en-us/library/windows/desktop/ms680578(v=vs.85).aspx
-    std::string callstack;
-
-    HANDLE hProcess = GetCurrentProcess();//-1 return value is OK and valid, hence no error checking
-    const int maxframes = 128;
-    void * frames[maxframes];
-    USHORT nFrames = 0;
-    DWORD64  dwDisplacement = 0;
-    PSYMBOL_INFO pSymbol = nullptr;
-
-    if (SymInitialize(hProcess, NULL, TRUE)) {
-        nFrames = CaptureStackBackTrace(0, maxframes, frames, NULL);
-        if (nFrames > 0) {
-            std::unique_ptr<char[]> pbuffer(new char[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)]);
-            pSymbol = reinterpret_cast<SYMBOL_INFO*>(pbuffer.get()); //unique_ptr does not give up ownership
-            pSymbol->MaxNameLen = MAX_SYM_NAME;
-            pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-            std::stringstream ss;
-            for (USHORT i = 0; i < nFrames; i++) {
-                if (SymFromAddr(hProcess, (DWORD64)frames[i], 0, pSymbol) == TRUE) {
-                    ss << i << "::" << pSymbol->Name << "::" << std::hex << pSymbol->Address << std::endl;
-                }
-            }
-            callstack += ss.str();
-        }
-
-    }
-    else {
-        callstack = GetFormattedWindowsErrorMsg();//could not get callstack
-    }
-
-    LOG(DEBUG, msg << "BackTrace:" << callstack);
-#endif
 }
