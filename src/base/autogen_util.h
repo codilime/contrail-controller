@@ -130,7 +130,7 @@ static bool ParseDateTime(const pugi::xml_node &node, time_t *valuep) {
     char *endp;
     memset(&tm, 0, sizeof(tm));
     if (value.size() == 0) return true;
-    endp = strptime(value.c_str(), "%FT%T", &tm);
+    endp = strptime(value.c_str(), "%Y-%m-%dT%T", &tm);
     if (!endp) return false;
     *valuep = timegm(&tm);
     return true;
@@ -149,7 +149,7 @@ static std::string FormatDateTime(const time_t *valuep) {
     struct tm tm;
     char result[100];
     gmtime_r(valuep, &tm);
-    strftime(result, sizeof(result), "%FT%T", &tm);
+    strftime(result, sizeof(result), "%Y-%m-%dT%T", &tm);
     return std::string(result);
 }
 static std::string FormatTime(const time_t *valuep) {
@@ -197,7 +197,7 @@ static bool ParseDateTime(const contrail_rapidjson::Value &node, time_t *valuep)
     char *endp;
     memset(&tm, 0, sizeof(tm));
     if (value.size() == 0) return true;
-    endp = strptime(value.c_str(), "%FT%T", &tm);
+    endp = strptime(value.c_str(), "%Y-%m-%dT%T", &tm);
     if (!endp) return false;
     *valuep = timegm(&tm);
     return true;

@@ -295,10 +295,10 @@ void VmStatKvm::ReadPid() {
 }
 
 void VmStatKvm::GetPid() {
-    std::ostringstream cmd;
+    /*std::ostringstream cmd;
     cmd << "ps -eo pid,cmd | grep " << agent_->GetUuidStr(vm_uuid_)
         << " | grep instance-";
-    ExecCmd(cmd.str(), boost::bind(&VmStatKvm::ReadPid, this));
+    ExecCmd(cmd.str(), boost::bind(&VmStatKvm::ReadPid, this));*/
 }
 
 void VmStatKvm::Start() {
