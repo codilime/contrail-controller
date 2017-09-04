@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <string.h>
+#include <strings.h>
 
 #include "base/util.h"
 #include "base/string_util.h"
