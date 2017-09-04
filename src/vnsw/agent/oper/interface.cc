@@ -615,6 +615,9 @@ void Interface::GetOsParams(Agent *agent) {
     }
 
 #ifdef _WIN32
+    /* In case of pkt0 interface, we assume that it is UP, set os_index to dummy value 0,
+        since on Windows this parameter is not used because interfaces are represented by named pipes.
+        Name and mac are set to constant values from agent specific for that interface */
     if (type_ == PACKET) {
         os_oper_state_ = true;
         os_index_ = 0;
