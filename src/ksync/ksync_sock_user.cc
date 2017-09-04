@@ -116,10 +116,7 @@ void KSyncSockTypeMap::PurgeTxBuffer() {
     } else {
         // Single buffer. Reset the MULTI flag
         assert(iovec.size() == 1);
-
-        char *buf = boost::asio::buffer_cast<char *>(iovec.back());
-        struct nlmsghdr *nlh = (struct nlmsghdr *)buf;
-        nlh->nlmsg_flags &= (~NLM_F_MULTI);
+        last_nlh->nlmsg_flags &= (~NLM_F_MULTI);
     }
 
     // Send a message for each entry in io-vector
