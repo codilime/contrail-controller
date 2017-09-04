@@ -616,7 +616,6 @@ void Interface::GetOsParams(Agent *agent) {
 
 #ifdef _WIN32
     if (type_ == PACKET) {
-        /* TODO: JW-425: Handle pkt0 interface */
         os_oper_state_ = true;
         os_index_ = 0;
         name_ = agent->pkt_interface_name();
