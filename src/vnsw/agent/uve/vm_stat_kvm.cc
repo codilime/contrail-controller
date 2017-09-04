@@ -302,5 +302,10 @@ void VmStatKvm::GetPid() {
 }
 
 void VmStatKvm::Start() {
+    // TODO(WINDOWS): JW-1109: Implement metrics gathering
+#ifndef _WIN32
     GetPid();
+#else
+    // For now: do nothing on Windows
+#endif
 }
