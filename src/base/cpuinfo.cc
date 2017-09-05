@@ -1,13 +1,14 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
-#ifdef __APPLE__
+
+#if defined(__APPLE__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <mach/mach.h>
 #include <mach/task.h>
+#elif defined(_WIN32)
+#include <thread>
 #endif
 
 #include "sys/times.h"
@@ -20,11 +21,6 @@
 #include <boost/algorithm/string/find.hpp>
 #include <boost/algorithm/string/find_iterator.hpp>
 #include <boost/algorithm/string/split.hpp>
-#ifdef _WINDOWS
-#include <sys/times.h>
-#include "cpuutil.h"
-#include "wmi.h"
-#endif
 
 using namespace boost;
 
@@ -34,12 +30,12 @@ static uint32_t NumCpus() {
     if (count != 0) {
         return count;
     }
-#ifdef _WINDOWS
-    return count = GetWindowsOSProcessorCount();
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
     size_t len = sizeof(count);
     sysctlbyname("hw.logicalcpu", &count, &len, NULL, 0);
     return count;
+#elif defined(_WIN32)
+    return count = std::thread::hardware_concurrency();
 #else
     std::ifstream file("/proc/cpuinfo");
     std::string content((std::istreambuf_iterator<char>(file)),
@@ -66,9 +62,7 @@ static void LoadAvg(CpuLoad &load) {
 }
 
 static void ProcessMemInfo(ProcessMemInfo &info) {
-#ifdef _WINDOWS
-    //windows-fix
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
     struct task_basic_info t_info;
     mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
     if (KERN_SUCCESS != task_info(mach_task_self(),
@@ -82,6 +76,8 @@ static void ProcessMemInfo(ProcessMemInfo &info) {
     // XXX Peak virt not availabe, just fill in virt
     info.peakvirt = t_info.virtual_size;
     return;
+#elif defined(_WIN32)
+    // TODO(WINDOWS)
 #else
     std::ifstream file("/proc/self/status");
     bool vmsize = false;
@@ -111,8 +107,8 @@ static void ProcessMemInfo(ProcessMemInfo &info) {
 }
 
 static void SystemMemInfo(SystemMemInfo &info) {
-#ifdef _WINDOWS
-    //windows-fix
+#if defined(_WIN32)
+    // TODO(WINDOWS)
 #else
     std::ifstream file("/proc/meminfo");
     std::string tmp;

@@ -7,6 +7,7 @@
 
 #include <boost/function.hpp>
 #include <boost/functional/factory.hpp>
+#include <boost/functional/forward_adapter.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
@@ -29,13 +30,13 @@ class Factory {
 
 #define FACTORY_STATIC_REGISTER(_Factory, _BaseType, _TypeImpl)\
 static void _Factory ## _TypeImpl ## Register () {\
-    _Factory::Register<_BaseType>(boost::factory<_TypeImpl *>());\
+    _Factory::Register<_BaseType>(boost::forward_adapter<boost::factory<_TypeImpl *> >(boost::factory<_TypeImpl *>()));\
 }\
 MODULE_INITIALIZER(_Factory ## _TypeImpl ## Register)
 
 #define FACTORY_PARAM_STATIC_REGISTER(_Factory, _BaseType, _Param, _TypeImpl)\
 static void _Factory ## _TypeImpl ## Register () {\
-    _Factory::Register<_BaseType, _Param>(boost::factory<_TypeImpl *>());\
+    _Factory::Register<_BaseType, _Param>(boost::forward_adapter<boost::factory<_TypeImpl *> >(boost::factory<_TypeImpl *>()));\
 }\
 MODULE_INITIALIZER(_Factory ## _TypeImpl ## Register)
 

@@ -1,27 +1,33 @@
 # -*- mode: python; -*-
 import sys
 import os
+import subprocess
 
 env = DefaultEnvironment().Clone()
 
 if sys.platform.startswith('win'):
-    # path to the sources
     vpath = '#/third_party/libxml2-2.9.4'
-    win32_path = os.path.join(Dir(vpath).abspath, 'win32')
-    
-    config_opts = 'iconv=no prefix=' + str(Dir('#/build').abspath)
+    vpath_win32 = os.path.join(Dir(vpath).abspath, 'win32')
 
-    cmd = ('cd ' + win32_path + ' & ' +
-           'cscript configure.js ' + config_opts + ' & ' +
-           'nmake /f Makefile.msvc & nmake /f Makefile.msvc install')
-    
-    products = [File('#/build/lib/libxml2.lib'), Dir('#/build/include/libxml2')]
-    
-    env.Command(products, vpath, cmd)
+    output_lib = File('#/build/lib/xml2.lib')
+
+    def build(target, source, env):
+        configure = ['cscript', 'configure.js', 'iconv=no', 'prefix=' + Dir('#/build').abspath]
+        make = ['nmake', '/f', 'Makefile.msvc']
+        make_install = ['nmake', '/f', 'Makefile.msvc', 'install']
+
+        subprocess.call(configure, cwd=vpath_win32)
+        subprocess.call(make, cwd=vpath_win32)
+        subprocess.call(make_install, cwd=vpath_win32)
+        
+        os.rename(File('#/build/lib/libxml2.lib').abspath, output_lib.abspath)
+
+    products = [output_lib, Dir('#/build/include/libxml2')]
+    env.Command(products, vpath, build)
 else:
     # path to the sources
     vpath = '#/third_party/libxml2-2.8.0'
-    
+
     # use 'configure' first to set things up
     cfg_opts = '--prefix=' + str(Dir('#/build')) + ' ' + \
                '--disable-dependency-tracking'

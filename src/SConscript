@@ -45,10 +45,9 @@ include = ['#/controller/src', '#/build/include', '#controller/lib']
 
 libpath = ['#/build/lib']
 
-if sys.platform.startswith('win'):
-    libs = ['boost_system', 'log4cplusD', 'libboost_system-vc140-mt-gd-1_62', 'libboost_date_time-vc140-mt-gd-1_62', 'libboost_regex-vc140-mt-gd-1_62', 'libboost_program_options-vc140-mt-gd-1_62', 'libboost_thread-vc140-mt-gd-1_62', 'libboost_filesystem-vc140-mt-gd-1_62']
-else:
-    libs = ['boost_system', 'log4cplus', 'pthread']
+libs = ['boost_system', 'log4cplus']
+if not sys.platform.startswith('win'):
+    libs.append(['pthread'])
 
 common = DefaultEnvironment().Clone()
 
@@ -60,9 +59,7 @@ else:
 common.Append(LIBPATH = libpath)
 common.Prepend(LIBS = libs)
 
-if sys.platform.startswith('win'):
-    common.Append(CCFLAGS = '/w /D NOMINMAX')
-else:
+if not sys.platform.startswith('win'):
     common.Append(CCFLAGS = '-Wall -Werror -Wsign-compare')
 
 if not sys.platform.startswith('darwin'):
