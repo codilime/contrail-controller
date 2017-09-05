@@ -1530,10 +1530,9 @@ bool BridgeTunnelRouteAdd(const Peer *peer, const string &vm_vrf,
                           uint32_t label, MacAddress &remote_vm_mac,
                           const char *vm_addr, uint8_t plen) {
     boost::system::error_code ec;
-    BridgeTunnelRouteAdd(peer, vm_vrf, bmap,
+    return BridgeTunnelRouteAdd(peer, vm_vrf, bmap,
                         Ip4Address::from_string(server_ip, ec), label, remote_vm_mac,
                         IpAddress::from_string(vm_addr, ec), plen);
-    return true;
 }
 
 bool EcmpTunnelRouteAdd(const Peer *peer, const string &vrf_name, const Ip4Address &vm_ip,
@@ -1602,10 +1601,10 @@ bool EcmpTunnelRouteAdd(Agent *agent, const Peer *peer, const string &vrf,
     comp_nh_list.push_back(nh_data2);
 
     SecurityGroupList sg_id_list;
-    EcmpTunnelRouteAdd(peer, vrf, Ip4Address::from_string(prefix), plen,
+    bool ret = EcmpTunnelRouteAdd(peer, vrf, Ip4Address::from_string(prefix), plen,
                        comp_nh_list, false, vn, sg_id_list, PathPreference());
     client->WaitForIdle();
-    return true;
+    return ret;
 }
 
 bool Inet4TunnelRouteAdd(const Peer *peer, const string &vm_vrf, const Ip4Address &vm_addr,
@@ -1633,10 +1632,9 @@ bool Inet4TunnelRouteAdd(const Peer *peer, const string &vm_vrf, char *vm_addr,
                          const SecurityGroupList &sg,
                          const PathPreference &path_preference) {
     boost::system::error_code ec;
-    Inet4TunnelRouteAdd(peer, vm_vrf, Ip4Address::from_string(vm_addr, ec), plen,
+    return Inet4TunnelRouteAdd(peer, vm_vrf, Ip4Address::from_string(vm_addr, ec), plen,
                         Ip4Address::from_string(server_ip, ec), bmap, label,
                         dest_vn_name, sg, path_preference);
-    return true;
 }
 
 bool TunnelRouteAdd(const char *server, const char *vmip, const char *vm_vrf,

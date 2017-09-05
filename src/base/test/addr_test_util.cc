@@ -1,13 +1,10 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
-#include <boost/asio.hpp>
-#include <windows.h>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #endif
 
-
-#include <boost/asio.hpp>
 #include "base/test/addr_test_util.h"
 
 namespace task_util {

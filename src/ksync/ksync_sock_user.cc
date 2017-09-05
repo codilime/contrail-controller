@@ -108,9 +108,9 @@ void KSyncSockTypeMap::PurgeTxBuffer() {
     }
 
     // If there are more than one NETLINK messages, we need to add 
+    struct nlmsghdr nlh;
     if (count > 1) {
         //Send Netlink-Done message NLMSG_DONE at end
-        struct nlmsghdr nlh;
         InitNetlinkDoneMsg(&nlh, last_nlh->nlmsg_seq);
         iovec.push_back(buffer((uint8_t *)&nlh, NLMSG_HDRLEN));
     } else {

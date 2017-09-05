@@ -25,12 +25,11 @@ void *asio_poll() {
 }
 
 void AsioRun() {
-    int ret;
     try {
         asio_thread = boost::thread(asio_poll);
     }
     catch (const std::exception &e) {
-        LOG(ERROR, "pthread_create error : " <<  strerror(ret) );
+        LOG(ERROR, std::string("boost::thread failed: ") + std::string(e.what()));
         assert(0);
     }
 }
