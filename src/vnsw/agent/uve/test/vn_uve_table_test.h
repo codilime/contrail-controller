@@ -5,7 +5,10 @@
 #ifndef vnsw_agent_vn_uve_table_test_h
 #define vnsw_agent_vn_uve_table_test_h
 
-#include <boost/asio.hpp>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <uve/vn_uve_table.h>
 
 class VnUveTableTest : public VnUveTable {

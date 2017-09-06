@@ -115,8 +115,8 @@ void KSyncSockTypeMap::PurgeTxBuffer() {
         iovec.push_back(buffer((uint8_t *)&nlh, NLMSG_HDRLEN));
     } else {
         // Single buffer. Reset the MULTI flag
-        assert(iovec.size() == 1);
-        last_nlh->nlmsg_flags &= (~NLM_F_MULTI);
+        if (last_nlh)
+            last_nlh->nlmsg_flags &= (~NLM_F_MULTI);
     }
 
     // Send a message for each entry in io-vector
