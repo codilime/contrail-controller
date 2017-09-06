@@ -1,14 +1,14 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+
 #include <fstream>
 #include <sstream>
 #include <stdlib.h> 
 #include <base/misc_utils.h>
 #include <base/logging.h>
-//WINDOWSFIX #include <netdb.h>
+#include <base/paths.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "boost/filesystem/operations.hpp"
@@ -18,18 +18,19 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-#ifdef _WINDOWS
+
+#ifdef _WIN32
 #include "vnsw/agent/contrail/windows/resource.h"
 #endif
 
 using namespace std;
 namespace fs = boost::filesystem;
-const std::string MiscUtils::ContrailVersionCmd = "/usr/bin/contrail-version";//not used in windows
-#ifndef _WINDOWS
-const std::string MiscUtils::CoreFileDir = "/var/crashes/";
-#else
-const std::string MiscUtils::CoreFileDir = "crashes/";
+
+#ifndef _WIN32
+const std::string MiscUtils::ContrailVersionCmd = "/usr/bin/contrail-version";
 #endif
+
+const std::string MiscUtils::CoreFileDir = dir_paths::var + "crashes/";
 const int MiscUtils::MaxCoreFiles = 5;
 const map<MiscUtils::BuildModule, string> MiscUtils::BuildModuleNames = 
     MiscUtils::MapInit();
@@ -82,13 +83,9 @@ void MiscUtils::GetCoreFileList(string prog, vector<string> &list) {
     }
 }
 
-//will not be called for windows
+#ifndef _WIN32
 bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
                                        string &build_num) {
-#ifdef _WINDOWS
-    assert(0);
-    return false;
-#else
     FILE *fp=NULL;
     char line[512];
     fp = popen(cmd.c_str(), "r");
@@ -118,8 +115,8 @@ bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
     }
 
     return true;
-#endif
 }
+#endif
 
 bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
     string &build_num) {
@@ -128,7 +125,7 @@ bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
     //Initialize the version info here. Overide its value on finding version
     rpm_version.assign("unknown");
     build_num.assign("unknown");
-#ifndef _WINDOWS
+#ifndef _WIN32
     ifstream f(ContrailVersionCmd.c_str());
     if (!f.good()) {
         f.close();
@@ -138,19 +135,18 @@ bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
     cmd << ContrailVersionCmd << " " << BuildModuleNames.at(id)
         << " | tail -1 | awk '{ print $2 \" \" $3 }'";
     ret = GetVersionInfoInternal(cmd.str(), rpm_version, build_num);
-#else //getting it from the binary resources as discussed(for now)
+#else // getting it from the binary resources
     ret = false;
-    const UINT bufsize = 1024;
-    char buffer[bufsize];
+    const UINT bufsize = 64;
+    LPTSTR buffer[bufsize];
     HMODULE hModule = GetModuleHandle(NULL);
     if (hModule) {
-        if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, 1024) > 0) {
+        if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, bufsize) > 0) {
             rpm_version = buffer;
-            ret = true;//even if one rc string is read, we return true
-        }
-        if (LoadString(hModule, IDS_CONTRAIL_BUILD_NUM, buffer, 1024) > 0) {
-            build_num = buffer;
-            ret = false;
+            if (LoadString(hModule, IDS_CONTRAIL_BUILD_NUM, buffer, bufsize) > 0) {
+                build_num = buffer;
+                ret = true;
+            }
         }
     }
 #endif

@@ -855,11 +855,7 @@ void TaskScheduler::WaitForTerminateCompletion() {
 
     int count = 0;
     int threadsRunning;
-#ifdef _WINDOWS
-    pid_t pid = windows_getpid();
-#else
     pid_t pid = getpid();
-#endif
 
     while (count++ < 12000) {
         threadsRunning = CountThreadsPerPid(pid);
