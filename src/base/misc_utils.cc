@@ -137,8 +137,8 @@ bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
     ret = GetVersionInfoInternal(cmd.str(), rpm_version, build_num);
 #else // getting it from the binary resources
     ret = false;
-    const UINT bufsize = 64;
-    LPTSTR buffer[bufsize];
+    const int bufsize = 64;
+    char buffer[bufsize];
     HMODULE hModule = GetModuleHandle(NULL);
     if (hModule) {
         if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, bufsize) > 0) {
