@@ -1,9 +1,8 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
-#include <boost/asio.hpp>
-#include <windows.h>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #endif
 
 #include "base/test/task_test_util.h"
@@ -16,6 +15,8 @@
 #include "base/task_annotations.h"
 #include "io/event_manager.h"
 #include "testing/gunit.h"
+
+#include <unistd.h>
 
 using namespace boost::posix_time;
 

@@ -5,6 +5,10 @@
 #include <iostream>
 #include <fstream>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include "db/db.h"
 #include "db/db_table.h"
 #include "db/db_entry.h"
@@ -36,7 +40,7 @@ public:
         INIT,
         ADD,
         CHANGE,
-        DELETE
+        DEL
     };
 
     Vlan(uint16_t tag, uint16_t dep_tag, size_t index) : 
@@ -60,7 +64,7 @@ public:
         if (op_ == TEMP)
             return;
 
-        assert((op_ == DELETE) || (op_ == INIT));
+        assert((op_ == DEL) || (op_ == INIT));
     };
 
     std::string ToString() const {return "VLAN";};
@@ -73,7 +77,7 @@ public:
     virtual bool Change();
 
     virtual bool Delete() {
-        op_ = DELETE;
+        op_ = DEL;
         delete_count_++;
         if (tag_ >= 0xF00 && tag_ < 0xFE0)
             return true;

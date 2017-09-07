@@ -5,6 +5,10 @@
 #ifndef vnsw_agent_vm_uve_table_test_h
 #define vnsw_agent_vm_uve_table_test_h
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <uve/vm_uve_table.h>
 
 class VmUveTableTest : public VmUveTable {

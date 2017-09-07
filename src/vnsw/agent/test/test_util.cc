@@ -1530,7 +1530,7 @@ bool BridgeTunnelRouteAdd(const Peer *peer, const string &vm_vrf,
                           uint32_t label, MacAddress &remote_vm_mac,
                           const char *vm_addr, uint8_t plen) {
     boost::system::error_code ec;
-    BridgeTunnelRouteAdd(peer, vm_vrf, bmap,
+    return BridgeTunnelRouteAdd(peer, vm_vrf, bmap,
                         Ip4Address::from_string(server_ip, ec), label, remote_vm_mac,
                         IpAddress::from_string(vm_addr, ec), plen);
 }
@@ -1555,6 +1555,7 @@ bool EcmpTunnelRouteAdd(const Peer *peer, const string &vrf_name, const Ip4Addre
                                 sg, path_preference, TunnelType::MplsType(),
                                 EcmpLoadBalance(), nh_req);
     InetUnicastAgentRouteTable::AddRemoteVmRouteReq(peer, vrf_name, vm_ip, plen, data);
+    return true;
 }
 
 bool Inet6TunnelRouteAdd(const Peer *peer, const string &vm_vrf, const Ip6Address &vm_addr,
@@ -1600,9 +1601,10 @@ bool EcmpTunnelRouteAdd(Agent *agent, const Peer *peer, const string &vrf,
     comp_nh_list.push_back(nh_data2);
 
     SecurityGroupList sg_id_list;
-    EcmpTunnelRouteAdd(peer, vrf, Ip4Address::from_string(prefix), plen,
+    bool ret = EcmpTunnelRouteAdd(peer, vrf, Ip4Address::from_string(prefix), plen,
                        comp_nh_list, false, vn, sg_id_list, PathPreference());
     client->WaitForIdle();
+    return ret;
 }
 
 bool Inet4TunnelRouteAdd(const Peer *peer, const string &vm_vrf, const Ip4Address &vm_addr,
@@ -1630,7 +1632,7 @@ bool Inet4TunnelRouteAdd(const Peer *peer, const string &vm_vrf, char *vm_addr,
                          const SecurityGroupList &sg,
                          const PathPreference &path_preference) {
     boost::system::error_code ec;
-    Inet4TunnelRouteAdd(peer, vm_vrf, Ip4Address::from_string(vm_addr, ec), plen,
+    return Inet4TunnelRouteAdd(peer, vm_vrf, Ip4Address::from_string(vm_addr, ec), plen,
                         Ip4Address::from_string(server_ip, ec), bmap, label,
                         dest_vn_name, sg, path_preference);
 }
@@ -3598,9 +3600,6 @@ int MplsToVrfId(int label) {
         }
     }
     return vrf;
-}
-
-uint32_t GetInterfaceLabel(int uuid, bool l3) {
 }
 
 PktGen *TxMplsPacketUtil(int ifindex, const char *out_sip,
