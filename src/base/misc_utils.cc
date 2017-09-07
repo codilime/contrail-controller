@@ -86,7 +86,7 @@ void MiscUtils::GetCoreFileList(string prog, vector<string> &list) {
 #ifndef _WIN32
 bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
                                        string &build_num) {
-    FILE *fp=NULL;
+    FILE *fp;
     char line[512];
     fp = popen(cmd.c_str(), "r");
     if (fp == NULL) {
@@ -94,7 +94,7 @@ bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
     }
     char *ptr = fgets(line, sizeof(line), fp);
     if (ptr == NULL) {
-    pclose(fp);
+        pclose(fp);
         return false;
     }
     pclose(fp);
@@ -118,13 +118,14 @@ bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
 }
 #endif
 
-bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
-    string &build_num) {
+bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version, 
+                                       string &build_num) {
     bool ret;
     stringstream cmd;
     //Initialize the version info here. Overide its value on finding version
     rpm_version.assign("unknown");
     build_num.assign("unknown");
+
 #ifndef _WIN32
     ifstream f(ContrailVersionCmd.c_str());
     if (!f.good()) {
@@ -150,6 +151,7 @@ bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
         }
     }
 #endif
+
     return ret;
 }
 
@@ -169,12 +171,10 @@ bool MiscUtils::GetBuildInfo(BuildModule id, const string &build_info,
         result = build_info;
         return false;
     }
-
-    rapidjson::Value str1("build-id"), str2("build-number");
-    rapidjson::Value str11(rpm_version.c_str(), d.GetAllocator()), str22(build_num.c_str(), d.GetAllocator());
-
-    fields[0u].AddMember(str1, str11, d.GetAllocator());
-    fields[0u].AddMember(str2, str22, d.GetAllocator());
+    fields[0u].AddMember("build-id", const_cast<char *>(rpm_version.c_str()), 
+                         d.GetAllocator());
+    fields[0u].AddMember("build-number", const_cast<char *>(build_num.c_str()), 
+                         d.GetAllocator());
 
     rapidjson::StringBuffer strbuf;
     rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);

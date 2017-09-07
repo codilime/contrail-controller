@@ -11,8 +11,7 @@
 #include "nexthop_server.h"
 #include <boost/thread.hpp>
 #include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
+#include "rapidjson/filestream.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
