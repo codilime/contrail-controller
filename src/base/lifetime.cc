@@ -5,7 +5,6 @@
 #include "base/lifetime.h"
 
 #include <boost/bind.hpp>
-#include "base/backtrace.h"
 #include "base/time_util.h"
 
 LifetimeRefBase::LifetimeRefBase(LifetimeActor *actor)

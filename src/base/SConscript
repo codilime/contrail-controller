@@ -4,6 +4,8 @@
 
 # -*- mode: python; -*-
 
+import sys
+
 Import('BuildEnv')
 
 env = BuildEnv.Clone()
@@ -53,26 +55,18 @@ VersionInfoSandeshGenFiles = env.SandeshGenCpp('sandesh/version.sandesh')
 VersionInfoSandeshGenSrcs = env.ExtractCpp(VersionInfoSandeshGenFiles)
 
 env.Append(CPPPATH = env['TOP'])
-libbase = env.Library('base',
-                      [VersionInfoSandeshGenSrcs +
-                      ['backtrace.cc',
-                       'contrail_ports.cc',
-                       'misc_utils.cc',
-                       'bitset.cc',
-                       'index_allocator.cc',
-                       'label_block.cc',
-                       'lifetime.cc',
-                       'logging.cc',
-                       'proto.cc',
-                       task,
-                       'task_annotations.cc',
-                       'task_sandesh.cc',
-                       'task_trigger.cc',
-                       'tdigest.c',
-                       timer,
-                       taskinfo_sandesh_files_,
-                       ]])
-env.Requires(libbase, '#/build/lib/liblog4cplus.lib')
+libbase_src = [VersionInfoSandeshGenSrcs +
+               ['contrail_ports.cc', 'misc_utils.cc', 'bitset.cc',
+                'index_allocator.cc', 'label_block.cc', 'lifetime.cc',
+                'logging.cc', 'proto.cc', task, 'task_annotations.cc',
+                'task_sandesh.cc', 'task_trigger.cc', 'tdigest.c', timer,
+                taskinfo_sandesh_files_]]
+
+if not sys.platform.startswith('win'):
+    libbase_src.append('backtrace.cc')
+
+libbase = env.Library('base', libbase_src)
+env.Requires(libbase, '#/build/lib/' + env['LIBPREFIX'] + 'log4cplus' + env['LIBSUFFIX'])
 env.Requires(libbase, '#/build/include/boost')
 
 env.SConscript('test/SConscript', exports='BuildEnv', duplicate = 0)

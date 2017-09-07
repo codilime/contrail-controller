@@ -118,7 +118,7 @@ env.Prepend(LIBS = [
     'xmpp_multicast',
     'xmpp_enet',
     'xmpp_unicast',
-    'libxml2',
+    'xml2',
     'ds',
     'xml',
     'pugixml',

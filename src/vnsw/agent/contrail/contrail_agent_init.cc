@@ -1,6 +1,11 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+
+// in Boost this macro defaults to 6 but we're using FACTORY_TYPE_N7,
+// so we need to define it manually
+#define BOOST_FUNCTIONAL_FORWARD_ADAPTER_MAX_ARITY 7
+
 #include <cmn/agent_cmn.h>
 #include <cmn/agent_factory.h>
 #include <init/agent_param.h>
@@ -39,23 +44,22 @@ void ContrailAgentInit::ProcessOptions
  * Initialization routines
 ****************************************************************************/
 void ContrailAgentInit::FactoryInit() {
-
-
     if (agent()->tsn_enabled() == false) {
         AgentObjectFactory::Register<AgentUveBase>
-            (boost::factory<AgentUveStats *>());
+            (boost::forward_adapter<boost::factory<AgentUveStats *> >(boost::factory<AgentUveStats *>()));
     } else {
         AgentObjectFactory::Register<AgentUveBase>
-            (boost::factory<AgentUve *>());
+            (boost::forward_adapter<boost::factory<AgentUve *> >(boost::factory<AgentUve *>()));
     }
     if (agent_param()->vrouter_on_nic_mode() || agent_param()->vrouter_on_host_dpdk()) {
-        AgentObjectFactory::Register<KSync>(boost::factory<KSyncTcp *>());
+        AgentObjectFactory::Register<KSync>
+            (boost::forward_adapter<boost::factory<KSyncTcp *> >(boost::factory<KSyncTcp *>()));
     } else {
-        AgentObjectFactory::Register<KSync>(boost::factory<KSync *>());
+        AgentObjectFactory::Register<KSync>
+            (boost::forward_adapter<boost::factory<KSync *> >(boost::factory<KSync *>()));
     }
-    AgentObjectFactory::Register<FlowStatsCollector>(boost::factory<FlowStatsCollector *>());
-
-
+    AgentObjectFactory::Register<FlowStatsCollector>
+        (boost::forward_adapter<boost::factory<FlowStatsCollector *> >(boost::factory<FlowStatsCollector *>()));
 }
 
 void ContrailAgentInit::CreateModules() {

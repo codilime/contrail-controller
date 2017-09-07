@@ -10,7 +10,7 @@ vpath = '#/third_party/log4cplus-1.1.1'
 env = DefaultEnvironment()
 
 if platform.system() == 'Windows':
-    output_lib = File('#/build/lib/log4cplusD.lib')
+    output_lib = File('#/build/lib/log4cplus.lib')
     output_dll = File('#/build/bin/log4cplusD.dll')
 
     def build(target, source, env):

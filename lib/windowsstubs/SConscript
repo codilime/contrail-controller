@@ -1,12 +1,12 @@
 env = DefaultEnvironment().Clone()
 
-env.AppendUnique(CCFLAGS=['/DUNICODE', '/D_UNICODE']) #both are needed by the compiler
+env.AppendUnique(CCFLAGS=['/DUNICODE', '/D_UNICODE']) # both are needed by the compiler
 
 vpath = '#windows/src'
 env.VariantDir('#/' + Dir('.').path + '/src', vpath, duplicate=0)
 buildpath = Dir('.').abspath + '/src'
 
-files = Glob(buildpath + '/*.cc') + [buildpath + '/sys/ioctl.cc', buildpath + '/sys/time.cc']
+files = Glob(buildpath + '/misc/*.cc') + [buildpath + '/sys/ioctl.cc', buildpath + '/sys/time.cc', buildpath + '/strings.cc', buildpath + '/unistd.cc']
 windowsstubs_lib = env.Library('windowsstubs', files)
 env.Install('#/build/lib/', 'windowsstubs.lib')
 env.Alias('windowsstubs', '#/build/lib/windowsstubs.lib')
