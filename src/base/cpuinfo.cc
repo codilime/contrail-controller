@@ -77,7 +77,7 @@ static void ProcessMemInfo(ProcessMemInfo &info) {
     info.peakvirt = t_info.virtual_size;
     return;
 #elif defined(_WIN32)
-    // TODO(WINDOWS)
+    // TODO(WINDOWS) JW-1121
 #else
     std::ifstream file("/proc/self/status");
     bool vmsize = false;
@@ -108,7 +108,7 @@ static void ProcessMemInfo(ProcessMemInfo &info) {
 
 static void SystemMemInfo(SystemMemInfo &info) {
 #if defined(_WIN32)
-    // TODO(WINDOWS)
+    // TODO(WINDOWS) JW-1121
 #else
     std::ifstream file("/proc/meminfo");
     std::string tmp;

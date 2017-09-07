@@ -60,7 +60,6 @@ void ContrailAgentInit::FactoryInit() {
     }
     AgentObjectFactory::Register<FlowStatsCollector>
         (boost::forward_adapter<boost::factory<FlowStatsCollector *> >(boost::factory<FlowStatsCollector *>()));
-    //AgentObjectFactory::Register<FlowStatsCollector>(boost::factory<FlowStatsCollector *>());
 }
 
 void ContrailAgentInit::CreateModules() {
