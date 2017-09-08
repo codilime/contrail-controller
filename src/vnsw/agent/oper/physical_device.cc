@@ -56,7 +56,7 @@ bool PhysicalDevice::IsLess(const DBEntry &rhs) const {
 }
 
 string PhysicalDevice::ToString() const {
-    return UUIDToString(uuid_);
+    return UuidToString(uuid_);
 }
 
 DBEntryBase::KeyPtr PhysicalDevice::GetDBRequestKey() const {
@@ -267,7 +267,7 @@ class DeviceSandesh : public AgentSandesh {
 
 static void SetDeviceSandeshData(const PhysicalDevice *entry,
                                       SandeshDevice *data) {
-    data->set_uuid(UUIDToString(entry->uuid()));
+    data->set_uuid(UuidToString(entry->uuid()));
     data->set_fq_name(entry->fq_name());
     data->set_name(entry->name());
     data->set_vendor(entry->vendor());
@@ -281,7 +281,7 @@ bool PhysicalDevice::DBEntrySandesh(Sandesh *resp, std::string &name)
     SandeshDeviceListResp *dev_resp =
         static_cast<SandeshDeviceListResp *> (resp);
 
-    std::string str_uuid = UUIDToString(uuid_);
+    std::string str_uuid = UuidToString(uuid_);
     if (name.empty() || name_.find(name) != string::npos) {
         SandeshDevice data;
         SetDeviceSandeshData(this, &data);
@@ -325,7 +325,7 @@ void PhysicalDevice::SendObjectLog(AgentLogEvent::type event) const {
     }
     info.set_event(str);
 
-    info.set_uuid(UUIDToString(uuid_));
+    info.set_uuid(UuidToString(uuid_));
     info.set_fq_name(fq_name_);
     info.set_name(name_);
     info.set_vendor(vendor_);

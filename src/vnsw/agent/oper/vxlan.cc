@@ -464,7 +464,7 @@ bool VxLanConfigSandeshTask::Run() {
         }
 
         entry.set_vxlan_id(it->first.vxlan_id_);
-        entry.set_vn_uuid(UUIDToString(it->first.vn_));
+        entry.set_vn_uuid(UuidToString(it->first.vn_));
         entry.set_vrf(it->second.vrf_);
         entry.set_flood_unknown_unicast(it->second.flood_unknown_unicast_);
         entry.set_active(it->second.active_);

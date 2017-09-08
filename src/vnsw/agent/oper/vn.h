@@ -12,7 +12,6 @@
 #include <oper/oper_dhcp_options.h>
 
 using namespace boost::uuids;
-using namespace std;
 
 class AgentRouteResync;
 

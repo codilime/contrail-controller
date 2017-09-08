@@ -489,7 +489,7 @@ static void SgListResponse(Sandesh *sandesh, int id, int sg_id, int num_entries)
 
     EXPECT_EQ(resp->get_sg_list().size(), num_entries);
     if (!sg_id) {
-        EXPECT_EQ(resp->get_sg_list()[0].sg_uuid, UUIDToString(MakeUuid(id)));
+        EXPECT_EQ(resp->get_sg_list()[0].sg_uuid, UuidToString(MakeUuid(id)));
         EXPECT_EQ(resp->get_sg_list()[0].sg_id, sg_id);
     }
     sg_introspec_test = true;
@@ -781,7 +781,7 @@ TEST_F(SgTest, Sg_Introspec) {
     // Introspec based on the uuid
     client->WaitForIdle();
     SgListReq *req = new SgListReq();
-    req->set_name(UUIDToString(MakeUuid(20)));
+    req->set_name(UuidToString(MakeUuid(20)));
     sg_introspec_test = false;
     Sandesh::set_response_callback(boost::bind(SgListResponse, _1, 20, 1, 1));
     req->HandleRequest();

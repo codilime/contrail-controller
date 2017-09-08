@@ -373,17 +373,8 @@ static void AclObjectTrace(AgentLogEvent::type event, AclSpec &acl_spec)
         }
         acl.set_entries(acl_entries);
         ACL_TRACE(AclTrace, "Add", "", acl);
-    } else if (event == AgentLogEvent::DELETE) {
+    } else if (event == AgentLogEvent::DEL) {
         ACL_TRACE(AclTrace, "Delete", UuidToString(acl_spec.acl_id), acl);
-    }
-    switch (event) {
-        case AgentLogEvent::ADD:
-        case AgentLogEvent::CHANGE:
-            break;
-        case AgentLogEvent::DELETE:
-            break;
-        default:
-            break;
     }
 }
 
@@ -408,7 +399,7 @@ bool AclTable::IFNodeToReq(IFMapNode *node, DBRequest &req,
         req.data.reset(NULL);
         Agent::GetInstance()->acl_table()->Enqueue(&req);
         acl_spec.acl_id = u;
-        AclObjectTrace(AgentLogEvent::DELETE, acl_spec);
+        AclObjectTrace(AgentLogEvent::DEL, acl_spec);
         return false;
     }
 

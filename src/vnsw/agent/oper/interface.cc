@@ -285,8 +285,8 @@ bool InterfaceTable::FindVmUuidFromMetadataIp(const Ip4Address &ip,
         const VmInterface *vintf = static_cast<const VmInterface *>(intf);
         *vm_ip = vintf->primary_ip_addr().to_string();
         if (vintf->vm()) {
-            *vm_uuid = UUIDToString(vintf->vm()->GetUuid());
-            *vm_project_uuid = UUIDToString(vintf->vm_project_uuid());
+            *vm_uuid = UuidToString(vintf->vm()->GetUuid());
+            *vm_project_uuid = UuidToString(vintf->vm_project_uuid());
             return true;
         }
     }
@@ -936,7 +936,7 @@ static string VmiTypeToString(VmInterface::VmiType type) {
 void Interface::SetItfSandeshData(ItfSandeshData &data) const {
     data.set_index(id_);
     data.set_name(name_);
-    data.set_uuid(UUIDToString(uuid_));
+    data.set_uuid(UuidToString(uuid_));
 
     if (vrf_)
         data.set_vrf_name(vrf_->GetName());
@@ -1007,7 +1007,7 @@ void Interface::SetItfSandeshData(ItfSandeshData &data) const {
     data.set_flood_unknown_unicast(false);
 
     if (qos_config_.get()) {
-        data.set_qos_config(UUIDToString(qos_config_->uuid()));
+        data.set_qos_config(UuidToString(qos_config_->uuid()));
     }
 
     switch (type_) {
@@ -1037,7 +1037,7 @@ void Interface::SetItfSandeshData(ItfSandeshData &data) const {
         if (vintf->vn())
             data.set_vn_name(vintf->vn()->GetName());
         if (vintf->vm())
-            data.set_vm_uuid(UUIDToString(vintf->vm()->GetUuid()));
+            data.set_vm_uuid(UuidToString(vintf->vm()->GetUuid()));
         data.set_ip_addr(vintf->primary_ip_addr().to_string());
         data.set_ip6_addr(vintf->primary_ip6_addr().to_string());
         data.set_mac_addr(vintf->vm_mac().ToString());
@@ -1293,12 +1293,12 @@ void Interface::SetItfSandeshData(ItfSandeshData &data) const {
         for (sgit = sg_uuid_l.list_.begin(); sgit != sg_uuid_l.list_.end(); 
              ++sgit) {
             VmIntfSgUuid sg_id;
-            sg_id.set_sg_uuid(UUIDToString(sgit->uuid_));
+            sg_id.set_sg_uuid(UuidToString(sgit->uuid_));
             intf_sg_uuid_l.push_back(sg_id);
         }
         data.set_sg_uuid_list(intf_sg_uuid_l);
         data.set_vm_name(vintf->vm_name());
-        data.set_vm_project_uuid(UUIDToString(vintf->vm_project_uuid()));
+        data.set_vm_project_uuid(UuidToString(vintf->vm_project_uuid()));
         data.set_local_preference(vintf->local_preference());
 
         data.set_tx_vlan_id(vintf->tx_vlan_id());
@@ -1318,7 +1318,7 @@ void Interface::SetItfSandeshData(ItfSandeshData &data) const {
 
         if (vintf->vrf_assign_acl()) {
             std::string vrf_assign_acl;
-            vrf_assign_acl.assign(UUIDToString(vintf->vrf_assign_acl()->GetUuid()));
+            vrf_assign_acl.assign(UuidToString(vintf->vrf_assign_acl()->GetUuid()));
             data.set_vrf_assign_acl_uuid(vrf_assign_acl);
         }
 

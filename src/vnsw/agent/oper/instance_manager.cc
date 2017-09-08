@@ -709,13 +709,13 @@ void InstanceManager::StopStaleNetNS(ServiceInstance::Properties &props) {
     cmd_str << netns_cmd_ << " destroy";
 
     cmd_str << " " << props.ServiceTypeString();
-    cmd_str << " " << UUIDToString(props.instance_id);
-    cmd_str << " " << UUIDToString(boost::uuids::nil_uuid());
-    cmd_str << " " << UUIDToString(boost::uuids::nil_uuid());
+    cmd_str << " " << UuidToString(props.instance_id);
+    cmd_str << " " << UuidToString(boost::uuids::nil_uuid());
+    cmd_str << " " << UuidToString(boost::uuids::nil_uuid());
     if (props.service_type == ServiceInstance::LoadBalancer) {
         if (props.loadbalancer_id.empty()) {
             LOG(ERROR, "loadbalancer id is missing for service instance: "
-                        << UUIDToString(props.instance_id));
+                        << UuidToString(props.instance_id));
             return;
         }
         cmd_str << " --loadbalancer-id " << props.loadbalancer_id;
@@ -746,7 +746,7 @@ void InstanceManager::StopStaleNetNS(ServiceInstance::Properties &props) {
 
 void InstanceManager::SetLastCmdType(ServiceInstance *svc_instance,
                                      int last_cmd_type) {
-    std::string uuid = UUIDToString(svc_instance->uuid());
+    std::string uuid = UuidToString(svc_instance->uuid());
     std::map<std::string, int>::iterator iter =
             last_cmd_types_.find(uuid);
     if (iter != last_cmd_types_.end()) {
@@ -757,7 +757,7 @@ void InstanceManager::SetLastCmdType(ServiceInstance *svc_instance,
 }
 
 int InstanceManager::GetLastCmdType(ServiceInstance *svc_instance) const {
-    std::string uuid = UUIDToString(svc_instance->uuid());
+    std::string uuid = UuidToString(svc_instance->uuid());
     std::map<std::string, int>::const_iterator iter =
         last_cmd_types_.find(uuid);
     if (iter != last_cmd_types_.end()) {
@@ -768,7 +768,7 @@ int InstanceManager::GetLastCmdType(ServiceInstance *svc_instance) const {
 }
 
 void InstanceManager::ClearLastCmdType(ServiceInstance *svc_instance) {
-    std::string uuid = UUIDToString(svc_instance->uuid());
+    std::string uuid = UuidToString(svc_instance->uuid());
         std::map<std::string, int>::iterator iter =
             last_cmd_types_.find(uuid);
     if (iter != last_cmd_types_.end()) {
