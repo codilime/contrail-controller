@@ -638,7 +638,6 @@ size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
     KSyncBufferList::iterator it = iovec->begin();
     iovec->insert(it, buffer((char *)nl_client_->cl_buf,
                              nl_client_->cl_buf_offset));
-    printf("DEBUG: iovec->size() = %u\n", iovec->size());
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
 
 #ifndef _WIN32
