@@ -5,10 +5,6 @@
 #include <iostream>
 #include <fstream>
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#endif
-
 #include "db/db.h"
 #include "db/db_table.h"
 #include "db/db_entry.h"

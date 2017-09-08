@@ -2,10 +2,6 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#endif
-
 #include <sandesh/sandesh_types.h>
 #include <sandesh/sandesh.h>
 #include <sandesh/request_pipeline.h>

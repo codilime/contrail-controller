@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#endif // _WINDOWS
 
 #include <pkt/flow_entry.h>
 

@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#endif // _WINDOWS
 
 #include <pkt/pkt_sandesh_flow.h>
 

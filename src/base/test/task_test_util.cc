@@ -1,10 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#endif
-
 #include "base/test/task_test_util.h"
 
 #include <boost/asio/deadline_timer.hpp>
