@@ -6,16 +6,13 @@ import sys
 import re
 import time
 import subprocess
-import os
 
 Import('AgentEnv')
 env = AgentEnv.Clone()
-if os.name == 'nt':
-    env.Append(CPPPATH = ['#windows'])
 
-cflags = env['CCFLAGS']
-cflags.append('/w')
-cflags.append('-fexceptions')
+if not sys.platform.startswith('win'):
+    env.Append(CCFLAGS=['-Wno-return-type', '-fexceptions',
+                        '-Wno-unused-variable'])
 
 
 ##########################################################################
@@ -104,8 +101,10 @@ if sys.platform.startswith('freebsd'):
 elif sys.platform.startswith('linux'):
     platform_dependent = 'linux/pkt0_interface.cc'
 elif sys.platform.startswith('win'):
-    env.Prepend(LIBS=['DbgHelp'])
+    # for checking OS version in base/misc_utils.cc, eg. GetFileVersionInfoA
+    env.Append(LIBS=['version'])
     platform_dependent = ['windows/pkt0_interface.cc','#build/lib/windowsstubs.lib', env.RES('windows/resource.rc')]
+
 
 contrail_vrouter_agent = env.Program(target = 'contrail-vrouter-agent',
                      source = ['buildinfo.cc',

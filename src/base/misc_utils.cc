@@ -137,19 +137,20 @@ bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
         << " | tail -1 | awk '{ print $2 \" \" $3 }'";
     ret = GetVersionInfoInternal(cmd.str(), rpm_version, build_num);
 #else // getting it from the binary resources
-    ret = false;
     const int bufsize = 64;
     char buffer[bufsize];
     HMODULE hModule = GetModuleHandle(NULL);
-    if (hModule) {
-        if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, bufsize) > 0) {
-            rpm_version = buffer;
-            if (LoadString(hModule, IDS_CONTRAIL_BUILD_NUM, buffer, bufsize) > 0) {
-                build_num = buffer;
-                ret = true;
-            }
-        }
-    }
+    if (!hModule)
+        return false;
+    if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, bufsize) == 0)
+        return false;
+    rpm_version = buffer;
+    
+    if (LoadString(hModule, IDS_CONTRAIL_BUILD_NUM, buffer, bufsize) == 0)
+        return false;
+    build_num = buffer;
+    
+    ret = true;
 #endif
 
     return ret;
@@ -184,11 +185,43 @@ bool MiscUtils::GetBuildInfo(BuildModule id, const string &build_info,
 }
 
 bool MiscUtils::GetPlatformInfo(std::string &distro, std::string &code_name) {
-#ifdef _WINDOWS //as per discussion for now. May change to different values in the future.
-    distro = "windows";
-    code_name = GetWindowsVersionString();
+#ifdef _WIN32
+    // The only reliable way to get Windows build number is to check
+    // the build number inside some system dll's manifest.
+
+    LPCTSTR filename = "C:\\Windows\\System32\\Kernel32.dll";
+    LPCTSTR translation = "\\VarFileInfo\\Translation";
+    
+    DWORD size;
+    LPVOID data;
+    UINT cbTranslate, dwBytes;
+    LPVOID lpBuffer;
+    std::stringstream ss;
+
+    // structure used to store enumerated languages and code pages
+    struct LANGANDCODEPAGE {
+        WORD wLanguage;
+        WORD wCodePage;
+    } *lpTranslate;
+
+    size = GetFileVersionInfoSize(filename, NULL);
+    data = new BYTE[size];
+    if (!GetFileVersionInfo(filename, 0, size, data))
+        return false;
+    if (!VerQueryValue(data, translation, (LPVOID*)&lpTranslate, &cbTranslate))
+        return false;
+
+    ss << "\\StringFileInfo\\" << std::hex << std::setfill('0') << std::setw(4)
+       << lpTranslate[0].wLanguage << std::setw(4) << lpTranslate[0].wCodePage
+       << "\\ProductVersion";
+
+    if (!VerQueryValue(data, ss.str().c_str(), &lpBuffer, &dwBytes))
+        return false;
+
+    distro = "Windows";
+    code_name = (LPTSTR)lpBuffer;
 #else
-    FILE *fp=NULL;
+    FILE *fp;
     char line[512];
     fp = popen("cat /etc/*release", "r");
     if (fp == NULL) {
