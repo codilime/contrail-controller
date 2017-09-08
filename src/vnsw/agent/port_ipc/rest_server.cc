@@ -47,7 +47,7 @@ void RESTServer::VmPortDeleteHandler(const struct RESTData& data) {
     const std::string& port_id = (*data.match)[1];
     PortIpcHandler *pih = agent_->port_ipc_handler();
     if (pih) {
-        if (pih->DelPort(port_id, error)) {
+        if (pih->DeletePort(port_id, error)) {
             REST::SendResponse(data.session, "{}");
         } else {
             REST::SendErrorResponse(data.session, "{" + error + "}");

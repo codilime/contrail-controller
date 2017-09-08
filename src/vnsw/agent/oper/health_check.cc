@@ -186,7 +186,7 @@ bool HealthCheckService::IsLess(const DBEntry &rhs) const {
 }
 
 std::string HealthCheckService::ToString() const {
-    return UUIDToString(uuid_);
+    return UuidToString(uuid_);
 }
 
 DBEntryBase::KeyPtr HealthCheckService::GetDBRequestKey() const {
@@ -205,7 +205,7 @@ bool HealthCheckService::DBEntrySandesh(Sandesh *sresp,
     HealthCheckSandeshResp *resp = static_cast<HealthCheckSandeshResp *>(sresp);
 
     HealthCheckSandeshData data;
-    data.set_uuid(UUIDToString(uuid()));
+    data.set_uuid(UuidToString(uuid()));
     data.set_name(name_);
     data.set_monitor_type(monitor_type_);
     data.set_http_method(http_method_);
@@ -219,7 +219,7 @@ bool HealthCheckService::DBEntrySandesh(Sandesh *sresp,
     InstanceList::const_iterator it = intf_list_.begin();
     while (it != intf_list_.end()) {
         HealthCheckInstanceSandeshData inst_data;
-        inst_data.set_vm_interface(UUIDToString(it->first));
+        inst_data.set_vm_interface(UuidToString(it->first));
         inst_data.set_metadata_ip
             (it->second->ip_->GetLinkLocalIp().to_string());
         inst_data.set_service_ip(it->second->ip_->service_ip().to_string());

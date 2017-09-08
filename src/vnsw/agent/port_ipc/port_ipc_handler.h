@@ -56,8 +56,7 @@ class PortIpcHandler {
     void ReloadAllPorts(bool check_port);
     bool AddPortFromJson(const std::string &json, bool chk_port,
                          std::string &err_msg);
-	bool DelPort(const std::string &uuid_str, std::string &err);
-	
+    bool DeletePort(const std::string &uuid_str, std::string &err);
     bool GetPortInfo(const std::string &uuid_str, std::string &info) const;
     bool InterfaceExists(const std::string &name) const;
     void Shutdown();
