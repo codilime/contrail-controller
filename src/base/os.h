@@ -19,10 +19,8 @@
 # endif
 #endif
 
-#ifndef _WINDOWS
 # include <netinet/tcp.h>
 # include <netinet/udp.h>
-#endif
 
 #if defined(__linux__)
 # if defined(UNDEF__FEATURES_H)

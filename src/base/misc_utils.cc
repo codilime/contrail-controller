@@ -145,11 +145,11 @@ bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
     if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, bufsize) == 0)
         return false;
     rpm_version = buffer;
-    
+
     if (LoadString(hModule, IDS_CONTRAIL_BUILD_NUM, buffer, bufsize) == 0)
         return false;
     build_num = buffer;
-    
+
     ret = true;
 #endif
 
@@ -191,7 +191,7 @@ bool MiscUtils::GetPlatformInfo(std::string &distro, std::string &code_name) {
 
     LPCTSTR filename = "C:\\Windows\\System32\\Kernel32.dll";
     LPCTSTR translation = "\\VarFileInfo\\Translation";
-    
+
     DWORD size;
     LPVOID data;
     UINT cbTranslate, dwBytes;
