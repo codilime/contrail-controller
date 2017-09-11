@@ -140,7 +140,7 @@ bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
     const int bufsize = 64;
     char buffer[bufsize];
     HMODULE hModule = GetModuleHandle(NULL);
-    if (!hModule)
+    if (hModule == NULL)
         return false;
     if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, bufsize) == 0)
         return false;
@@ -220,6 +220,8 @@ bool MiscUtils::GetPlatformInfo(std::string &distro, std::string &code_name) {
 
     distro = "Windows";
     code_name = (LPTSTR)lpBuffer;
+
+    delete[] data;
 #else
     FILE *fp;
     char line[512];
