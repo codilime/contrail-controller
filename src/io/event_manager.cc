@@ -8,8 +8,10 @@
 #include "Thrift.h"
 
 #ifdef _WIN32
-// Thrift defines it incorrectly
+// Thrift defines a lot of functions from posix as macros (sometimes incorrectly)
+// and it breaks the build on Windows
 #undef usleep
+#undef ctime_r
 #endif
 
 #include "io/event_manager.h"
