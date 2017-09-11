@@ -193,7 +193,6 @@ bool MiscUtils::GetPlatformInfo(std::string &distro, std::string &code_name) {
     LPCTSTR translation = "\\VarFileInfo\\Translation";
 
     DWORD size;
-    LPVOID data;
     UINT cbTranslate, dwBytes;
     LPVOID lpBuffer;
     std::stringstream ss;
@@ -205,23 +204,23 @@ bool MiscUtils::GetPlatformInfo(std::string &distro, std::string &code_name) {
     } *lpTranslate;
 
     size = GetFileVersionInfoSize(filename, NULL);
-    data = new BYTE[size];
-    if (!GetFileVersionInfo(filename, 0, size, data))
+    if (size == 0)
         return false;
-    if (!VerQueryValue(data, translation, (LPVOID*)&lpTranslate, &cbTranslate))
+    std::vector<BYTE> info(size);
+    if (!GetFileVersionInfo(filename, 0, size, info.data()))
+        return false;
+    if (!VerQueryValue(info.data(), translation, (LPVOID*)&lpTranslate, &cbTranslate))
         return false;
 
     ss << "\\StringFileInfo\\" << std::hex << std::setfill('0') << std::setw(4)
        << lpTranslate[0].wLanguage << std::setw(4) << lpTranslate[0].wCodePage
        << "\\ProductVersion";
 
-    if (!VerQueryValue(data, ss.str().c_str(), &lpBuffer, &dwBytes))
+    if (!VerQueryValue(info.data(), ss.str().c_str(), &lpBuffer, &dwBytes))
         return false;
 
     distro = "Windows";
     code_name = (LPTSTR)lpBuffer;
-
-    delete[] data;
 #else
     FILE *fp;
     char line[512];
