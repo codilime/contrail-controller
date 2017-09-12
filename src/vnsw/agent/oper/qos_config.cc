@@ -40,7 +40,7 @@ bool AgentQosConfig::DBEntrySandesh(Sandesh *sresp, std::string &name) const {
         static_cast<AgentQosConfigSandeshResp *>(sresp);
     AgentQosConfigSandeshData data;
 
-    data.set_uuid(UUIDToString(uuid_));
+    data.set_uuid(UuidToString(uuid_));
     data.set_name(name_);
     data.set_id(id_);
     if (type_ == VHOST) {

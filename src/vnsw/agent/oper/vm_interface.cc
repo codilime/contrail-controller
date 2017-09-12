@@ -678,11 +678,11 @@ static void BuildVn(VmInterfaceConfigData *data, IFMapNode *node,
     if (cfg_entry && (cfg_entry->GetVnUuid() != data->vn_uuid_)) {
         IFMAP_ERROR(InterfaceConfiguration, 
                     "Virtual-network UUID mismatch for interface:",
-                    UUIDToString(u),
+                    UuidToString(u),
                     "configuration VN uuid",
-                    UUIDToString(data->vn_uuid_),
+                    UuidToString(data->vn_uuid_),
                     "compute VN uuid",
-                    UUIDToString(cfg_entry->GetVnUuid()));
+                    UuidToString(cfg_entry->GetVnUuid()));
     }
 }
 
@@ -707,11 +707,11 @@ static void BuildVm(VmInterfaceConfigData *data, IFMapNode *node,
     if (cfg_entry && (cfg_entry->GetVmUuid() != data->vm_uuid_)) {
         IFMAP_ERROR(InterfaceConfiguration, 
                     "Virtual-machine UUID mismatch for interface:",
-                    UUIDToString(u),
+                    UuidToString(u),
                     "configuration VM UUID is",
-                    UUIDToString(data->vm_uuid_),
+                    UuidToString(data->vm_uuid_),
                     "compute VM uuid is",
-                    UUIDToString(cfg_entry->GetVmUuid()));
+                    UuidToString(cfg_entry->GetVmUuid()));
     }
 }
 
@@ -5423,7 +5423,7 @@ void VmInterface::SendTrace(const AgentDBTable *table, Trace event) const {
 
     intf_info.set_ip_address(primary_ip_addr_.to_string());
     if (vm_) {
-        intf_info.set_vm(UUIDToString(vm_->GetUuid()));
+        intf_info.set_vm(UuidToString(vm_->GetUuid()));
     }
     if (vn_) {
         intf_info.set_vn(vn_->GetName());
@@ -5431,7 +5431,7 @@ void VmInterface::SendTrace(const AgentDBTable *table, Trace event) const {
     if (vrf_) {
         intf_info.set_vrf(vrf_->GetName());
     }
-    intf_info.set_vm_project(UUIDToString(vm_project_uuid_));
+    intf_info.set_vm_project(UuidToString(vm_project_uuid_));
     OPER_TRACE_ENTRY(Interface,
                      table,
                      intf_info);

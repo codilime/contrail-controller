@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#endif // _WINDOWS
 
 #include <pkt/flow_entry.h>
 
@@ -833,7 +830,7 @@ void FlowEntry::RevFlowDepInfo(RevFlowDepParams *params) {
         params->sg_uuid_ = rev_flow->sg_rule_uuid();
         params->rev_egress_uuid_ = rev_flow->egress_uuid();
         if (rev_flow->intf_entry()) {
-            params->vmi_uuid_ = UUIDToString(rev_flow->intf_entry()->GetUuid());
+            params->vmi_uuid_ = UuidToString(rev_flow->intf_entry()->GetUuid());
         }
 
         if (key().family != Address::INET) {
@@ -2335,7 +2332,7 @@ static void SetAclListAclAction(const std::list<MatchAclParams> &acl_l,
     std::list<MatchAclParams>::const_iterator it;
     for(it = acl_l.begin(); it != acl_l.end(); ++it) {
         AclAction acl_action;
-        acl_action.set_acl_id(UUIDToString((*it).acl->GetUuid()));
+        acl_action.set_acl_id(UuidToString((*it).acl->GetUuid()));
         acl_action.set_acl_type(acl_type);
         std::vector<ActionStr> action_str_l;
         SetActionStr((*it).action_info, action_str_l);
@@ -2565,7 +2562,7 @@ void FlowEntry::SetAclFlowSandeshData(const AclDBEntry *acl,
         v.push_back(*it);
     }
     fe_sandesh_data.set_dest_sg_id_l(v);
-    fe_sandesh_data.set_flow_uuid(UUIDToString(uuid()));
+    fe_sandesh_data.set_flow_uuid(UuidToString(uuid()));
     if (fsc_) {
         const FlowExportInfo *info = fsc_->FindFlowExportInfo(this);
         if (info) {

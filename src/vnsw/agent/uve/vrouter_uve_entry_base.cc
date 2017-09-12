@@ -339,7 +339,7 @@ bool VrouterUveEntryBase::AppendInterface(DBTablePartBase *part,
         const VmInterface *port = static_cast<const VmInterface *>(intf);
         if (!entry->IsDeleted()) {
             if (port->cfg_name() == agent_->NullString()) {
-                nova_if_list.get()->push_back(UUIDToString(port->GetUuid()));
+                nova_if_list.get()->push_back(UuidToString(port->GetUuid()));
             } else {
                 if (agent_->tsn_enabled()) {
                     /* For TSN nodes send VMI in interface_list if the VMI's

@@ -237,7 +237,7 @@ DhcpLeaseDb *DhcpProto::GetLeaseDb(Interface *interface) {
 
 std::string DhcpProto::GetLeaseFileName(const VmInterface *vmi) {
     if (!run_with_vrouter_)
-        return "./dhcp." + UUIDToString(vmi->GetUuid()) + ".leases";
+        return "./dhcp." + UuidToString(vmi->GetUuid()) + ".leases";
 
     boost::filesystem::path dir(agent()->params()->agent_base_dir() + "/dhcp");
     boost::system::error_code ec;
@@ -250,7 +250,7 @@ std::string DhcpProto::GetLeaseFileName(const VmInterface *vmi) {
         }
     }
 
-    return dir.string() + "/dhcp." + UUIDToString(vmi->GetUuid()) + ".leases";
+    return dir.string() + "/dhcp." + UuidToString(vmi->GetUuid()) + ".leases";
 }
 
 void DhcpProto::StartLeaseFileCleanupTimer() {

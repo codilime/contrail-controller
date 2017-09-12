@@ -1,13 +1,11 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
-#include<WinSock2.h>
 
 #include <ctype.h>
 #include <stdio.h>
 #include <sstream>
 #include <fstream>
-#include<WinSock2.h> 
 #include <net/if.h>
 #include <boost/uuid/uuid.hpp>
 #include <boost/filesystem.hpp>
@@ -25,9 +23,6 @@
 #include "oper/interface_common.h"
 #include "port_ipc/port_ipc_handler.h"
 #include "port_ipc/port_ipc_types.h"
-#ifdef _WINDOWS
-#include "winnw.h"
-#endif
 
 using namespace std;
 namespace fs = boost::filesystem;
@@ -436,8 +431,7 @@ bool PortIpcHandler::ValidateMac(const string &mac) const {
     return true;
 }
 
-bool PortIpcHandler::DelPort(const std::string &uuid_str, std::string &err_str) {
-	
+bool PortIpcHandler::DeletePort(const string &uuid_str, string &err_str) {
     uuid port_uuid = StringToUuid(uuid_str);
     if (port_uuid == nil_uuid()) {
         CONFIG_TRACE(PortInfo, "Invalid port uuid");
@@ -458,7 +452,7 @@ void PortIpcHandler::DeletePortInternal(const uuid &u, string &err_str) {
     req.oper = DBRequest::DB_ENTRY_DELETE;
     ctable->Enqueue(&req);
 
-    string uuid_str = UUIDToString(u);
+    string uuid_str = UuidToString(u);
     CONFIG_TRACE(DeletePortEnqueue, "Delete", uuid_str, version_);
 
     string file = ports_dir_ + "/" + uuid_str;
@@ -487,9 +481,9 @@ bool PortIpcHandler::GetPortInfo(const string &uuid_str, string &info) const {
         (new CfgIntKey(StringToUuid(uuid_str)));
     CfgIntEntry *entry = static_cast<CfgIntEntry *>(ctable->Find(key));
     if (entry != NULL) {
-        PortIpcHandler::AddPortParams req(UUIDToString(entry->GetUuid()),
-            UUIDToString(entry->GetVmUuid()), UUIDToString(entry->GetVnUuid()),
-            UUIDToString(entry->vm_project_uuid()), entry->vm_name(),
+        PortIpcHandler::AddPortParams req(UuidToString(entry->GetUuid()),
+            UuidToString(entry->GetVmUuid()), UuidToString(entry->GetVnUuid()),
+            UuidToString(entry->vm_project_uuid()), entry->vm_name(),
             entry->GetIfname(), entry->ip_addr().to_string(),
             entry->ip6_addr().to_string(), entry->GetMacAddr(),
             entry->port_type(), entry->tx_vlan_id(), entry->rx_vlan_id());
@@ -501,16 +495,10 @@ bool PortIpcHandler::GetPortInfo(const string &uuid_str, string &info) const {
 }
 
 bool PortIpcHandler::InterfaceExists(const std::string &name) const {
-
-#ifdef _WINDOWS
-    int indx  = windows_if_nametoindex(name.c_str());
-#else
-    int indx = if_nametoindex(name.c_str());
-#endif
+    int indx  = if_nametoindex(name.c_str());
     if (indx == 0) {
         return false;
     }
-
     return true;
 }
 

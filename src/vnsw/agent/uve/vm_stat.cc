@@ -124,7 +124,7 @@ void VmStat::ExecCmd(std::string cmd, DoneCb cb) {
 }
 
 bool VmStat::BuildVmStatsMsg(VirtualMachineStats *uve) {
-    uve->set_name(UUIDToString(vm_uuid_));
+    uve->set_name(UuidToString(vm_uuid_));
 
     std::vector<VmCpuStats> cpu_stats_list;
     VmCpuStats stats;
@@ -144,7 +144,7 @@ bool VmStat::BuildVmStatsMsg(VirtualMachineStats *uve) {
 }
 
 bool VmStat::BuildVmMsg(UveVirtualMachineAgent *uve) {
-    uve->set_name(UUIDToString(vm_uuid_));
+    uve->set_name(UuidToString(vm_uuid_));
 
     VmCpuStats stats;
     stats.set_cpu_one_min_avg(cpu_usage_);

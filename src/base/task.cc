@@ -1,9 +1,11 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+
+#ifdef _WIN32
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
-#include <boost/asio.hpp>
-#include <windows.h>
+#endif
+
 #include <assert.h>
 #include <fstream>
 #include <map>
@@ -20,9 +22,7 @@
 #include <sandesh/sandesh_types.h>
 #include <sandesh/sandesh.h>
 #include <base/sandesh/task_types.h>
-#ifdef _WINDOWS
-#include "taskutil.h"
-#endif
+
 #if defined(__FreeBSD__)
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -779,6 +779,7 @@ TaskStats *TaskScheduler::GetTaskStats(int task_id, int instance_id) {
     return group->GetTaskStats(instance_id);
 }
 
+#ifndef _WIN32
 //
 // Platfrom-dependent subroutine in Linux and FreeBSD implementations,
 // used only in TaskScheduler::WaitForTerminateCompletion()
@@ -839,9 +840,6 @@ int TaskScheduler::CountThreadsPerPid(pid_t pid) {
         if (line == "Threads:\t1") threads = 1;
     }
     file.close();
-#else
-    threads = CountProcessThreads(pid);
-    //WINDOWS-CHECK
 #endif
 
     return threads;
@@ -872,6 +870,7 @@ void TaskScheduler::WaitForTerminateCompletion() {
         usleep(10000);
     }
 }
+#endif /* _WIN32 */
 
 void TaskScheduler::Terminate() {
     for (int i = 0; i < 10000; i++) {
@@ -879,17 +878,14 @@ void TaskScheduler::Terminate() {
         usleep(1000);
     }
     assert(IsEmpty());
-#ifndef _WINDOWS
+#ifdef _WIN32
+    if (!singleton_->task_scheduler_.blocking_terminate(std::nothrow_t {})) {
+        LOG(ERROR, "could not terminate tbb worker threads");
+        assert(0);
+    }
+#else
     singleton_->task_scheduler_.terminate();
     WaitForTerminateCompletion();
-#else
-    try {
-        singleton_->task_scheduler_.blocking_terminate();
-        // Intel TBB worker threads are terminated at this point.
-    }
-    catch (const std::runtime_error&) {
-        std::cerr << "Failed to terminate the worker threads." << std::endl;
-    }
 #endif
     singleton_.reset(NULL);
 }

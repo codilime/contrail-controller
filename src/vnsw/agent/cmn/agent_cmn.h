@@ -5,17 +5,11 @@
 #ifndef vnsw_agent_cmn_hpp
 #define vnsw_agent_cmn_hpp
 
-#ifndef _WINDOWS
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/address.h>
 #include <unistd.h>
-#else
-#include "winsock2.h"
-#endif
-
-
 
 #include <boost/intrusive_ptr.hpp>
 #include <boost/bind.hpp>

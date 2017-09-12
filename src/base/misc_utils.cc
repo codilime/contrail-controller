@@ -86,7 +86,7 @@ void MiscUtils::GetCoreFileList(string prog, vector<string> &list) {
 #ifndef _WIN32
 bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
                                        string &build_num) {
-    FILE *fp=NULL;
+    FILE *fp;
     char line[512];
     fp = popen(cmd.c_str(), "r");
     if (fp == NULL) {
@@ -94,7 +94,7 @@ bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
     }
     char *ptr = fgets(line, sizeof(line), fp);
     if (ptr == NULL) {
-    pclose(fp);
+        pclose(fp);
         return false;
     }
     pclose(fp);
@@ -118,13 +118,14 @@ bool MiscUtils::GetVersionInfoInternal(const string &cmd, string &rpm_version,
 }
 #endif
 
-bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
-    string &build_num) {
+bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version, 
+                                       string &build_num) {
     bool ret;
     stringstream cmd;
     //Initialize the version info here. Overide its value on finding version
     rpm_version.assign("unknown");
     build_num.assign("unknown");
+
 #ifndef _WIN32
     ifstream f(ContrailVersionCmd.c_str());
     if (!f.good()) {
@@ -136,20 +137,22 @@ bool MiscUtils::GetContrailVersionInfo(BuildModule id, string &rpm_version,
         << " | tail -1 | awk '{ print $2 \" \" $3 }'";
     ret = GetVersionInfoInternal(cmd.str(), rpm_version, build_num);
 #else // getting it from the binary resources
-    ret = false;
     const int bufsize = 64;
     char buffer[bufsize];
     HMODULE hModule = GetModuleHandle(NULL);
-    if (hModule) {
-        if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, bufsize) > 0) {
-            rpm_version = buffer;
-            if (LoadString(hModule, IDS_CONTRAIL_BUILD_NUM, buffer, bufsize) > 0) {
-                build_num = buffer;
-                ret = true;
-            }
-        }
-    }
+    if (hModule == NULL)
+        return false;
+    if (LoadString(hModule, IDS_CONTRAIL_RPM_VERSION, buffer, bufsize) == 0)
+        return false;
+    rpm_version = buffer;
+
+    if (LoadString(hModule, IDS_CONTRAIL_BUILD_NUM, buffer, bufsize) == 0)
+        return false;
+    build_num = buffer;
+
+    ret = true;
 #endif
+
     return ret;
 }
 
@@ -169,12 +172,10 @@ bool MiscUtils::GetBuildInfo(BuildModule id, const string &build_info,
         result = build_info;
         return false;
     }
-
-    rapidjson::Value str1("build-id"), str2("build-number");
-    rapidjson::Value str11(rpm_version.c_str(), d.GetAllocator()), str22(build_num.c_str(), d.GetAllocator());
-
-    fields[0u].AddMember(str1, str11, d.GetAllocator());
-    fields[0u].AddMember(str2, str22, d.GetAllocator());
+    fields[0u].AddMember("build-id", const_cast<char *>(rpm_version.c_str()), 
+                         d.GetAllocator());
+    fields[0u].AddMember("build-number", const_cast<char *>(build_num.c_str()), 
+                         d.GetAllocator());
 
     rapidjson::StringBuffer strbuf;
     rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
@@ -184,11 +185,44 @@ bool MiscUtils::GetBuildInfo(BuildModule id, const string &build_info,
 }
 
 bool MiscUtils::GetPlatformInfo(std::string &distro, std::string &code_name) {
-#ifdef _WINDOWS //as per discussion for now. May change to different values in the future.
-    distro = "windows";
-    code_name = GetWindowsVersionString();
+#ifdef _WIN32
+    // The only reliable way to get Windows build number is to check
+    // the build number inside some system dll's manifest.
+
+    LPCTSTR filename = "C:\\Windows\\System32\\Kernel32.dll";
+    LPCTSTR translation = "\\VarFileInfo\\Translation";
+
+    DWORD size;
+    UINT cbTranslate, dwBytes;
+    LPVOID lpBuffer;
+    std::stringstream ss;
+
+    // structure used to store enumerated languages and code pages
+    struct LANGANDCODEPAGE {
+        WORD wLanguage;
+        WORD wCodePage;
+    } *lpTranslate;
+
+    size = GetFileVersionInfoSize(filename, NULL);
+    if (size == 0)
+        return false;
+    std::vector<BYTE> info(size);
+    if (!GetFileVersionInfo(filename, 0, size, info.data()))
+        return false;
+    if (!VerQueryValue(info.data(), translation, (LPVOID*)&lpTranslate, &cbTranslate))
+        return false;
+
+    ss << "\\StringFileInfo\\" << std::hex << std::setfill('0') << std::setw(4)
+       << lpTranslate[0].wLanguage << std::setw(4) << lpTranslate[0].wCodePage
+       << "\\ProductVersion";
+
+    if (!VerQueryValue(info.data(), ss.str().c_str(), &lpBuffer, &dwBytes))
+        return false;
+
+    distro = "Windows";
+    code_name = (LPTSTR)lpBuffer;
 #else
-    FILE *fp=NULL;
+    FILE *fp;
     char line[512];
     fp = popen("cat /etc/*release", "r");
     if (fp == NULL) {

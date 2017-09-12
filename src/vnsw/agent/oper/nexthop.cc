@@ -202,7 +202,7 @@ void NextHop::FillObjectLogIntf(const Interface *intf,
             break;
         }
         info.set_intf_type(if_type_str);
-        info.set_intf_uuid(UUIDToString(intf->GetUuid()));
+        info.set_intf_uuid(UuidToString(intf->GetUuid()));
         info.set_intf_name(intf->name());
     }
 }

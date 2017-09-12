@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#endif // _WINDOWS
 
 #include <pkt/pkt_sandesh_flow.h>
 
@@ -29,7 +26,7 @@ using boost::system::error_code;
     data.set_dst_port((unsigned)fe->key().dst_port);                        \
     data.set_protocol(fe->key().protocol);                                  \
     data.set_dest_vrf(fe->data().dest_vrf);                                 \
-    data.set_uuid(UUIDToString(fe->uuid()));                                \
+    data.set_uuid(UuidToString(fe->uuid()));                                \
     data.set_action(fe->match_p().action_info.action);                      \
     std::vector<ActionStr> action_str_l;                                    \
     SetActionStr(fe->match_p().action_info, action_str_l);                  \
@@ -61,7 +58,7 @@ using boost::system::error_code;
             integerToString(UTCUsecToPTime(info->setup_time())));           \
         data.set_setup_time_utc(info->setup_time());                        \
         if (fe->is_flags_set(FlowEntry::LocalFlow)) {                       \
-            data.set_egress_uuid(UUIDToString(info->egress_uuid()));        \
+            data.set_egress_uuid(UuidToString(info->egress_uuid()));        \
         }                                                                   \
     }                                                                       \
     if (fe->is_flags_set(FlowEntry::NatFlow)) {                             \
@@ -122,7 +119,7 @@ static void SetOneAclInfo(FlowAclInfo *policy, uint32_t action,
 
     for (it = acl_list.begin(); it != acl_list.end(); it++) {
         FlowAclUuid f;
-        f.uuid = UUIDToString(it->acl->GetUuid());
+        f.uuid = UuidToString(it->acl->GetUuid());
         acl.push_back(f);
     }
     policy->set_acl(acl);
