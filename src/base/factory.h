@@ -28,6 +28,12 @@ class Factory {
 
 #include "base/factory_macros.h"
 
+#define FACTORY_N0_STATIC_REGISTER(_Factory, _BaseType, _TypeImpl)\
+static void _Factory ## _TypeImpl ## Register () {\
+    _Factory::Register<_BaseType>(boost::factory<_TypeImpl *>());\
+}\
+MODULE_INITIALIZER(_Factory ## _TypeImpl ## Register)
+
 #define FACTORY_STATIC_REGISTER(_Factory, _BaseType, _TypeImpl)\
 static void _Factory ## _TypeImpl ## Register () {\
     _Factory::Register<_BaseType>(boost::forward_adapter<boost::factory<_TypeImpl *> >(boost::factory<_TypeImpl *>()));\

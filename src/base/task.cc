@@ -840,6 +840,8 @@ int TaskScheduler::CountThreadsPerPid(pid_t pid) {
         if (line == "Threads:\t1") threads = 1;
     }
     file.close();
+#else
+#error "TaskScheduler::CountThreadsPerPid() - unsupported platform."
 #endif
 
     return threads;

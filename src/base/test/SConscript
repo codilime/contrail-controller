@@ -13,16 +13,15 @@ env.Append(LIBPATH = env['TOP'] + '/base')
 env.Append(LIBPATH = env['TOP'] + '/base/test')
 env.Append(LIBPATH = env['TOP'] + '/io')
 
-env.Prepend(LIBS = ['base', 'gtestd', 'task_test', 'io', 'sandesh', 'io', 'sandeshvns',
+env.Prepend(LIBS = ['base', 'gunit', 'task_test', 'io', 'sandesh', 'io', 'sandeshvns',
                     'nodeinfo', 'process_info', 'cpuinfo', 'base', 'http',
-                    'http_parser', 'curl', 'pugixml', 'boost_program_options', 'Dbghelp'])
+                    'http_parser', 'curl', 'pugixml', 'boost_program_options'])
 
-if sys.platform not in ['win32', 'darwin']: #works on 64 bit also
+if sys.platform not in ['win32', 'darwin']:
     env.Append(LIBS = ['rt'])
 
-if sys.platform.startswith('win'):
-    env.Append(LIBS = ['windowsstubs'])
-
+if sys.platform == 'win32':
+    env.Append(LIBS = 'windowsstubs')
 
 libtask_test = env.Library('task_test',
                            ['task_test_util.cc',
@@ -113,6 +112,9 @@ test_suite = [
     conn_info_test,
     ]
 
+if sys.platform != 'win32':
+    test_suite.append(queue_task_test)
+
 test = env.TestSuite('base-test', test_suite)
 env.Alias('controller/src/base:test', test)
 
@@ -121,6 +123,9 @@ flaky_test_suite = [
 #   task_test,
     timer_test,
 ]
+
+if sys.platform == 'win32':
+    flaky_test_suite.append(queue_task_test)
 
 flaky_test = env.TestSuite('base-flaky-test', flaky_test_suite)
 env.Alias('controller/src/base:flaky-test', flaky_test)
