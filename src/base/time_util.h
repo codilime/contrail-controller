@@ -10,10 +10,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <unistd.h>
-
-#ifdef _WINDOWS
-  #include "winutils.h"
+#ifdef _WIN32
+#include <posix_time.h>
 #endif
 
 /* timestamp - returns usec since epoch */
