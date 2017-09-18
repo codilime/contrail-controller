@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
+ * Copyright (c) 2017 Juniper Networks, Inc. All rights reserved.
  */
  
 #include <stdio.h>
@@ -49,8 +49,18 @@ void Pkt0Interface::InitControlInterface() {
     AsyncRead();
 }
 
+void Pkt0Interface::SendImpl(uint8_t *buff, uint16_t buff_len, const PacketBufferPtr &pkt,
+                             buffer_list& buffers) {
+    auto collected_data = std::vector<uint8_t>(boost::asio::buffer_size(buffers));
+    boost::asio::buffer_copy(boost::asio::buffer(collected_data), buffers);
+    auto collected_buffer = boost::asio::buffer(collected_data.data(), collected_data.size());
+
+    boost::asio::async_write(input_, collected_buffer,
+                             boost::bind(&Pkt0Interface::WriteHandler, this,
+                                 boost::asio::placeholders::error,
+                                 boost::asio::placeholders::bytes_transferred,
+                                 pkt, buff));
+}
+
 void Pkt0RawInterface::InitControlInterface() {
-   
-
-
 }
