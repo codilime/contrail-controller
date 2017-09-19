@@ -26,13 +26,20 @@ env.Append(LIBPATH = ['#/' + Dir('..').path,
 libxmpptest = env.Library('xmpptest',
                          ['xmpp_sample_peer.cc'])
 
-env.Prepend(LIBS = ['task_test', 'gunit', 'xmpp', 'xml', 'pugixml', 'sandesh', 
-                    'http', 'http_parser', 'curl', 'process_info', 
-                    'io', 'ssl', 'crypto', 'sandeshvns', 'base', 'peer_sandesh',
-                    'table_sandesh', 'boost_regex', 'xmpptest', 'control_node',
-                    'sandesh'])
+required_libs = ['task_test', 'gunit', 'xmpp', 'xml', 'pugixml', 'sandesh',
+                 'http', 'http_parser', 'curl', 'process_info',
+                 'io', 'sandeshvns', 'base', 'peer_sandesh',
+                 'table_sandesh', 'boost_regex', 'xmpptest', 'control_node',
+                 'sandesh']
 
-if sys.platform != 'darwin':
+if sys.platform.startswith('win'):
+    required_libs.append(['ssleay32', 'libeay32', 'advapi32', 'gdi32', 'windowsstubs'])
+else:
+    required_libs.append(['ssl', 'crypto'])
+
+env.Prepend(LIBS = required_libs)
+
+if not sys.platform.startswith('win') and sys.platform != 'darwin':
     env.Append(LIBS = ['rt'])
 
 xmpp_server_test = env.UnitTest('xmpp_server_test', ['xmpp_server_test.cc'])
