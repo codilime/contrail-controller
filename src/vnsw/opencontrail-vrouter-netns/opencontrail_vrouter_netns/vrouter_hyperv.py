@@ -102,7 +102,7 @@ class VMPort(object):
                    "vn-id": '', "vm-project-id": '',
                    "type": port_type_value, "mac-address": str(nic['mac'])}
         json_dump = json.dumps(payload)
-        #self._request_to_agent(self.BASE_URL, 'post', json_dump) 
+        #self._request_to_agent(self.BASE_URL, 'post', json_dump)
 
     def _delete_port_from_agent(self, nic):
         # TODO no agent - uncomment and fix when it works
@@ -146,9 +146,9 @@ class MgmtIPAM(object):
 
     def _get_mgmt_ips_of(self, vmname_with_wildcard):
         ips = call_powershell(["Get-VMNetworkAdapter",
-                               "-VMName", "{}".format(vmname_with_wildcard), 
-                               "|", "Where", "SwitchName", "-eq", 
-                               self.mgmt_vswitch_name, "|", "Select", 
+                               "-VMName", "{}".format(vmname_with_wildcard),
+                               "|", "Where", "SwitchName", "-eq",
+                               self.mgmt_vswitch_name, "|", "Select",
                                "-ExpandProperty", "IPAddresses"])
         if ips == "":
             raise IndexError("no management IP found")
@@ -167,7 +167,7 @@ class SNATVirtualMachine(object):
 
     INJECT_IP_SCRIPT_REL_PATH = "vrouter_hyperv_inject_ip.ps1"
     WAIT_FOR_VM_TIME_SEC = 5
-    NUM_INJECT_RETRIES = 25
+    NUM_INJECT_RETRIES = 60
 
     HOST_MGMT_IP = "169.254.150.1"
     MGMT_PREFIX_LEN = 16
