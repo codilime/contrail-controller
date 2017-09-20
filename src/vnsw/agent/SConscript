@@ -278,7 +278,7 @@ def MakeTestEnvFn(self, env):
     env.Prepend(LIBS = AgentEnv['CONTRAIL_LIBS'])
     env.Prepend(LIBS = AgentEnv['TEST_CMN_LIBS_PRE'])
     if sys.platform.startswith('win'):
-        env.Prepend(LIBS = ['Dbghelp'])
+        env.Prepend(LIBS = ['Dbghelp', 'Iphlpapi'])
     env.Append(LIBS = AgentEnv['TEST_CMN_LIBS_POST'])
     cflags = env['CCFLAGS']
     if '-fno-exceptions' in cflags:

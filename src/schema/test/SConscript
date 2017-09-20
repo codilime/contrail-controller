@@ -18,7 +18,10 @@ env.Prepend(LIBS = ['sandesh', 'http', 'http_parser', 'curl', 'db',
                     'process_info', 'sandeshvns', 'io', 'base', 
                     'gunit', 'pugixml'])
 
-if sys.platform != 'darwin':
+if sys.platform.startswith('win'):
+    env.Append(LIBS = ['windowsstubs'])
+
+if not sys.platform.startswith('win') and sys.platform != 'darwin':
     env.Append(LIBS = ['rt'])
 
 env.Append(CPPPATH = [env['TOP']])

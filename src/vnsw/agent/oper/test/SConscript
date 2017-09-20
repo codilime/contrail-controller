@@ -44,7 +44,7 @@ test_health_check = AgentEnv.MakeTestCmd(env, 'test_health_check', oper_test_sui
 test_oper_xml = AgentEnv.MakeTestCmdSrc(env, 'test_oper_xml',
                                         [
                                          'test_oper_xml.cc',
-                                         '../../pkt/test/test_pkt_util.o'
+                                         '../../pkt/test/test_pkt_util' + env['OBJSUFFIX']
                                         ],
                                         oper_test_suite)
 

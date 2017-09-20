@@ -155,6 +155,7 @@ xml_node AddXmlNodeWithValue(xml_node *parent, const char *name,
                              const string &value) {
     xml_node n = parent->append_child(name);
     n.append_child(pugi::node_pcdata).set_value(value.c_str());
+    return n;
 }
 
 xml_node AddXmlNodeWithIntValue(xml_node *parent, const char *name,
@@ -163,6 +164,7 @@ xml_node AddXmlNodeWithIntValue(xml_node *parent, const char *name,
     s << val;
     xml_node n = parent->append_child(name);
     n.append_child(pugi::node_pcdata).set_value(s.str().c_str());
+    return n;
 }
 }
 
@@ -240,6 +242,7 @@ bool AgentUtXmlTest::ReadXml() {
 }
 
 bool AgentUtXmlTest::Load() {
+#ifndef _WIN32
     struct stat s;
     if (stat(file_name_.c_str(), &s)) {
         cout << "Error <" << strerror(errno) << "> opening file "
@@ -263,13 +266,29 @@ bool AgentUtXmlTest::Load() {
     }
     close(fd);
     data[s.st_size] = '\0';
+#else
+    size_t file_size;
+    {
+        std::fstream file(file_name_.c_str(), ios_base::ate);
+        file_size = file.tellg();
+    }
 
-    xml_parse_result result = doc_.load(data);
+    std::vector<char> data(file_size + 1, 0);
+    {
+        std::fstream file(file_name_.c_str(), ios_base::in);
+        file.read(data.data(), file_size);
+        if (!file.good() || file.gcount() < file_size)
+            return false;
+    }
+    data[file_size] = '\0';
+#endif
+
+    xml_parse_result result = doc_.load(data.data());
     if (result) {
         cout << "Loaded data file successfully" << endl;
     } else {
         cout << "Error in XML string at offset <: " << result.offset
-            << "> (error at [..." << (data + result.offset) << "])" << endl;
+            << "> (error at [..." << (data.data() + result.offset) << "])" << endl;
         return false;
     }
 
@@ -852,6 +871,7 @@ bool AgentUtXmlFlowThreshold::Run() {
 
     mgr->UpdateFlowThreshold();
     TestClient::WaitForIdle();
+    return true;
 }
 
 void AgentUtXmlFlowThreshold::ToString(string *str) {
