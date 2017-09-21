@@ -3,4 +3,4 @@
 #
 
 env = DefaultEnvironment()
-env.InstallAs('#build/bin/winsw.exe', '#/third_party/winsw/winsw-2.1.2-bin.exe')
+env.Alias('winsw', env.InstallAs('#build/bin/winsw.exe', '#/third_party/winsw/winsw-2.1.2-bin.exe'))
