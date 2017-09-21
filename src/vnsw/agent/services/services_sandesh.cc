@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
+#ifdef _WIN32
 #include "winsock2.h"
 #include "netinet/ip.h"
 #include "netinet/ip6.h"
@@ -28,10 +28,6 @@
 #include <services/services_types.h>
 #include <services/services_sandesh.h>
 #include <vr_defs.h>
-
-
-
-
 
 #define SET_ICMPV6_INTERFACE_STATS(it, list)                                   \
     InterfaceIcmpv6Stats entry;                                                \
@@ -627,7 +623,7 @@ void ServicesSandesh::FillDhcpv6Hdr(Dhcpv6Hdr *dhcp, Dhcpv6Header &resp,
                                     int32_t len) {
     resp.type = Dhcpv6MsgType(dhcp->type);
     PktToHexString(dhcp->xid, 3, resp.xid);
-    PktToHexString((uint8_t *)dhcp->options, len - 4, resp.options);
+    PktToHexString((uint8_t *)dhcp + DHCPV6_FIXED_LEN, len - 4, resp.options);
 }
 
 void ServicesSandesh::FillDnsHdr(dnshdr *dns, DnsHdr &resp, int32_t dnslen) {

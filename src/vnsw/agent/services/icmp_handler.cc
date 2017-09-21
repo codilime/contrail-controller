@@ -66,14 +66,8 @@ void IcmpHandler::SendResponse(VmInterface *vm_intf) {
     char *ptr = (char *)pkt_info_->pkt;
     uint16_t buf_len = pkt_info_->max_pkt_len;
 
-#ifndef _WINDOWS
     // Copy the ICMP payload
-    char icmp_payload[icmp_len_];
-#else
-	char *icmp_payload = new char[icmp_len_];
-#endif
-
-
+    char *icmp_payload = new char[icmp_len_];
     memcpy(icmp_payload, icmp_, icmp_len_);
 
     uint16_t len = 0;
@@ -111,8 +105,5 @@ void IcmpHandler::SendResponse(VmInterface *vm_intf) {
          AgentHdr::TX_ROUTE : AgentHdr::TX_SWITCH);
     Send(interface, pkt_info_->vrf, command, PktHandler::ICMP);
 
-#ifdef _WINDOWS
-	delete[] icmp_payload;
-#endif
-
+    delete[] icmp_payload;
 }
