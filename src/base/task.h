@@ -30,7 +30,7 @@
 
 #ifndef ctrlplane_task_h
 #define ctrlplane_task_h
-#define TBB_PREVIEW_WAITING_FOR_WORKERS 1
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/intrusive/list.hpp>
 #include <map>
@@ -39,10 +39,9 @@
 #include <tbb/reader_writer_lock.h>
 #include <tbb/task.h>
 #include <tbb/task_scheduler_init.h>
+#include <unistd.h>
 #include "base/util.h"
-#ifdef _WINDOWS
-typedef UINT32 pid_t;
-#endif
+
 class TaskGroup;
 class TaskEntry;
 class SandeshTaskScheduler;
