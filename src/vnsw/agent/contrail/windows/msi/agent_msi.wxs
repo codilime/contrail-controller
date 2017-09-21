@@ -10,6 +10,9 @@
                     <Directory Id="INSTALLDIR" Name="Agent">
                         <Component Id="AgentMainExe" Guid="0AA4E35B-89F0-4E60-8D1C-F79BFBE49F78" Win64="yes">
                             <File Id="AgentMainExe" Source="build/debug/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
+                        </Component>
+                        <Component Id="AgentServiceWrapperExe" Guid="8312f7da-bbd9-414c-8807-e280a863323a" Win64="yes">
+                            <File Id="AgentServiceWrapperExe" Name="contrail-vrouter-agent-sw.exe" Source="build/bin/winsw.exe"/>
                             <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="ownProcess" Start="demand" ErrorControl="normal"/>
                             <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="uninstall"/>
                         </Component>
@@ -34,6 +37,9 @@
                         <Component Id="SampleConfig" Guid="5E840E9E-96D6-41F4-A384-1500A089CAEB" Win64="yes">
                             <File Id="SampleConfig" Name="contrail-vrouter-agent.conf.sample" Source="controller/src/vnsw/agent/contrail-vrouter-agent.conf"/>
                         </Component>
+                        <Component Id="AgentServiceWrapperConfig" Guid="3e05ee03-a5a5-45f5-8abc-5cc5f952a6d2" Win64="yes">
+                            <File Id="AgentServiceWrapperConfig" Name="contrail-vrouter-agent-sw.xml" Source="controller/src/vnsw/agent/contrail/windows/service_config/service-wrapper.xml"/>
+                        </Component>
                     </Directory>
                 </Directory>
             </Directory>
@@ -41,6 +47,8 @@
 
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="AgentMainExe"/>
+            <ComponentRef Id="AgentServiceWrapperExe"/>
+            <ComponentRef Id="AgentServiceWrapperConfig"/>
             <ComponentRef Id="VRouterHypervScript"/>
             <ComponentRef Id="VRouterCommonScript"/>
             <ComponentRef Id="VRouterHypervInjectIPScript"/>
