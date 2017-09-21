@@ -9,7 +9,7 @@
 #include <mach/task.h>
 #elif defined(_WIN32)
 #include <thread>
-#include <poxis_stdlib.h>
+#include <posix_stdlib.h>
 #endif
 
 #include "sys/times.h"
