@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <pugixml/pugixml.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/uuid/uuid.hpp>
 
 #include <test/test_cmn_util.h>
@@ -242,46 +243,24 @@ bool AgentUtXmlTest::ReadXml() {
 }
 
 bool AgentUtXmlTest::Load() {
-#ifndef _WIN32
-    struct stat s;
-    if (stat(file_name_.c_str(), &s)) {
-        cout << "Error <" << strerror(errno) << "> opening file "
-            << file_name_ << endl;
+    boost::system::error_code ec;
+    boost::filesystem::path file_path(file_name_);
+    uintmax_t file_size = boost::filesystem::file_size(file_path, ec);
+    if (ec) {
+        cout << "Error <" << ec << "> opening file" << file_name_ << endl;
         return false;
-    }
-
-    int fd = open(file_name_.c_str(), O_RDONLY);
-    if (fd < 0) {
-        cout << "Error <" << strerror(errno) << "> opening file "
-            << file_name_ << endl;
-        return false;
-    }
-
-    char data[s.st_size + 1];
-    if (read(fd, data, s.st_size) < s.st_size) {
-        cout << "Error <" << strerror(errno) << "> reading file "
-            << file_name_ << endl;
-        close(fd);
-        return false;
-    }
-    close(fd);
-    data[s.st_size] = '\0';
-#else
-    size_t file_size;
-    {
-        std::fstream file(file_name_.c_str(), ios_base::ate);
-        file_size = file.tellg();
     }
 
     std::vector<char> data(file_size + 1, 0);
-    {
-        std::fstream file(file_name_.c_str(), ios_base::in);
+    try {
+        std::fstream file(file_name_.c_str(), std::ios::binary | std::ios_base::in);
         file.read(data.data(), file_size);
-        if (!file.good() || file.gcount() < file_size)
+        if (file.gcount() < file_size)
             return false;
+    } catch (const std::exception& err) {
+        cout << "Error <" << err.what() << "> reading file" << file_name_ << endl;
+        return false;
     }
-    data[file_size] = '\0';
-#endif
 
     xml_parse_result result = doc_.load(data.data());
     if (result) {

@@ -31,18 +31,18 @@ env.Prepend(LIBS = ['dbtest', 'ifmap_vnc', 'task_test',
                     'ifmap_test_util', 'ifmap_test_util_server',
                     'ifmap_server', 'ifmap_common',
                     'ifmapio', 'process_info',
-                    'db', 'sandeshvns', 'io', 'base',
+                    'db', 'sandeshvns', 'io', 'base', 'xml',
                     'boost_regex', 'boost_program_options', 'gunit'])
 
 if sys.platform.startswith('win'):
-    env.Append(LIBS = ['ssleay32', 'libeay32', 'xml2'])
+    env.Append(LIBS = ['ssleay32', 'libeay32'])
 else:
-    env.Append(LIBS = ['crypto', 'xml'])
+    env.Append(LIBS = ['crypto'])
 
 env.Prepend(LIBS=['dns_cfg', 'cmn', 'mgr', 'agent_xmpp', 'bind_interface'])
 env.Append(LIBS=['sandesh', 'http', 'http_parser'])
 
-if not sys.platform.startswith('win') and sys.platform != 'darwin':
+if sys.platform not in ['win32', 'darwin']:
     env.Prepend(LINKFLAGS =
                 ['-Wl,--whole-archive',
                  '-rdynamic',
