@@ -10,7 +10,7 @@
                     <Directory Id="INSTALLDIR" Name="Agent">
                         <Component Id="AgentMainExe" Guid="0AA4E35B-89F0-4E60-8D1C-F79BFBE49F78" Win64="yes">
                             <File Id="AgentMainExe" Source="build/debug/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
-                            <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="shareProcess" Start="auto" ErrorControl="normal"/>
+                            <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="ownProcess" Start="demand" ErrorControl="normal"/>
                             <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="uninstall"/>
                         </Component>
                         <Component Id="VRouterHypervScript" Guid="2E5ED884-4461-4852-B841-CF6FE4E1E6B7" Win64="yes">
