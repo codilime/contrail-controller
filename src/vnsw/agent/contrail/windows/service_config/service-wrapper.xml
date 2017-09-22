@@ -3,5 +3,6 @@
     <name>ContrailAgent</name>
     <description>Contrail vRouter Agent</description>
     <executable>contrail-vrouter-agent.exe</executable>
-    <logmode>none</logmode>
+    <logpath>%ALLUSERSPROFILE%\contrail\log</logpath>
+    <logmode>append</logmode>
 </service>
