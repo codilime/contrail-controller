@@ -2,6 +2,7 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
+#include <memory>
 #include "base/os.h"
 #include <netinet/icmp6.h>
 
@@ -279,20 +280,19 @@ void Icmpv6Handler::SendIcmpv6Response(uint32_t ifindex, uint32_t vrfindex,
 
     char *buff = (char *)pkt_info_->pkt;
     uint16_t buff_len = pkt_info_->packet_buffer()->data_len();
-    char *icmpv6_payload = new char[icmp_len_];
-    memcpy(icmpv6_payload,icmp_,icmp_len_);
+    std::auto_ptr<char> icmpv6_payload(new char[icmp_len_]);
+    memcpy(icmpv6_payload.get(),icmp_,icmp_len_);
     uint16_t eth_len = EthHdr(buff, buff_len, ifindex, agent()->vrrp_mac(),
                               dest_mac, ETHERTYPE_IPV6);
 
     pkt_info_->ip6 = (struct ip6_hdr *)(buff + eth_len);
     Ip6Hdr(pkt_info_->ip6, len, IPV6_ICMP_NEXT_HEADER, 255, src_ip, dest_ip);
-    memcpy(buff + sizeof(ip6_hdr) + eth_len, icmpv6_payload, icmp_len_);
+    memcpy(buff + sizeof(ip6_hdr) + eth_len, icmpv6_payload.get(), icmp_len_);
     pkt_info_->set_len(len + sizeof(ip6_hdr) + eth_len);
     uint16_t command =
         (pkt_info_->agent_hdr.cmd == AgentHdr::TRAP_TOR_CONTROL_PKT) ?
         (uint16_t)AgentHdr::TX_ROUTE : AgentHdr::TX_SWITCH;
     Send(ifindex, vrfindex, command, PktHandler::ICMPV6);
-    delete[] icmpv6_payload;
 }
 
 uint16_t Icmpv6Handler::FillNeighborSolicit(uint8_t *buf,

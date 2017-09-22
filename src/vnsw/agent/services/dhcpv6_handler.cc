@@ -3,6 +3,7 @@
  */
 
 #include <stdint.h>
+#include <memory>
 #include "base/os.h"
 #include "vr_defs.h"
 #include "cmn/agent_cmn.h"
@@ -538,12 +539,11 @@ uint16_t Dhcpv6Handler::AddDomainNameOption(uint16_t opt_len) {
     if (ipam_type_.ipam_dns_method == "virtual-dns-server") {
         if (is_dns_enabled() && config_.domain_name_.size()) {
             // encode the domain name in the dns encoding format
-            uint8_t *domain_name = new uint8_t[config_.domain_name_.size() * 2 + 2];
+            std::auto_ptr<uint8_t> domain_name(new uint8_t[config_.domain_name_.size() * 2 + 2]);
             uint16_t len = 0;
-            BindUtil::AddName(domain_name, config_.domain_name_, 0, 0, len);
+            BindUtil::AddName(domain_name.get(), config_.domain_name_, 0, 0, len);
             option_->WriteData(DHCPV6_OPTION_DOMAIN_LIST, len,
-                               domain_name, &opt_len);
-            delete[] domain_name;
+                               domain_name.get(), &opt_len);
         }
     }
     return opt_len;

@@ -3,6 +3,7 @@
  */
 
 #include <stdint.h>
+#include <memory>
 #include "vr_defs.h"
 #include "cmn/agent_cmn.h"
 #include "pkt/pkt_init.h"
@@ -355,11 +356,10 @@ uint16_t DhcpHandlerBase::AddByteCompressedNameOption(uint32_t option,
 
 uint16_t DhcpHandlerBase::AddCompressedName(uint16_t opt_len,
                                             const std::string &input) {
-    uint8_t *name = new uint8_t[input.size() * 2 + 2];
+    std::auto_ptr<uint8_t> name(new uint8_t[input.size() * 2 + 2]);
     uint16_t len = 0;
-    BindUtil::AddName(name, input, 0, 0, len);
-    option_->AppendData(len, name, &opt_len);
-    delete[] name;
+    BindUtil::AddName(name.get(), input, 0, 0, len);
+    option_->AppendData(len, name.get(), &opt_len);
     return opt_len;
 }
 
