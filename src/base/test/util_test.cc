@@ -8,9 +8,6 @@
 #include "base/util.h"
 #include "base/logging.h"
 #include "base/time_util.h"
-#ifdef _WINDOWS
-#include <winsock2.h>
-#endif
 
 namespace {
 
@@ -19,7 +16,7 @@ static inline uint64_t UTCgettimeofday() {
     if (gettimeofday(&tv, (struct timezone *)0) != 0) {
         assert(0);
     }
-    //ULL is needed in windows to prevent overflow
+
     return tv.tv_sec * 1000000ULL + tv.tv_usec;
 }
 

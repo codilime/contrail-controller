@@ -213,8 +213,9 @@ public:
     }
 
     ~WorkQueue() {
-        tbb::mutex::scoped_lock lock(mutex_);
         // Shutdown() needs to be called before deleting
+        if (!deleted_)
+            Shutdown();
         //assert(!running_ && deleted_);
     }
 

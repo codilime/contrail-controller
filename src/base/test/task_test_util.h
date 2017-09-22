@@ -12,10 +12,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <base/task_trigger.h>
 #include "testing/gunit.h"
-#ifdef _WINDOWS
-#include "taskutil.h"
-#include "winutils.h"
-#endif
 
 class EventManager;
 
@@ -58,14 +54,12 @@ private:
 
 }
 
-// Fork off python shell for pause. Use portable fork and exec instead of the
-// platform specific system() call.
 static inline void TaskUtilPauseTest() {
     static bool d_pause_ = getenv("TASK_UTIL_PAUSE_AFTER_FAILURE") != NULL;
     if (!d_pause_)
         return;
-    std::cout << "Test PAUSED. Exit (Ctrl-d) python shell to resume";
-    WindowsTaskExecute("python", nullptr, false);
+    std::cout << "Test PAUSED. Press enter to resume";
+    std::cin.get();
 }
 
 #define TASK_UTIL_WAIT_EQ_NO_MSG(expected, actual, wait, retry, msg)           \
