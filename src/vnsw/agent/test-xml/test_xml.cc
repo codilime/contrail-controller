@@ -251,14 +251,16 @@ bool AgentUtXmlTest::Load() {
         return false;
     }
 
+    std::fstream file(file_name_.c_str(), std::ios::binary | std::ios_base::in);
+    if (!file) {
+        cout << "Error <fstream error> opening file" << file_name_ << endl;
+        return false;
+    }
+
     std::vector<char> data(file_size + 1, 0);
-    try {
-        std::fstream file(file_name_.c_str(), std::ios::binary | std::ios_base::in);
-        file.read(data.data(), file_size);
-        if (file.gcount() < file_size)
-            return false;
-    } catch (const std::exception& err) {
-        cout << "Error <" << err.what() << "> reading file" << file_name_ << endl;
+    file.read(data.data(), file_size);
+    if (!file || file.gcount() < file_size) {
+        cout << "Error <fstream::read> reading file" << file_name_ << endl;
         return false;
     }
 
