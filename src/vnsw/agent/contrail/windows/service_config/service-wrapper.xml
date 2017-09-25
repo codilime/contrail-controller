@@ -3,6 +3,7 @@
     <name>ContrailAgent</name>
     <description>Contrail vRouter Agent</description>
     <executable>contrail-vrouter-agent.exe</executable>
-    <logpath>%ALLUSERSPROFILE%\contrail\log</logpath>
+    <arguments>--config_file=%ALLUSERSPROFILE%\ContrailVrouterAgent\etc\contrail\contrail-vrouter-agent.conf</arguments>
+    <logpath>%ALLUSERSPROFILE%\ContrailVRouterAgent\var\log\contrail</logpath>
     <logmode>append</logmode>
 </service>
