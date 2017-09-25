@@ -47,6 +47,7 @@ elif platform.system() == 'Windows':
         'dirent',
         'openssl',
         'windowsstubs',
+        'winsw',
     ]
 
 for dir in subdirs:

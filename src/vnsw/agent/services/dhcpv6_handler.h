@@ -164,21 +164,13 @@ struct Dhcpv6Options {
 
     uint16_t code;
     uint16_t len;
-#ifndef _WINDOWS
     uint8_t  data[0];
-#else
-	uint8_t  data[1];
-#endif
 };
 
 struct Dhcpv6Hdr {
     uint8_t     type;
     uint8_t     xid[3];
-#ifndef _WINDOWS
-    Dhcpv6Options options[0];
-#else
-	Dhcpv6Options options[];
-#endif
+    // followed by options
 };
 
 struct Dhcpv6Ia {
@@ -277,7 +269,8 @@ private:
     uint32_t OptionCode(const std::string &option) const;
     void DhcpTrace(const std::string &msg) const;
     Dhcpv6Options *GetNextOptionPtr(uint16_t optlen) {
-        return reinterpret_cast<Dhcpv6Options *>((uint8_t *)dhcp_->options + optlen);
+        return reinterpret_cast<Dhcpv6Options *>(
+            (uint8_t *)dhcp_ + DHCPV6_FIXED_LEN + optlen);
     }
 
     Dhcpv6Hdr *dhcp_;

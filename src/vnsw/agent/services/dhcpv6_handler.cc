@@ -2,8 +2,8 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
-
 #include <stdint.h>
+#include <memory>
 #include "base/os.h"
 #include "vr_defs.h"
 #include "cmn/agent_cmn.h"
@@ -19,12 +19,11 @@
 #include "bind/xmpp_dns_agent.h"
 
 #include <boost/assign/list_of.hpp>
-#ifdef _WINDOWS
-#include "winutils.h"
+
+#ifdef _WIN32
 #include <netinet/ip6.h>
 #include <netinet/udp.h>
 #endif
-
 
 using namespace boost::assign;
 
@@ -246,7 +245,7 @@ Dhcpv6Handler::~Dhcpv6Handler() {
 
 bool Dhcpv6Handler::Run() {
     dhcp_ = (Dhcpv6Hdr *) pkt_info_->data;
-    option_->SetDhcpOptionPtr((uint8_t *)dhcp_->options);
+    option_->SetDhcpOptionPtr((uint8_t *)dhcp_ + DHCPV6_FIXED_LEN);
     // request_.UpdateData(dhcp_->xid, ntohs(dhcp_->flags), dhcp_->chaddr);
     Dhcpv6Proto *dhcp_proto = agent()->dhcpv6_proto();
     Interface *itf =
@@ -364,7 +363,8 @@ bool Dhcpv6Handler::Run() {
 
 // read DHCP options in the incoming packet
 void Dhcpv6Handler::ReadOptions(int16_t opt_rem_len) {
-    Dhcpv6Options *opt = dhcp_->options;
+    Dhcpv6Options *opt = reinterpret_cast<Dhcpv6Options *>(
+        (uint8_t *)dhcp_ + DHCPV6_FIXED_LEN);
     // parse thru the option fields
     while (opt_rem_len > 0) {
         uint16_t option_code = ntohs(opt->code);
@@ -539,18 +539,11 @@ uint16_t Dhcpv6Handler::AddDomainNameOption(uint16_t opt_len) {
     if (ipam_type_.ipam_dns_method == "virtual-dns-server") {
         if (is_dns_enabled() && config_.domain_name_.size()) {
             // encode the domain name in the dns encoding format
-#ifndef _WINDOWS
-            uint8_t domain_name[config_.domain_name_.size() * 2 + 2];
-#else
-			uint8_t *domain_name = new uint8_t[config_.domain_name_.size() * 2 + 2];
-#endif
+            std::auto_ptr<uint8_t> domain_name(new uint8_t[config_.domain_name_.size() * 2 + 2]);
             uint16_t len = 0;
-            BindUtil::AddName(domain_name, config_.domain_name_, 0, 0, len);
+            BindUtil::AddName(domain_name.get(), config_.domain_name_, 0, 0, len);
             option_->WriteData(DHCPV6_OPTION_DOMAIN_LIST, len,
-                               domain_name, &opt_len);
-#ifndef _WINDOWS
-			delete[] domain_name;
-#endif
+                               domain_name.get(), &opt_len);
         }
     }
     return opt_len;
@@ -639,7 +632,7 @@ uint16_t Dhcpv6Handler::FillDhcpResponse(const MacAddress &dest_mac,
     pkt_info_->ip6 = (struct ip6_hdr *)((char *)pkt_info_->eth + eth_len);
     pkt_info_->transp.udp = (udphdr *)(pkt_info_->ip6 + 1);
     dhcp_ = (Dhcpv6Hdr *)(pkt_info_->transp.udp + 1);
-    option_->SetDhcpOptionPtr((uint8_t *)dhcp_->options);
+    option_->SetDhcpOptionPtr((uint8_t *)dhcp_ + DHCPV6_FIXED_LEN);
 
     uint16_t len = FillDhcpv6Hdr();
     len += sizeof(udphdr);

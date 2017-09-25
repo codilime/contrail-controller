@@ -1,0 +1,8 @@
+<service>
+    <id>ContrailAgent</id>
+    <name>ContrailAgent</name>
+    <description>Contrail vRouter Agent</description>
+    <executable>contrail-vrouter-agent.exe</executable>
+    <logpath>%ALLUSERSPROFILE%\contrail\log</logpath>
+    <logmode>append</logmode>
+</service>
