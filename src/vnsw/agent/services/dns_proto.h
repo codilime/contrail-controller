@@ -80,11 +80,7 @@ public:
     };
 
     struct UpdateCompare {
-#ifndef _WINDOWS
-        bool operator() (DnsUpdateIpc *const &lhs, DnsUpdateIpc *const &rhs)  {
-#else
-		bool operator() (DnsUpdateIpc *const &lhs, DnsUpdateIpc *const &rhs) const {
-#endif
+        bool operator() (DnsUpdateIpc *const &lhs, DnsUpdateIpc *const &rhs) const {
             if (!lhs || !rhs)
                 return lhs < rhs;
             if (lhs->itf != rhs->itf)
