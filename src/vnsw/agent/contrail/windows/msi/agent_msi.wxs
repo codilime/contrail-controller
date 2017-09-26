@@ -6,7 +6,7 @@
 
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="CommonAppDataFolder">
-                <Directory Id="ROOTDIR" Name="ContrailVrouterAgent">
+                <Directory Id="ROOTDIR" Name="Contrail">
                     <Directory Id="ETCDIR" Name="etc">
                         <Directory Id="CONFIGDIR" Name="contrail">
                             <Component Id="ContrailVrouterAgentConfig" Guid="3386587d-a358-4193-90e7-ad2f659113e5" Win64="yes">
