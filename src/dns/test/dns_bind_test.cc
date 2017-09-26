@@ -231,7 +231,8 @@ TEST_F(DnsBindTest, Config) {
 }
 #endif
 
-TEST_F(DnsBindTest, Reordered) {
+// TODO(WINDOWS): JW-1168: NamedConfig is not used in the Agent
+TEST_F(DnsBindTest, DISABLED_Reordered) {
     string content = FileRead("controller/src/dns/testdata/config_test_2.xml");
     EXPECT_TRUE(parser_.Parse(content));
     task_util::WaitForIdle();
@@ -518,7 +519,8 @@ TEST_F(DnsBindTest, Reordered) {
     }
 }
 
-TEST_F(DnsBindTest, ReorderedExternalReverseResolutionDisabled) {
+// TODO(WINDOWS): JW-1168: NamedConfig is not used in the Agent
+TEST_F(DnsBindTest, DISABLED_ReorderedExternalReverseResolutionDisabled) {
     string content = FileRead("controller/src/dns/testdata/config_test_2_disable_flags.xml");
     EXPECT_TRUE(parser_.Parse(content));
     task_util::WaitForIdle();
