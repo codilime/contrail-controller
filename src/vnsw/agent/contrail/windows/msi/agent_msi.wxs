@@ -5,6 +5,17 @@
         <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
 
         <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="CommonAppDataFolder">
+                <Directory Id="ROOTDIR" Name="Contrail">
+                    <Directory Id="ETCDIR" Name="etc">
+                        <Directory Id="CONFIGDIR" Name="contrail">
+                            <Component Id="ContrailVrouterAgentConfig" Guid="3386587D-A358-4193-90E7-AD2F659113E5" Win64="yes">
+                                <File Id="ContrailVrouterAgentConfig" Name="contrail-vrouter-agent.conf" Source="controller/src/vnsw/agent/contrail-vrouter-agent.conf"/>
+                            </Component>
+                        </Directory>
+                    </Directory>
+                </Directory>
+            </Directory>
             <Directory Id="ProgramFiles64Folder">
                 <Directory Id="ManufacturerFolder" Name="Juniper Networks">
                     <Directory Id="INSTALLDIR" Name="Agent">
@@ -56,6 +67,7 @@
             <ComponentRef Id="Log4CPlusDll"/>
             <ComponentRef Id="CurlDll"/>
             <ComponentRef Id="SampleConfig"/>
+            <ComponentRef Id="ContrailVrouterAgentConfig"/>
         </Feature>
     </Product>
 </Wix>
