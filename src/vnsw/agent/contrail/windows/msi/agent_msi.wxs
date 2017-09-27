@@ -25,7 +25,7 @@
                         <Component Id="AgentServiceWrapperExe" Guid="8A6640CF-5EA0-4F16-A006-0991147E0D9E" Win64="yes">
                             <File Id="AgentServiceWrapperExe" Name="contrail-vrouter-agent-sw.exe" Source="build/bin/winsw.exe"/>
                             <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="ownProcess" Start="demand" ErrorControl="normal"/>
-                            <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="uninstall" Wait="yes"/>
+                            <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="both" Stop="both" Wait="yes"/>
                         </Component>
                         <Component Id="VRouterHypervScript" Guid="2E5ED884-4461-4852-B841-CF6FE4E1E6B7" Win64="yes">
                             <File Id="VRouterHypervScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv.py" />
