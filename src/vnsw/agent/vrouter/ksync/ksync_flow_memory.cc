@@ -11,9 +11,14 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-//WINDOWS #include <sys/ipc.h>
-//WINDOWS #include <sys/shm.h>
-//WINDOWS #include <asm/types.h>
+#if !defined(_WIN32)
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <asm/types.h>
+#else
+#include <windows.h>
+#include <windows_flow_ioctl.h>
+#endif
 #include <boost/asio.hpp>
 
 #include <base/timer.h>
@@ -93,13 +98,23 @@ void KSyncFlowMemory::InitFlowMem() {
     int encode_len, error, ret;
 
     assert((cl = nl_register_client()) != NULL);
-#ifndef _WINDOWS
+#ifndef _WIN32
     assert(nl_socket(cl, AF_NETLINK, SOCK_DGRAM, NETLINK_GENERIC) > 0);
     assert(nl_connect(cl, 0, 0) == 0);
-#endif
     assert(vrouter_get_family_id(cl) > 0);
+#else
+    cl->cl_win_pipe = CreateFile(KSYNC_PATH, GENERIC_READ | GENERIC_WRITE,
+        0, NULL, OPEN_EXISTING, 0, NULL);
+    cl->cl_recvmsg = win_nl_client_recvmsg;
+    if (cl->cl_win_pipe == INVALID_HANDLE_VALUE
+            || vrouter_get_family_id(cl) <= 0) {
+        nl_free_client(cl);
+        cl = NULL;
+    }
+    assert(cl != NULL); // When in Rome...
+#endif
 
-    //WINDOWSFIX assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
+    assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
     assert(nl_build_genlh(cl, SANDESH_REQUEST, 0) == 0);
 
     attr_len = nl_get_attr_hdr_size();
@@ -126,9 +141,8 @@ void KSyncFlowMemory::InitFlowMem() {
     }
     nl_free_client(cl);
 
+#if defined(__linux__)
     // Remove the existing /dev/flow file first. We will add it again below
-	//WINDOWSFIX
-#if 0 //WINDOWSFIX !defined(__FreeBSD__)
     if (unlink("/dev/flow") != 0) {
         if (errno != ENOENT) {
             LOG(DEBUG, "Error deleting </dev/flow>. Error <" << errno
@@ -148,7 +162,7 @@ void KSyncFlowMemory::InitFlowMem() {
     }
 #endif
 
-#if 0 //WINDOWSFIX
+#if !defined(_WIN32)
     int fd;
     if ((fd = open("/dev/flow", O_RDONLY | O_SYNC)) < 0) {
         LOG(DEBUG, "Error opening device </dev/flow>. Error <" << errno
@@ -163,10 +177,13 @@ void KSyncFlowMemory::InitFlowMem() {
             << "> : " << strerror(errno));
         assert(0);
     }
+#else
+    flow_table_ = GetFlowTableMemoryFromWindowsPipe();
+#endif
 
     flow_table_entries_count_ = flow_table_size_ / sizeof(vr_flow_entry);
     ksync_->agent()->set_flow_table_size(flow_table_entries_count_);
-#endif
+
     return;
 }
 
@@ -328,7 +345,7 @@ bool KSyncFlowMemory::AuditProcess() {
 }
 
 void KSyncFlowMemory::GetFlowTableSize() {
-#if 0 //WINDOWSFIX
+#ifndef _WIN32
     struct nl_client *cl;
     vr_flow_req req;
     int attr_len;
@@ -336,7 +353,7 @@ void KSyncFlowMemory::GetFlowTableSize() {
 
     assert((cl = nl_register_client()) != NULL);
     cl->cl_genl_family_id = KSyncSock::GetNetlinkFamilyId();
-    //WINDOWSFIX assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
+    assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
     assert(nl_build_genlh(cl, SANDESH_REQUEST, 0) == 0);
 
     attr_len = nl_get_attr_hdr_size();
@@ -388,9 +405,9 @@ void KSyncFlowMemory::GetFlowTableSize() {
 }
 
 void KSyncFlowMemory::MapSharedMemory() {
-#if 0 //WINDOWSFIX
     GetFlowTableSize();
 
+#if !defined(_WIN32)
     int fd;
     if ((fd = open(flow_table_path_.c_str(), O_RDONLY | O_SYNC)) < 0) {
         LOG(DEBUG, "Error opening device " << flow_table_path_
@@ -406,11 +423,37 @@ void KSyncFlowMemory::MapSharedMemory() {
             << "> : " << strerror(errno));
         assert(0);
     }
+#else
+    flow_table_ = GetFlowTableMemoryFromWindowsPipe();
+#endif
 
     flow_table_entries_count_ = flow_table_size_ / sizeof(vr_flow_entry);
     ksync_->agent()->set_flow_table_size(flow_table_entries_count_);
-#endif
 }
+
+#ifdef _WIN32
+vr_flow_entry* KSyncFlowMemory::GetFlowTableMemoryFromWindowsPipe() {
+    PVOID pBuffer;
+    DWORD bRetur;
+
+    HANDLE hPipe = CreateFile(FLOW_PATH, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+        OPEN_EXISTING, 0, NULL);
+    if (!hPipe) {
+        LOG(DEBUG, "Error opening flow pipe.");
+        assert(0); // When in Rome...
+    }
+
+    BOOL transactionResult = DeviceIoControl(hPipe,
+        IOCTL_FLOW_GET_ADDRESS, NULL, 0, &pBuffer,
+        sizeof(pBuffer), &bRetur, NULL);
+    if (!transactionResult) {
+        LOG(DEBUG, "Error - DeviceIoControl failed.");
+        assert(0); // When in Rome...
+    }
+
+    return reinterpret_cast<vr_flow_entry*>(pBuffer);
+}
+#endif
 
 void vr_flow_req::Process(SandeshContext *context) {
     AgentSandeshContext *ioc = static_cast<AgentSandeshContext *>(context);
