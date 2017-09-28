@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="0BA1E738-4DB7-4871-898C-545F16426BAF" UpgradeCode="488D475D-E73D-46AF-BEE6-173BE24FAF33" Name="Agent" Version="0.0.1" Manufacturer="Juniper Networks" Language="1033">
         <Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" Platform="x64"/>
@@ -26,6 +27,9 @@
                             <File Id="AgentServiceWrapperExe" Name="contrail-vrouter-agent-sw.exe" Source="build/bin/winsw.exe"/>
                             <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="ownProcess" Start="demand" ErrorControl="normal"/>
                             <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="both" Stop="both" Wait="yes"/>
+                        </Component>
+                         <Component Id="ContrailVrouterApi" Guid="21F50C2B-7F38-493B-B545-EC7DED2CB2F7" Win64="yes">
+                            <File Id="ContrailVrouterApi" Source="build\noarch\contrail-vrouter-api\dist\contrail-vrouter-api-1.0.tar.gz"/>
                         </Component>
                         <Component Id="VRouterHypervScript" Guid="2E5ED884-4461-4852-B841-CF6FE4E1E6B7" Win64="yes">
                             <File Id="VRouterHypervScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv.py" />
@@ -59,6 +63,7 @@
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="AgentMainExe"/>
             <ComponentRef Id="AgentServiceWrapperExe"/>
+            <ComponentRef Id="ContrailVrouterApi"/>
             <ComponentRef Id="AgentServiceWrapperConfig"/>
             <ComponentRef Id="VRouterHypervScript"/>
             <ComponentRef Id="VRouterCommonScript"/>
@@ -69,5 +74,18 @@
             <ComponentRef Id="SampleConfig"/>
             <ComponentRef Id="ContrailVrouterAgentConfig"/>
         </Feature>
+
+        <CustomAction Id="InstallContrailVrouterApi" Property="InstallContrailVrouterApiProperty" Value="&quot;pip2.exe&quot; install &quot;[#ContrailVrouterApi]&quot;" Execute="immediate"/>
+        <CustomAction Id="InstallContrailVrouterApiProperty" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="deferred" Return="check" Impersonate="no"/>
+
+        <CustomAction Id="UnInstallContrailVrouterApi" Property="UnInstallContrailVrouterApiProperty" Value="&quot;pip2.exe&quot; uninstall -y contrail-vrouter-api" Execute="immediate"/>
+        <CustomAction Id="UnInstallContrailVrouterApiProperty" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="deferred" Return="ignore" Impersonate="no"/>
+
+        <InstallExecuteSequence>
+            <Custom Action="InstallContrailVrouterApi" After="CostFinalize">NOT Installed</Custom>
+            <Custom Action="InstallContrailVrouterApiProperty" After="InstallFiles">NOT Installed</Custom>
+            <Custom Action='UnInstallContrailVrouterApi' Before='CostInitialize'>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+            <Custom Action='UnInstallContrailVrouterApiProperty' Before='RemoveFiles'>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+        </InstallExecuteSequence>
     </Product>
 </Wix>
