@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#if !defined(_WIN32)
+#ifndef _WIN32
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <asm/types.h>
@@ -141,7 +141,7 @@ void KSyncFlowMemory::InitFlowMem() {
     }
     nl_free_client(cl);
 
-#if defined(__linux__)
+#ifdef __linux__
     // Remove the existing /dev/flow file first. We will add it again below
     if (unlink("/dev/flow") != 0) {
         if (errno != ENOENT) {
@@ -162,7 +162,7 @@ void KSyncFlowMemory::InitFlowMem() {
     }
 #endif
 
-#if !defined(_WIN32)
+#ifndef _WIN32
     int fd;
     if ((fd = open("/dev/flow", O_RDONLY | O_SYNC)) < 0) {
         LOG(DEBUG, "Error opening device </dev/flow>. Error <" << errno
@@ -407,7 +407,7 @@ void KSyncFlowMemory::GetFlowTableSize() {
 void KSyncFlowMemory::MapSharedMemory() {
     GetFlowTableSize();
 
-#if !defined(_WIN32)
+#ifndef _WIN32
     int fd;
     if ((fd = open(flow_table_path_.c_str(), O_RDONLY | O_SYNC)) < 0) {
         LOG(DEBUG, "Error opening device " << flow_table_path_
