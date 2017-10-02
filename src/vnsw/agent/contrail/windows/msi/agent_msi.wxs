@@ -77,14 +77,14 @@
         <CustomAction Id="InstallContrailVrouterApi" Property="InstallContrailVrouterApiProperty" Value="&quot;pip2.exe&quot; install --upgrade &quot;[#ContrailVrouterApi]&quot;" Execute="immediate"/>
         <CustomAction Id="InstallContrailVrouterApiProperty" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="deferred" Return="check" Impersonate="no"/>
 
-        <CustomAction Id="UnInstallContrailVrouterApi" Property="UnInstallContrailVrouterApiProperty" Value="&quot;pip2.exe&quot; uninstall -y contrail-vrouter-api" Execute="immediate"/>
-        <CustomAction Id="UnInstallContrailVrouterApiProperty" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="deferred" Return="ignore" Impersonate="no"/>
+        <CustomAction Id="UninstallContrailVrouterApi" Property="UninstallContrailVrouterApiProperty" Value="&quot;pip2.exe&quot; uninstall -y contrail-vrouter-api" Execute="immediate"/>
+        <CustomAction Id="UninstallContrailVrouterApiProperty" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="deferred" Return="ignore" Impersonate="no"/>
 
         <InstallExecuteSequence>
             <Custom Action="InstallContrailVrouterApi" After="CostFinalize">NOT Installed</Custom>
             <Custom Action="InstallContrailVrouterApiProperty" After="InstallFiles">NOT Installed</Custom>
-            <Custom Action='UnInstallContrailVrouterApi' Before='CostInitialize'>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
-            <Custom Action='UnInstallContrailVrouterApiProperty' Before='RemoveFiles'>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+            <Custom Action='UninstallContrailVrouterApi' Before='CostInitialize'>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
+            <Custom Action='UninstallContrailVrouterApiProperty' Before='RemoveFiles'>(NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")</Custom>
         </InstallExecuteSequence>
     </Product>
 </Wix>
