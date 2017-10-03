@@ -60,10 +60,10 @@
         </Directory>
 
         <Property Id="PYTHON27">
-            <RegistrySearch Id="Python27" Root="HKLM" Key="Software\Python\PythonCore\2.7\InstallPath" Type="raw" Win64="yes"/>
+            <RegistrySearch Id="Python27" Root="HKLM" Key="Software\Python\PythonCore\2.7\InstallPath" Type="directory" Win64="yes"/>
         </Property>
         <Property Id="PYTHON27_32">
-            <RegistrySearch Id="Python27_32" Root="HKLM" Key="Software\Python\PythonCore\2.7\InstallPath" Type="raw" Win64="no"/>
+            <RegistrySearch Id="Python27_32" Root="HKLM" Key="Software\Python\PythonCore\2.7\InstallPath" Type="directory" Win64="no"/>
         </Property>
         <SetProperty Id="PYTHON27" Before="LaunchConditions" Value="[PYTHON27_32]">NOT(PYTHON27)</SetProperty>
         <Condition Message="Python 2.7 is not installed">
