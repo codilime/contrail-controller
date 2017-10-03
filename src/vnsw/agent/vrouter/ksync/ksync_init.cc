@@ -17,7 +17,6 @@
 #include "vr_os.h"
 #endif
 
-#include<WinSock2.h> 
 #include <net/if.h>
 
 #include <io/event_manager.h>
@@ -92,31 +91,24 @@ void KSync::RegisterDBClients(DB *db) {
 void KSync::Init(bool create_vhost) {
     NetlinkInit();
     VRouterInterfaceSnapshot();
-    // TODO: JW-882: uncomment the code
-    /* InitFlowMem(); */
+    InitFlowMem();
     ResetVRouter(true);
-
-    /* On Windows, vhost interface is created when Hyper-V switch is created */
-    #ifndef _WIN32
+    // On Windows, vhost interface is created when Hyper-V switch is created.
+#ifndef _WIN32
     if (create_vhost) {
         CreateVhostIntf();
     }
-    #endif
-
+#endif
     interface_ksync_obj_.get()->Init();
-    // TODO: JW-882: uncomment the code
-    /*
     for (uint16_t i = 0; i < flow_table_ksync_obj_list_.size(); i++) {
         FlowTable *flow_table = agent_->pkt()->get_flow_proto()->GetTable(i);
         flow_table->set_ksync_object(flow_table_ksync_obj_list_[i]);
         flow_table_ksync_obj_list_[i]->Init();
     }
     ksync_flow_memory_.get()->Init();
-    */
 }
 
 void KSync::InitDone() {
-#ifndef _WINDOWS //WINDOWSFIX
     for (uint16_t i = 0; i < flow_table_ksync_obj_list_.size(); i++) {
         FlowTable *flow_table = agent_->pkt()->get_flow_proto()->GetTable(i);
         flow_table_ksync_obj_list_[i]->set_flow_table(flow_table);
@@ -128,7 +120,6 @@ void KSync::InitDone() {
     profile->RegisterKSyncStatsCb(boost::bind(&KSync::SetProfileData,
                                               this, _1));
     KSyncSock::Get(0)->SetMeasureQueueDelay(agent_->MeasureQueueDelay());
-#endif
 }
 
 void KSync::InitFlowMem() {
@@ -142,7 +133,6 @@ void KSync::NetlinkInit() {
     boost::asio::io_service &io = *event_mgr->io_service();
 
     KSyncSockNetlink::Init(io, NETLINK_GENERIC);
-
     KSyncSock::SetAgentSandeshContext
         (new KSyncSandeshContext(ksync_flow_memory_.get()));
     GenericNetlinkInit();
