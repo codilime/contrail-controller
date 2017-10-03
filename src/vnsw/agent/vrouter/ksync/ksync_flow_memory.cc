@@ -405,9 +405,9 @@ void KSyncFlowMemory::GetFlowTableSize() {
 }
 
 void KSyncFlowMemory::MapSharedMemory() {
+#ifndef _WIN32
     GetFlowTableSize();
 
-#ifndef _WIN32
     int fd;
     if ((fd = open(flow_table_path_.c_str(), O_RDONLY | O_SYNC)) < 0) {
         LOG(DEBUG, "Error opening device " << flow_table_path_
@@ -423,12 +423,10 @@ void KSyncFlowMemory::MapSharedMemory() {
             << "> : " << strerror(errno));
         assert(0);
     }
-#else
-    flow_table_ = GetFlowTableMemoryFromWindowsPipe();
-#endif
 
     flow_table_entries_count_ = flow_table_size_ / sizeof(vr_flow_entry);
     ksync_->agent()->set_flow_table_size(flow_table_entries_count_);
+#endif
 }
 
 #ifdef _WIN32
