@@ -29,10 +29,10 @@ AclEntry::ActionList AclEntry::kEmptyActionList;
 AclEntry::~AclEntry() {
     // Clean up Matches
     std::vector<AclEntryMatch *>::iterator it;
-    for (it = matches_.begin(); it != matches_.end();) {
+    for (it = matches_.begin(); it != matches_.end(); it++) {
         delete(*it);
-        matches_.erase(it);
     }
+    matches_.clear();
     
     // Clean up Actions
     ActionList::iterator ial;

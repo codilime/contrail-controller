@@ -142,7 +142,8 @@ private:
     bool dynamic_acl_;
     std::string name_;
     AclEntries acl_entries_;
- //SAGARC   DISALLOW_COPY_AND_ASSIGN(AclDBEntry);
+
+    DISALLOW_COPY_AND_ASSIGN(AclDBEntry);
 };
 
 class AclTable : public AgentOperDBTable {
@@ -199,7 +200,8 @@ private:
     TrafficActionMap ta_map_;
     FlowAceSandeshDataFn flow_ace_sandesh_data_cb_;
     FlowAclSandeshDataFn flow_acl_sandesh_data_cb_;
-  //  DISALLOW_COPY_AND_ASSIGN(AclTable);
+
+    DISALLOW_COPY_AND_ASSIGN(AclTable);
 };
 
 extern SandeshTraceBufferPtr AclTraceBuf;
