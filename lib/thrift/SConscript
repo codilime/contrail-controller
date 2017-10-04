@@ -15,14 +15,13 @@ include_path = os.path.join(env.Dir(env['TOP_INCLUDE']).abspath, r'thrift')
 msbuild = os.environ['MSBUILD']
 
 def build_thrift_exe_for_windows(target,source,env):
-    copy_tree(os.path.join( Dir('.').srcnode().abspath, r'controller\lib\thrift\msvc15\0_8_0\compiler\cpp'), os.path.join(abs_vpath, r'compiler\cpp'))
-    subprocess.call([msbuild, 'Compiler.sln', '/p:Configuration=Debug', '/p:Platform=x64', '/p:PlatformToolset=v140'], cwd = os.path.join(abs_vpath, r'compiler\cpp'))
+    copy_tree(os.path.join( Dir('.').srcnode().abspath, r'controller\lib\thrift\msvc15\compiler'), os.path.join(abs_vpath, 'compiler'))
+    subprocess.call([msbuild, 'compiler.vcxproj', '/p:Configuration=Debug', '/p:Platform=x64', '/p:PlatformToolset=v140'], cwd=os.path.join(abs_vpath, r'compiler\cpp'))
     copyfile(os.path.join(abs_vpath, r'compiler\cpp\x64\Debug\thrift.exe'), os.path.join(env.Dir(env['TOP_BIN']).abspath, r'thrift.exe'))
 
- #build libraries
 def build_thrift_libs_for_windows(target,source,env):
-    subprocess.call([msbuild, 'thrift.sln', '/p:Configuration=Debug', '/p:Platform=x64', '/p:PlatformToolset=v140'], cwd = os.path.join(abs_vpath, r'lib\cpp'))
-#   create_if_needed_dir(env.Dir(env['TOP_LIB']).abspath)
+    copy_tree(os.path.join( Dir('.').srcnode().abspath, r'controller\lib\thrift\msvc15\lib'), os.path.join(abs_vpath, 'lib'))
+    subprocess.call([msbuild, 'thrift.sln', '/p:Configuration=Debug', '/p:Platform=x64', '/p:PlatformToolset=v140'], cwd=os.path.join(abs_vpath, r'lib\cpp'))
     copyfile(os.path.join(abs_vpath, r'lib\cpp\x64\Debug\libthrift.lib'), os.path.join(env.Dir(env['TOP_LIB']).abspath, r'thrift.lib'))
     copyfile(os.path.join(abs_vpath, r'lib\cpp\x64\Debug\libthriftnb.lib'), os.path.join(env.Dir(env['TOP_LIB']).abspath, r'thriftnb.lib'))
     files = glob.iglob(os.path.join(abs_vpath, r"lib\cpp\src\*.h"))
