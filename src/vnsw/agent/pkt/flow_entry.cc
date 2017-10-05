@@ -2294,7 +2294,7 @@ bool FlowPendingAction::CanRevaluate() {
 void SetActionStr(const FlowAction &action_info,
                   std::vector<ActionStr> &action_str_l) {
     std::bitset<32> bs(action_info.action);
-    for (unsigned int i = 0; i <= bs.size(); i++) {
+    for (unsigned int i = 0; i < bs.size(); i++) {
         if (bs[i]) {
             ActionStr astr;
             astr.action =
