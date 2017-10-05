@@ -59,6 +59,17 @@
             </Directory>
         </Directory>
 
+        <Property Id="PYTHON27">
+            <RegistrySearch Id="Python27" Root="HKLM" Key="Software\Python\PythonCore\2.7\InstallPath" Type="directory" Win64="yes"/>
+        </Property>
+        <Property Id="PYTHON27_32">
+            <RegistrySearch Id="Python27_32" Root="HKLM" Key="Software\Python\PythonCore\2.7\InstallPath" Type="directory" Win64="no"/>
+        </Property>
+        <SetProperty Id="PYTHON27" Before="LaunchConditions" Value="[PYTHON27_32]">NOT(PYTHON27)</SetProperty>
+        <Condition Message="Python 2.7 is not installed">
+            <![CDATA[Installed OR PYTHON27]]>
+        </Condition>
+
         <Feature Id="DefaultFeature" Level="1">
             <ComponentRef Id="AgentMainExe"/>
             <ComponentRef Id="AgentServiceWrapperExe"/>
@@ -74,10 +85,10 @@
             <ComponentRef Id="ContrailVrouterAgentConfig"/>
         </Feature>
 
-        <CustomAction Id="InstallContrailVrouterApi" Property="InstallContrailVrouterApiProperty" Value="&quot;pip2.exe&quot; install --upgrade &quot;[#ContrailVrouterApi]&quot;" Execute="immediate"/>
+        <CustomAction Id="InstallContrailVrouterApi" Property="InstallContrailVrouterApiProperty" Value="&quot;[PYTHON27]/Scripts/pip2.exe&quot; install --upgrade &quot;[#ContrailVrouterApi]&quot;" Execute="immediate"/>
         <CustomAction Id="InstallContrailVrouterApiProperty" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="deferred" Return="check" Impersonate="no"/>
 
-        <CustomAction Id="UninstallContrailVrouterApi" Property="UninstallContrailVrouterApiProperty" Value="&quot;pip2.exe&quot; uninstall -y contrail-vrouter-api" Execute="immediate"/>
+        <CustomAction Id="UninstallContrailVrouterApi" Property="UninstallContrailVrouterApiProperty" Value="&quot;[PYTHON27]/Scripts/pip2.exe&quot; uninstall -y contrail-vrouter-api" Execute="immediate"/>
         <CustomAction Id="UninstallContrailVrouterApiProperty" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="deferred" Return="ignore" Impersonate="no"/>
 
         <InstallExecuteSequence>
