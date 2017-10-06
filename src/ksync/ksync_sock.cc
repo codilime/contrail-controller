@@ -625,14 +625,6 @@ void KSyncSockNetlink::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
 #endif
 }
 
-#ifdef _WIN32
-static std::vector<uint8_t> CollectKSyncBufferList(KSyncBufferList& list) {
-    std::vector<uint8_t> data(boost::asio::buffer_size(list));
-    boost::asio::buffer_copy(boost::asio::buffer(data), list);
-    return data;
-}
-#endif
-
 size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
     ResetNetlink(nl_client_);
     KSyncBufferList::iterator it = iovec->begin();
@@ -644,12 +636,7 @@ size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
     boost::asio::netlink::raw::endpoint ep;
     return sock_.send_to(*iovec, ep);
 #else
-    /* On Windows, KSync pipe assumes that one message comes in one write call, thus
-       buffers (which contain parts of the same message) must be collected before
-       sending
-    */
-    auto collected_data = CollectKSyncBufferList(*iovec);
-    return boost::asio::write(pipe_, boost::asio::buffer(collected_data));
+    return boost::asio::write(pipe_, *iovec);
 #endif
 }
 
