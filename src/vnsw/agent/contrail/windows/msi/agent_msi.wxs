@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix
+    xmlns="http://schemas.microsoft.com/wix/2006/wi"
+    xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
     <Product Id="0BA1E738-4DB7-4871-898C-545F16426BAF" UpgradeCode="488D475D-E73D-46AF-BEE6-173BE24FAF33" Name="Agent" Version="0.0.1" Manufacturer="Juniper Networks" Language="1033">
         <Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package" Platform="x64"/>
         <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
@@ -24,7 +26,14 @@
                         </Component>
                         <Component Id="AgentServiceWrapperExe" Guid="8A6640CF-5EA0-4F16-A006-0991147E0D9E" Win64="yes">
                             <File Id="AgentServiceWrapperExe" Name="contrail-vrouter-agent-sw.exe" Source="build/bin/winsw.exe"/>
-                            <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="ownProcess" Start="demand" ErrorControl="normal"/>
+                            <ServiceInstall Id="CreateService" Name="ContrailAgent" DisplayName="ContrailAgent" Type="ownProcess" Start="demand" ErrorControl="normal">
+                                <util:ServiceConfig
+                                    FirstFailureActionType="restart"
+                                    SecondFailureActionType="restart"
+                                    ThirdFailureActionType="restart"
+                                    ResetPeriodInDays="1"
+                                    RestartServiceDelayInSeconds="5"/>
+                            </ServiceInstall>
                             <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="both" Stop="both" Wait="yes"/>
                         </Component>
                         <Component Id="VRouterHypervScript" Guid="2E5ED884-4461-4852-B841-CF6FE4E1E6B7" Win64="yes">
