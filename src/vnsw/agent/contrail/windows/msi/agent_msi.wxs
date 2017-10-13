@@ -32,7 +32,7 @@
                                     SecondFailureActionType="restart"
                                     ThirdFailureActionType="restart"
                                     ResetPeriodInDays="1"
-                                    RestartServiceDelayInSeconds="5"/>
+                                    RestartServiceDelayInSeconds="0"/>
                             </ServiceInstall>
                             <ServiceControl Id="DeleteService" Name="ContrailAgent" Remove="both" Stop="both" Wait="yes"/>
                         </Component>
