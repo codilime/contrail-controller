@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
 #include "tbb/atomic.h"
 #include "io/test/event_manager_test.h"
 #include "base/test/task_test_util.h"
@@ -12,7 +13,6 @@
 #include "testing/gunit.h"
 
 using namespace std;
-using tbb::atomic;
 
 TaskScheduler       *scheduler;
 tbb::atomic<int> timer_count_;
