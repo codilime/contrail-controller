@@ -1325,7 +1325,7 @@ TEST_F(TestUT, test9_0)
     task_ptr[0] = new TestTask(90, 1, 0, 2, TEST9_0_MAX_RUNS);
     TaskStats *stats;
 
-    TestTask *task_seq_expected[] = { };
+    TestTask *task_seq_expected[] = {0};
     TestInit(32, 0, task_seq_expected);
     scheduler->Enqueue(task_ptr[0]);
 
@@ -1347,7 +1347,7 @@ TEST_F(TestUT, test9_1)
     task_ptr[0] = new TestTask(92, 1, 0, 2, 2);
     task_ptr[1] = new TestTask(92, 1, 1, 2, 2);
 
-    TestTask *task_seq_expected[] = { };
+    TestTask *task_seq_expected[3] = {0};
     TestInit(33, 3, task_seq_expected);
 
     scheduler->Enqueue(task_ptr[0]);
