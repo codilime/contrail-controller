@@ -6,6 +6,7 @@ from distutils.dir_util import copy_tree
 from shutil import copyfile
 
 vpath = '#/third_party/tbb-2017_U7'
+abs_vpath = Dir(vpath).abspath
 
 env = DefaultEnvironment()
 
@@ -17,8 +18,6 @@ elif env['OPT'] == 'production':
     build_dir = r'build\windows_intel64_cl_vc14_release'
     dll_name = 'tbb.dll'
     lib_name = 'tbb.lib'
-
-    abs_vpath = Dir(vpath).abspath
 
 def build_tbb_for_windows(target,source,env):
     srcdir = Dir(vpath +'/include/tbb').abspath
