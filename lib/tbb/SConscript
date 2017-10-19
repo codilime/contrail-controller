@@ -1,9 +1,7 @@
 # -*- mode: python; -*-
 
 import os
-import re
 import subprocess
-import sys
 from distutils.dir_util import copy_tree
 from shutil import copyfile
 
@@ -11,14 +9,16 @@ vpath = '#/third_party/tbb-2017_U7'
 
 env = DefaultEnvironment()
 
-if env['TARGET_ARCH'] == 'x86':
-   arch = 'ia32'
-else:
-   arch = 'intel64'
+if env['OPT'] == 'debug':
+    build_dir = r'build\windows_intel64_cl_vc14_debug'
+    dll_name = 'tbb_debug.dll'
+    lib_name = 'tbb_debug.lib'
+elif env['OPT'] == 'production':
+    build_dir = r'build\windows_intel64_cl_vc14_release'
+    dll_name = 'tbb.dll'
+    lib_name = 'tbb.lib'
 
-vcversion = 'vc14'
-bindir = r'build\windows_' + arch + '_cl_' + vcversion +'_' + env['TARGET_CONFIG'] #debug is default for now
-abs_vpath = Dir(vpath).abspath
+    abs_vpath = Dir(vpath).abspath
 
 def build_tbb_for_windows(target,source,env):
     srcdir = Dir(vpath +'/include/tbb').abspath
@@ -31,12 +31,8 @@ def build_tbb_for_windows(target,source,env):
     
     if not os.path.exists(env.Dir(env['TOP_BIN']).abspath):
         os.makedirs(env.Dir(env['TOP_BIN']).abspath)
-    copyfile(os.path.join(abs_vpath, bindir, "tbb_debug.dll"), os.path.join(env.Dir(env['TOP_BIN']).abspath, 'tbb_debug.dll'))
-    copyfile(os.path.join(abs_vpath, bindir, "tbb_debug.lib"), os.path.join(env.Dir(env['TOP_LIB']).abspath, 'tbb_debug.lib'))
+    copyfile(os.path.join(abs_vpath, build_dir, dll_name), os.path.join(env.Dir(env['TOP_BIN']).abspath, dll_name))
+    copyfile(os.path.join(abs_vpath, build_dir, lib_name), os.path.join(env.Dir(env['TOP_LIB']).abspath, lib_name))
     
 
-#shutil.copytree()
-
-#os.symcopy(Dir(vpath + '/include/tbb').abspath, Dir('#/build/include/tbb').abspath)
 env.Command(['#build/lib/tbb_debug.lib', '#/build/include/tbb/mutex.h'], Dir(vpath), build_tbb_for_windows)
-

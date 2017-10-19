@@ -13,10 +13,6 @@ except ImportError:
     pass
     
 vpath = '#/third_party/boost_1_62_0'
-engine = vpath + '/tools/build/v2/engine'
-version = '1.62.0'
-print "Building windows boost..."
-currentdir =  Dir('.').path
 
 env = DefaultEnvironment()
 
@@ -24,20 +20,8 @@ stagedir = Dir('#').abspath;
 stagedir += '/build/third_party/boost_1_62_0'
 
 boostlibdirprefix = '/build/msvc-14.0/debug/address-model-64/link-static/threading-multi/'
-
-
 boostcmd = 'b2 -j4 toolset=msvc-14.0 --build-type=complete architecture=x86 address-model=64 stage --stagedir=' + stagedir
-print boostcmd
-exit
 buildlibdir = Dir('#build/lib').abspath + '/'
-
-def Symlink(target, source):
-    parent = os.path.dirname(target[0].abspath)
-    if not os.path.exists(parent):
-        os.makedirs(parent)
-
-    if not os.path.exists(target[0].abspath):
-        os.symlink(source[0].abspath, target[0].abspath)
 
 libpath = Dir(vpath).abspath
 if not os.path.exists(libpath):
@@ -80,7 +64,3 @@ products = [File('#build/lib/boost_filesystem.lib'), Dir('#build/include/boost')
 boost_command = env.Command(products, str(Dir(vpath)), build_boost_for_windows)
 env.Alias('boostbuild', '#build/lib/boost_filesystem.lib')
 env.Depends(boost_command, Dir('#/build/include/openssl'))
-
-#Default(SymCopy([Dir('#/build/include/boost')], [Dir(vpath + bin.v2\libs\filesystem\build\msvc-14.0\debug\link-static\runtime-link-static\threading-multi)]))
-
-print 'finished building boost for windows!! '
