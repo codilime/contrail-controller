@@ -5,10 +5,7 @@ import os
 SConscript(dirs=['lib', 'src'])
 
 env = DefaultEnvironment()
-if os.name == 'nt':
- env.Append(CPPPATH = ['#windows'])
 
-env.Append(CPPPATH = '#third_party\OpenSSLWin32\include')
 env.Alias('controller/test', [
     'controller/src/agent:test',
     'controller/src/analytics:test',
