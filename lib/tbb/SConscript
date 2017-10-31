@@ -34,4 +34,4 @@ def build_tbb_for_windows(target,source,env):
     copyfile(os.path.join(abs_vpath, build_dir, lib_name), os.path.join(env.Dir(env['TOP_LIB']).abspath, lib_name))
     
 
-env.Command(['#build/lib/tbb_debug.lib', '#/build/include/tbb/mutex.h'], Dir(vpath), build_tbb_for_windows)
+env.Command(['#build/lib/' + lib_name, '#/build/include/tbb/mutex.h'], Dir(vpath), build_tbb_for_windows)
