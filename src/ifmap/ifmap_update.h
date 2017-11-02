@@ -63,7 +63,7 @@ struct IFMapListEntry {
     }
     bool IsMarker() const { return ((type == MARKER) ? true : false); }
     bool IsUpdate() const { return ((type == UPDATE) ? true : false); }
-    bool IsDelete() const { return ((type == DELETE) ? true : false); }
+    bool IsDelete() const { return ((type == DEL) ? true : false); }
     std::string TypeToString() {
         if (IsMarker()) {
             return "Marker";
