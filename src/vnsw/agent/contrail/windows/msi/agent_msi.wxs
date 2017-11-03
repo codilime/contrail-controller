@@ -12,7 +12,7 @@
                     <Directory Id="ETCDIR" Name="etc">
                         <Directory Id="CONFIGDIR" Name="contrail">
                             <Component Id="ContrailVrouterAgentConfig" Guid="3386587D-A358-4193-90E7-AD2F659113E5" Win64="yes">
-                                <File Id="ContrailVrouterAgentConfig" Name="contrail-vrouter-agent.conf" Source="controller/src/vnsw/agent/contrail-vrouter-agent.conf"/>
+                                <File Id="ContrailVrouterAgentConfig" Name="contrail-vrouter-agent.conf.sample" Source="controller/src/vnsw/agent/contrail-vrouter-agent.conf"/>
                             </Component>
                         </Directory>
                     </Directory>
@@ -22,7 +22,7 @@
                 <Directory Id="ManufacturerFolder" Name="Juniper Networks">
                     <Directory Id="INSTALLDIR" Name="Agent">
                         <Component Id="AgentMainExe" Guid="0AA4E35B-89F0-4E60-8D1C-F79BFBE49F78" Win64="yes">
-                            <File Id="AgentMainExe" Source="build/debug/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
+                            <File Id="AgentMainExe" Source="build/$(var.optimization)/vnsw/agent/contrail/contrail-vrouter-agent.exe"/>
                         </Component>
                         <Component Id="AgentServiceWrapperExe" Guid="8A6640CF-5EA0-4F16-A006-0991147E0D9E" Win64="yes">
                             <File Id="AgentServiceWrapperExe" Name="contrail-vrouter-agent-sw.exe" Source="build/bin/winsw.exe"/>
@@ -45,11 +45,11 @@
                         <Component Id="VRouterHypervInjectIPScript" Guid="B52AFC26-A7E3-4FB7-9740-747765BEA5BC" Win64="yes">
                             <File Id="VRouterHypervInjectIPScript" Source="controller/src/vnsw/opencontrail-vrouter-netns/opencontrail_vrouter_netns/vrouter_hyperv_inject_ip.ps1" />
                         </Component>
-                        <Component Id="TbbDebugDll" Guid="3DD82F1D-E1C5-4CF6-8C53-AB0E047D1B0B" Win64="yes">
-                            <File Id="TbbDebugDll" Source="build/bin/tbb_debug.dll"/>
+                        <Component Id="TbbDll" Guid="3DD82F1D-E1C5-4CF6-8C53-AB0E047D1B0B" Win64="yes">
+                            <File Id="TbbDll" Source="build/bin/$(var.TbbDll)"/>
                         </Component>
                         <Component Id="Log4CPlusDll" Guid="27D4F796-4BF8-423C-BF68-25334A963810" Win64="yes">
-                            <File Id="Log4CPlusDll" Source="build/bin/log4cplusD.dll"/>
+                            <File Id="Log4CPlusDll" Source="build/bin/$(var.Log4CPlusDll)"/>
                         </Component>
                         <Component Id="CurlDll" Guid="BE814CFF-7812-4D99-8E69-94A19185563F" Win64="yes">
                             <File Id="CurlDll" Source="build/bin/libcurl.dll"/>
@@ -72,7 +72,7 @@
             <ComponentRef Id="VRouterHypervScript"/>
             <ComponentRef Id="VRouterCommonScript"/>
             <ComponentRef Id="VRouterHypervInjectIPScript"/>
-            <ComponentRef Id="TbbDebugDll"/>
+            <ComponentRef Id="TbbDll"/>
             <ComponentRef Id="Log4CPlusDll"/>
             <ComponentRef Id="CurlDll"/>
             <ComponentRef Id="SampleConfig"/>
