@@ -884,8 +884,8 @@ void IFMapChannel::SetArcSocketOptions() {
 
 #ifdef TCP_KEEPALIVE
     boost::asio::detail::socket_option::integer<IPPROTO_TCP, TCP_KEEPALIVE>
-        keepalive_idle_time_option(kSessionKeepaliveIdleTime);
-    arc_socket_->next_layer().set_option(keepalive_idle_time_option, ec);
+        keepalive_time_option(kSessionKeepaliveIdleTime);
+    arc_socket_->next_layer().set_option(keepalive_time_option, ec);
     if (ec) {
         IFMAP_PEER_WARN(IFMapServerConnection,
                         "Error setting keepalive idle time", ec.message());
