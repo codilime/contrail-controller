@@ -1,8 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #if defined(__linux__)
