@@ -64,8 +64,7 @@ struct TestRouteCmp {
 };
 
 struct TestVrfAssignCmp {
-    bool operator() (const vr_vrf_assign_req &lhs,
-                     const vr_vrf_assign_req &rhs) const{
+    bool operator() (const vr_vrf_assign_req &lhs, const vr_vrf_assign_req &rhs) const {
         if (lhs.get_var_vif_index() != rhs.get_var_vif_index()) {
             return lhs.get_var_vif_index() < rhs.get_var_vif_index();
         }
