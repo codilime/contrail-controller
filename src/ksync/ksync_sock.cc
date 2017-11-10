@@ -541,8 +541,7 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol) :
 }
 #else
 KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
-    : sock_(ios, protocol)
-{
+    : sock_(ios, protocol) {
     ReceiveBuffForceSize set_rcv_buf;
     set_rcv_buf = KSYNC_SOCK_RECV_BUFF_SIZE;
     boost::system::error_code ec;
@@ -618,11 +617,11 @@ size_t KSyncSockNetlink::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
                              nl_client_->cl_buf_offset));
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
 
-#ifndef _WIN32
+#ifdef _WIN32
+    return boost::asio::write(pipe_, *iovec);
+#else
     boost::asio::netlink::raw::endpoint ep;
     return sock_.send_to(*iovec, ep);
-#else
-    return boost::asio::write(pipe_, *iovec);
 #endif
 }
 
@@ -662,15 +661,17 @@ bool KSyncSockNetlink::BulkDecoder(char *data,
 }
 
 void KSyncSockNetlink::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
-#ifndef _WIN32
-    sock_.async_receive(buf, cb);
-#else
+#ifdef _WIN32
     pipe_.async_read_some(buf, cb);
+#else
+    sock_.async_receive(buf, cb);
 #endif
 }
 
 void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
-#ifndef _WIN32
+#ifdef _WIN32
+    pipe_.read_some(buf);
+#else
     sock_.receive(buf);
     struct nlmsghdr *nlh = buffer_cast<struct nlmsghdr *>(buf);
     if (nlh->nlmsg_type == NLMSG_ERROR) {
@@ -678,8 +679,6 @@ void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
                 << " len " << nlh->nlmsg_len);
         assert(0);
     }
-#else
-    pipe_.read_some(buf);
 #endif
 }
 
@@ -711,7 +710,7 @@ bool KSyncSockUdp::IsMoreData(char *data) {
 // We dont expect any non-bulk operation on UDP
 bool KSyncSockUdp::Decoder(char *data, AgentSandeshContext *context) {
     assert(0);
-	return true;;
+    return false;
 }
 
 bool KSyncSockUdp::BulkDecoder(char *data,
@@ -736,7 +735,6 @@ void KSyncSockUdp::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
 }
 
 size_t KSyncSockUdp::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
-#ifndef _WINDOWS //WINDOWSFIX
     struct uvr_msg_hdr hdr;
     hdr.seq_no = seq_no;
     hdr.flags = 0;
@@ -746,8 +744,6 @@ size_t KSyncSockUdp::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
     iovec->insert(it, buffer((char *)(&hdr), sizeof(hdr)));
 
     return sock_.send_to(*iovec, server_ep_, MSG_DONTWAIT);
-#endif
-	return 0;
 }
 
 bool KSyncSockUdp::Validate(char *data) {
@@ -798,7 +794,6 @@ bool KSyncSockTcp::IsMoreData(char *data) {
 }
 
 size_t KSyncSockTcp::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
-#ifndef _WINDOWS //WINDOWSFIX
     ResetNetlink(nl_client_);
     int offset = nl_client_->cl_buf_offset;
     UpdateNetlink(nl_client_, bulk_buf_size_, seq_no);
@@ -807,14 +802,13 @@ size_t KSyncSockTcp::SendTo(KSyncBufferList *iovec, uint32_t seq_no) {
     iovec->insert(it, buffer((char *)nl_client_->cl_buf, offset));
 
     uint32_t alloc_len = IoVectorLength(iovec);
-    char msg[alloc_len];
+    char* msg = new char[alloc_len];
 
     uint32_t len = IoVectorToData(msg, iovec);
 
     session_->Send((const uint8_t *)(msg), len, NULL);
+    delete[] msg;
     return nl_client_->cl_buf_offset;
-#endif
-	return 0;
 }
 
 void KSyncSockTcp::AsyncSendTo(KSyncBufferList *iovec, uint32_t seq_no,
@@ -834,14 +828,11 @@ bool KSyncSockTcp::Decoder(char *data, AgentSandeshContext *context) {
 
 bool KSyncSockTcp::BulkDecoder(char *data,
                                KSyncBulkSandeshContext *bulk_context) {
-#ifndef _WINDOWS //WINDOWSFIX
     // Get sandesh buffer and buffer-length
     uint32_t buf_len = 0;
     char *buf = NULL;
     GetNetlinkPayload(data, &buf, &buf_len);
     return bulk_context->Decoder(buf, buf_len, NLA_ALIGNTO, IsMoreData(data));
-#endif
-	return false;
 }
 
 void KSyncSockTcp::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
@@ -850,7 +841,6 @@ void KSyncSockTcp::AsyncReceive(mutable_buffers_1 buf, HandlerCb cb) {
 }
 
 void KSyncSockTcp::Receive(mutable_buffers_1 buf) {
-#ifndef _WINDOWS //WINDOWSFIX
     uint32_t bytes_read = 0;
     boost::system::error_code ec;
     const struct nlmsghdr *nlh = NULL;
@@ -896,7 +886,6 @@ void KSyncSockTcp::Receive(mutable_buffers_1 buf) {
         }
     }
     session_->socket()->non_blocking(blocking_socket, ec);
-#endif
 }
 
 bool KSyncSockTcp::ReceiveMsg(const u_int8_t *msg, size_t size) {
@@ -949,7 +938,6 @@ KSyncSockTcpSessionReader::KSyncSockTcpSessionReader(
 }
 
 int KSyncSockTcpSessionReader::MsgLength(Buffer buffer, int offset) {
-#ifndef _WINDOWS //WINDOWSFIX
     size_t size = TcpSession::BufferSize(buffer);
     int remain = size - offset;
     if (remain < GetHeaderLenSize()) {
@@ -960,8 +948,6 @@ int KSyncSockTcpSessionReader::MsgLength(Buffer buffer, int offset) {
     const struct nlmsghdr *nlh =
         (const struct nlmsghdr *)(TcpSession::BufferData(buffer) + offset);
     return nlh->nlmsg_len;
-#endif
-	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////
