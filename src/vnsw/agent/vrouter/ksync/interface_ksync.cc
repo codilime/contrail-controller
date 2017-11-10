@@ -4,8 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <WinSock2.h>
-#include<WinSock2.h> 
+
 #include <net/if.h>
 
 #include <boost/asio.hpp>
@@ -741,7 +740,7 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     encoder.set_vifr_ip(ip_);
     encoder.set_vifr_nh_id(flow_key_nh_id_);
 
-    /* GUIDs are used as interface identifiers on Windows */
+    // GUIDs are used as interface identifiers on Windows
     if (os_guid_) {
         Interface::IfGuid& os_guid = os_guid_.get();
 

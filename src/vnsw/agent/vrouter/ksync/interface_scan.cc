@@ -5,10 +5,7 @@
 #include <vrouter/ksync/interface_scan.h>
 #include <oper/interface_common.h>
 #include <oper/mirror_table.h>
-
-#ifdef _WIN32
-#include <Iphlpapi.h>
-#endif
+#include <net/if.h>
 
 InterfaceKScan::InterfaceKScan(Agent *agent) 
     : agent_(agent), timer_(NULL) {

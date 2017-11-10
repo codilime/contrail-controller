@@ -75,6 +75,7 @@ void KSyncTxQueue::Shutdown() {
         work_queue_ = NULL;
         return;
     }
+
     uint64_t u = 1;
     assert(write(event_fd_, &u, sizeof(u)) == sizeof(u));
     while (queue_len_ != 0) {
@@ -100,8 +101,7 @@ bool KSyncTxQueue::EnqueueInternal(IoContext *io_context) {
     if (ncount == 1) {
         uint64_t u = 1;
         int res = 0;
-        while ((res = write(event_fd_, &u, sizeof(u))) < (int)sizeof(u))
-		{
+        while ((res = write(event_fd_, &u, sizeof(u))) < (int)sizeof(u)) {
             int ec = errno;
             if (ec != EINTR && ec != EIO) {
                 LOG(ERROR, "KsyncTxQueue write failure : " << ec << " : "
@@ -121,7 +121,7 @@ bool KSyncTxQueue::Run() {
         ssize_t num = 0;
 
         while (1) {
-           num = read(event_fd_, &u, sizeof(u));
+            num = read(event_fd_, &u, sizeof(u));
             if (num >= (int)sizeof(u)) {
                 break;
             }
