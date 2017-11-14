@@ -37,7 +37,9 @@ public:
             assert(owner_.get() == NULL);
         }
         // copy-contructor is needed by std::vector but should never be used
-        IndexEntry(const IndexEntry& i) { assert(0); }
+        IndexEntry(const IndexEntry& i) {
+            assert(0);
+        }
 
         tbb::mutex mutex_;
         FlowEntryPtr owner_;

@@ -11,14 +11,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#ifndef _WIN32
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <asm/types.h>
-#else
-#include <windows.h>
-#include <windows_flow_ioctl.h>
-#endif
 #include <boost/asio.hpp>
 
 #include <base/timer.h>
@@ -43,6 +38,11 @@
 
 #include "ksync_init.h"
 #include "ksync_flow_memory.h"
+
+#ifdef _WIN32
+#include <windows_flow_ioctl.h>
+#endif
+
 using namespace boost::asio::ip;
 static const int kTestFlowTableSize = 131072 * sizeof(vr_flow_entry);
 
@@ -98,21 +98,17 @@ void KSyncFlowMemory::InitFlowMem() {
     int encode_len, error, ret;
 
     assert((cl = nl_register_client()) != NULL);
-#ifndef _WIN32
+
+#ifdef _WIN32
+    cl->cl_win_pipe = CreateFile(KSYNC_PATH, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    assert(cl->cl_win_pipe != INVALID_HANDLE_VALUE);
+    cl->cl_recvmsg = win_nl_client_recvmsg;
+#else
     assert(nl_socket(cl, AF_NETLINK, SOCK_DGRAM, NETLINK_GENERIC) > 0);
     assert(nl_connect(cl, 0, 0) == 0);
-    assert(vrouter_get_family_id(cl) > 0);
-#else
-    cl->cl_win_pipe = CreateFile(KSYNC_PATH, GENERIC_READ | GENERIC_WRITE,
-        0, NULL, OPEN_EXISTING, 0, NULL);
-    cl->cl_recvmsg = win_nl_client_recvmsg;
-    if (cl->cl_win_pipe == INVALID_HANDLE_VALUE
-            || vrouter_get_family_id(cl) <= 0) {
-        nl_free_client(cl);
-        cl = NULL;
-    }
-    assert(cl != NULL); // When in Rome...
 #endif
+
+    assert(vrouter_get_family_id(cl) > 0);
 
     assert(nl_build_nlh(cl, cl->cl_genl_family_id, NLM_F_REQUEST) == 0);
     assert(nl_build_genlh(cl, SANDESH_REQUEST, 0) == 0);
@@ -162,7 +158,24 @@ void KSyncFlowMemory::InitFlowMem() {
     }
 #endif
 
-#ifndef _WIN32
+#ifdef _WIN32
+    PVOID pBuffer;
+    DWORD bRetur;
+
+    HANDLE hPipe = CreateFile(FLOW_PATH, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (!hPipe) {
+        LOG(DEBUG, "Error opening flow pipe.");
+        assert(0);
+    }
+
+    BOOL result = DeviceIoControl(hPipe, IOCTL_FLOW_GET_ADDRESS, NULL, 0, &pBuffer, sizeof(pBuffer), &bRetur, NULL);
+    if (!result) {
+        LOG(DEBUG, "Error - DeviceIoControl failed.");
+        assert(0);
+    }
+
+    flow_table_ = reinterpret_cast<vr_flow_entry*>(pBuffer);
+#else
     int fd;
     if ((fd = open("/dev/flow", O_RDONLY | O_SYNC)) < 0) {
         LOG(DEBUG, "Error opening device </dev/flow>. Error <" << errno
@@ -177,13 +190,10 @@ void KSyncFlowMemory::InitFlowMem() {
             << "> : " << strerror(errno));
         assert(0);
     }
-#else
-    flow_table_ = GetFlowTableMemoryFromWindowsPipe();
 #endif
 
     flow_table_entries_count_ = flow_table_size_ / sizeof(vr_flow_entry);
     ksync_->agent()->set_flow_table_size(flow_table_entries_count_);
-
     return;
 }
 
@@ -344,8 +354,8 @@ bool KSyncFlowMemory::AuditProcess() {
     return true;
 }
 
-void KSyncFlowMemory::GetFlowTableSize() {
 #ifndef _WIN32
+void KSyncFlowMemory::GetFlowTableSize() {
     struct nl_client *cl;
     vr_flow_req req;
     int attr_len;
@@ -401,11 +411,9 @@ void KSyncFlowMemory::GetFlowTableSize() {
     KSyncSockNetlink::NetlinkDecoder(cl->cl_buf,
                                      KSyncSock::GetAgentSandeshContext());
     nl_free_client(cl);
-#endif
 }
 
 void KSyncFlowMemory::MapSharedMemory() {
-#ifndef _WIN32
     GetFlowTableSize();
 
     int fd;
@@ -426,30 +434,6 @@ void KSyncFlowMemory::MapSharedMemory() {
 
     flow_table_entries_count_ = flow_table_size_ / sizeof(vr_flow_entry);
     ksync_->agent()->set_flow_table_size(flow_table_entries_count_);
-#endif
-}
-
-#ifdef _WIN32
-vr_flow_entry* KSyncFlowMemory::GetFlowTableMemoryFromWindowsPipe() {
-    PVOID pBuffer;
-    DWORD bRetur;
-
-    HANDLE hPipe = CreateFile(FLOW_PATH, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-        OPEN_EXISTING, 0, NULL);
-    if (!hPipe) {
-        LOG(DEBUG, "Error opening flow pipe.");
-        assert(0); // When in Rome...
-    }
-
-    BOOL transactionResult = DeviceIoControl(hPipe,
-        IOCTL_FLOW_GET_ADDRESS, NULL, 0, &pBuffer,
-        sizeof(pBuffer), &bRetur, NULL);
-    if (!transactionResult) {
-        LOG(DEBUG, "Error - DeviceIoControl failed.");
-        assert(0); // When in Rome...
-    }
-
-    return reinterpret_cast<vr_flow_entry*>(pBuffer);
 }
 #endif
 

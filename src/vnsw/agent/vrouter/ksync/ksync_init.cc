@@ -360,6 +360,7 @@ void GenericNetlinkInit() {
 #endif
 }
 
+#ifndef _WIN32
 KSyncTcp::KSyncTcp(Agent *agent): KSync(agent) {
 }
 
@@ -388,7 +389,6 @@ void KSyncTcp::TcpInit() {
 KSyncTcp::~KSyncTcp() { }
 
 void KSyncTcp::Init(bool create_vhost) {
-#ifndef _WINDOWS //WINDOWS-TEMP
     TcpInit();
     VRouterInterfaceSnapshot();
     InitFlowMem();
@@ -401,5 +401,5 @@ void KSyncTcp::Init(bool create_vhost) {
         flow_table_ksync_obj_list_[i]->Init();
     }
     ksync_flow_memory_.get()->Init();
-#endif
 }
+#endif

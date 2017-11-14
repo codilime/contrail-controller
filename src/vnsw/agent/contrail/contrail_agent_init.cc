@@ -52,8 +52,13 @@ void ContrailAgentInit::FactoryInit() {
             (boost::forward_adapter<boost::factory<AgentUve *> >(boost::factory<AgentUve *>()));
     }
     if (agent_param()->vrouter_on_nic_mode() || agent_param()->vrouter_on_host_dpdk()) {
+#ifdef _WIN32
+        LOG(DEBUG, "KSyncTcp is not supported on Windows");
+        assert(0);
+#else
         AgentObjectFactory::Register<KSync>
             (boost::forward_adapter<boost::factory<KSyncTcp *> >(boost::factory<KSyncTcp *>()));
+#endif
     } else {
         AgentObjectFactory::Register<KSync>
             (boost::forward_adapter<boost::factory<KSync *> >(boost::factory<KSync *>()));
