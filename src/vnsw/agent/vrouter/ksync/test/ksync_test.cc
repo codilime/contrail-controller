@@ -5,7 +5,6 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#include<WinSock2.h> 
 #include <net/if.h>
 
 #if defined(__linux__)

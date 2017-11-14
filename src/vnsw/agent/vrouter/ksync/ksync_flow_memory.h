@@ -57,10 +57,6 @@ public:
         flow_table_path_ = path;
     }
     uint32_t audit_timeout() const { return audit_timeout_; }
-
-#ifdef _WIN32
-    static vr_flow_entry* GetFlowTableMemoryFromWindowsPipe();
-#endif
 private:
     struct AuditEntry {
         AuditEntry(uint32_t flow_idx, uint8_t gen_id,

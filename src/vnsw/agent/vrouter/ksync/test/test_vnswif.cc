@@ -119,7 +119,6 @@ TEST_F(TestVnswIf, intf_inactive) {
 TEST_F(TestVnswIf, intf_delete) {
     Ip4Address vnet1_address = vnet1_->mdata_ip_addr();
     DeleteVmportEnv(input, 1, false);
-    vnet1_ = NULL;
     client->WaitForIdle();
     EXPECT_FALSE(vnswif_->IsValidLinkLocalAddress(vnet1_address));
     EXPECT_TRUE(vnswif_->IsValidLinkLocalAddress(vnet2_->mdata_ip_addr()));
