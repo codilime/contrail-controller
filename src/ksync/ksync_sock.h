@@ -382,10 +382,10 @@ public:
     static void NetlinkBulkDecoder(char *data, SandeshContext *ctxt, bool more);
     static void Init(boost::asio::io_service &ios, int protocol);
 private:
-#ifndef _WIN32
-    boost::asio::netlink::raw::socket sock_;
-#else
+#ifdef _WIN32
     boost::asio::windows::stream_handle pipe_;
+#else
+    boost::asio::netlink::raw::socket sock_;
 #endif
 };
 

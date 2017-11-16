@@ -186,7 +186,6 @@ static void DecodeSandeshMessages(char *buf, uint32_t buf_len,
     }
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 // KSyncSock routines
 /////////////////////////////////////////////////////////////////////////////
@@ -527,7 +526,8 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol) :
     DWORD attrs = OPEN_EXISTING;
     DWORD config_flags = FILE_FLAG_OVERLAPPED;
 
-    nl_client_->cl_win_pipe = CreateFile(KSYNC_PATH, access_flags, 0, NULL, attrs, config_flags, NULL);
+    nl_client_->cl_win_pipe = CreateFile(KSYNC_PATH, access_flags, 0, NULL,
+                                         attrs, config_flags, NULL);
     if (nl_client_->cl_win_pipe == INVALID_HANDLE_VALUE) {
         LOG(ERROR, "Error while opening KSync pipe: " << GetFormattedWindowsErrorMsg());
         assert(0);
@@ -682,7 +682,6 @@ void KSyncSockNetlink::Receive(mutable_buffers_1 buf) {
     }
 #endif
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 // KSyncSockUdp routines

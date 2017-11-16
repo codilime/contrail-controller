@@ -243,9 +243,11 @@ void ContrailInitCommon::InitDone() {
         agent()->ksync()->UpdateVhostMac();
     }
 
+#ifndef _WIN32
     if (ksync_enable_) {
         agent()->ksync()->VnswInterfaceListenerInit();
     }
+#endif
 
     if (agent()->pkt()) {
         agent()->pkt()->InitDone();
