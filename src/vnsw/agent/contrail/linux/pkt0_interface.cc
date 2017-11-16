@@ -9,7 +9,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include<WinSock2.h> 
 #include <net/if.h>
 #include <linux/if_ether.h>
 #include <linux/if_tun.h>
@@ -152,8 +151,7 @@ void Pkt0Interface::SendImpl(uint8_t *buff, uint16_t buff_len, const PacketBuffe
     input_.async_write_some(buff_list,
                             boost::bind(&Pkt0Interface::WriteHandler, this,
                                         boost::asio::placeholders::error,
-                                        boost::asio::placeholders::bytes_transferred,
-                                        pkt, buff));
+                                        boost::asio::placeholders::bytes_transferred, pkt, buff));
 }
 
 void Pkt0RawInterface::InitControlInterface() {

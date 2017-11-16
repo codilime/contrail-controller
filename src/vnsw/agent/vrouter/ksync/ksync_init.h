@@ -54,9 +54,11 @@ public:
     InterfaceKScan *interface_scanner() const {
         return interface_scanner_.get();
     }
+#ifndef _WIN32
     VnswInterfaceListener *vnsw_interface_listner() const  {
         return vnsw_interface_listner_.get();
     }
+#endif
     KSyncFlowMemory *ksync_flow_memory() const  {
         return ksync_flow_memory_.get();
     }
@@ -87,7 +89,9 @@ protected:
     boost::scoped_ptr<VxLanKSyncObject> vxlan_ksync_obj_;
     boost::scoped_ptr<VrfAssignKSyncObject> vrf_assign_ksync_obj_;
     boost::scoped_ptr<InterfaceKScan> interface_scanner_;
+#ifndef _WIN32
     boost::scoped_ptr<VnswInterfaceListener> vnsw_interface_listner_;
+#endif
     boost::scoped_ptr<KSyncFlowMemory> ksync_flow_memory_;
     boost::scoped_ptr<KSyncFlowIndexManager> ksync_flow_index_manager_;
     boost::scoped_ptr<QosQueueKSyncObject> qos_queue_ksync_obj_;

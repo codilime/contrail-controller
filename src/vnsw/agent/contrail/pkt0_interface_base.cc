@@ -8,11 +8,10 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#ifndef _WINDOWS
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
-#endif
 
 #include "base/logging.h"
 #include "cmn/agent_cmn.h"
@@ -30,7 +29,7 @@ do {                                                                     \
 } while (false)                                                          \
 
 ///////////////////////////////////////////////////////////////////////////////
-const string Pkt0Socket::kSocketDir = "vrouter";
+const string Pkt0Socket::kSocketDir = "/var/run/vrouter";
 const string Pkt0Socket::kAgentSocketPath = Pkt0Socket::kSocketDir
                                             + "/agent_pkt0";
 const string Pkt0Socket::kVrouterSocketPath = Pkt0Socket::kSocketDir
@@ -122,13 +121,12 @@ Pkt0RawInterface::~Pkt0RawInterface() {
     }
 }
 
+// Pkt0Socket is not supported on Windows
+#ifndef _WIN32
+
 Pkt0Socket::Pkt0Socket(const std::string &name,
     boost::asio::io_service *io):
-    connected_(false),
-#ifndef _WINDOWS
-    socket_(*io), 
-#endif
-    timer_(NULL),
+    connected_(false), socket_(*io), timer_(NULL),
     read_buff_(NULL), pkt_handler_(NULL), name_(name){
 }
 
@@ -143,11 +141,9 @@ void Pkt0Socket::CreateUnixSocket() {
     boost::filesystem::remove(kAgentSocketPath);
 
     boost::system::error_code ec;
-#ifndef _WINDOWS
     socket_.open();
     local::datagram_protocol::endpoint ep(kAgentSocketPath);
     socket_.bind(ep, ec);
-#endif
     if (ec) {
         LOG(DEBUG, "Error binding to the socket " << kAgentSocketPath
                 << ": " << ec.message());
@@ -168,45 +164,34 @@ void Pkt0Socket::IoShutdownControlInterface() {
     }
 
     boost::system::error_code ec;
-#ifndef _WINDOWS
     socket_.close(ec);
-#endif
 }
 
 void Pkt0Socket::ShutdownControlInterface() {
 }
 
 void Pkt0Socket::AsyncRead() {
-#ifndef _WINDOWS
     read_buff_ = new uint8_t[kMaxPacketSize];
-
     socket_.async_receive(
             boost::asio::buffer(read_buff_, kMaxPacketSize), 
             boost::bind(&Pkt0Socket::ReadHandler, this,
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred));
-#endif
 }
 
 void Pkt0Socket::StartConnectTimer() {
-#ifndef _WINDOWS
     Agent *agent = pkt_handler()->agent();
     timer_.reset(TimerManager::CreateTimer(
                  *(agent->event_manager()->io_service()),
                  "UnixSocketConnectTimer"));
     timer_->Start(kConnectTimeout,
                   boost::bind(&Pkt0Socket::OnTimeout, this));
-#endif
 }
 
 bool Pkt0Socket::OnTimeout() {
-#ifndef _WINDOWS
     local::datagram_protocol::endpoint ep(kVrouterSocketPath);
-#endif
     boost::system::error_code ec;
-#ifndef _WINDOWS
     socket_.connect(ep, ec);
-#endif
     if (ec != 0) {
         LOG(DEBUG, "Error connecting to socket " << kVrouterSocketPath
                 << ": " << ec.message());
@@ -218,8 +203,6 @@ bool Pkt0Socket::OnTimeout() {
 
 int Pkt0Socket::Send(uint8_t *buff, uint16_t buff_len,
                       const PacketBufferPtr &pkt) {
-
-#ifndef _WINDOWS
     if (connected_ == false) {
         //queue the data?
         return (pkt->data_len());
@@ -234,16 +217,11 @@ int Pkt0Socket::Send(uint8_t *buff, uint16_t buff_len,
                        boost::asio::placeholders::error,
                        boost::asio::placeholders::bytes_transferred,
                        pkt, buff));
-
     return (buff_len + pkt->data_len());
-#else
-    return 0;
-#endif
 }
 
 void Pkt0Socket::ReadHandler(const boost::system::error_code &error,
                              std::size_t length) {
-#ifndef _WINDOWS
     if (error) {
         TAP_TRACE(Err,
                   "Packet Error <" + error.message() + "> reading packet");
@@ -264,16 +242,15 @@ void Pkt0Socket::ReadHandler(const boost::system::error_code &error,
     }
 
     AsyncRead();
-#endif
 }
 
 void Pkt0Socket::WriteHandler(const boost::system::error_code &error,
                               std::size_t length, PacketBufferPtr pkt,
                               uint8_t *buff) {
-#ifndef _WINDOWS
     if (error)
         TAP_TRACE(Err,
                   "Packet Error <" + error.message() + "> sending packet");
     delete [] buff;
-#endif
 }
+
+#endif // _WIN32
