@@ -90,7 +90,7 @@ private:
     bool connected_;
 
 #ifndef _WIN32
-	boost::asio::local::datagram_protocol::socket socket_;
+    boost::asio::local::datagram_protocol::socket socket_;
 #endif
 
     boost::scoped_ptr<Timer> timer_;

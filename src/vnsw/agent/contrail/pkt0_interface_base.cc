@@ -7,7 +7,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <assert.h>
-
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
