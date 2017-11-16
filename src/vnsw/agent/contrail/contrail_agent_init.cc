@@ -54,7 +54,7 @@ void ContrailAgentInit::FactoryInit() {
     }
     if (agent_param()->vrouter_on_nic_mode() || agent_param()->vrouter_on_host_dpdk()) {
 #ifdef _WIN32
-        LOG(DEBUG, "KSyncTcp is not supported on Windows");
+        LOG(ERROR, "KSyncTcp is not supported on Windows");
         assert(0);
 #else
         AgentObjectFactory::Register<KSync>
@@ -74,7 +74,7 @@ void ContrailAgentInit::CreateModules() {
 
     if (agent_param()->vrouter_on_host_dpdk()) {
 #ifdef _WIN32
-        LOG(DEBUG, "Pkt0Socket is not supported on Windows");
+        LOG(ERROR, "Pkt0Socket is not supported on Windows");
         assert(0);
 #else
         pkt0_.reset(new Pkt0Socket("unix",
