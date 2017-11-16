@@ -11,9 +11,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-//WINDOWS #include <sys/ipc.h>
-//WINDOWS #include <sys/shm.h>
-//WINDOWS #include <asm/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <asm/types.h>
 #include <boost/asio.hpp>
 #include <boost/asio/buffer.hpp>
 

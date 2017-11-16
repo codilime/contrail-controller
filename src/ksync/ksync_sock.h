@@ -18,6 +18,7 @@
 #include <sandesh/common/vns_constants.h>
 #include <sandesh/common/vns_types.h>
 #include <io/tcp_session.h>
+#include <nl_util.h>
 #include "vr_types.h"
 #include "ksync_tx_queue.h"
 
@@ -221,11 +222,11 @@ public:
 
     // Number of messages that can be bunched together
     // TODO: JW-990: Windows implementation currently supports singular message transfers
-    #ifndef _WIN32
-    const static unsigned kMaxBulkMsgCount = 16;
-    #else
+#ifdef _WIN32
     const static unsigned kMaxBulkMsgCount = 1;
-    #endif
+#else
+    const static unsigned kMaxBulkMsgCount = 16;
+#endif
     // Max size of buffer that can be bunched together
     const static unsigned kMaxBulkMsgSize = (4*1024);
     // Sequence number to denote invalid builk-context
@@ -380,7 +381,6 @@ public:
     static void NetlinkDecoder(char *data, SandeshContext *ctxt);
     static void NetlinkBulkDecoder(char *data, SandeshContext *ctxt, bool more);
     static void Init(boost::asio::io_service &ios, int protocol);
-
 private:
 #ifndef _WIN32
     boost::asio::netlink::raw::socket sock_;
@@ -421,9 +421,7 @@ protected:
     virtual int MsgLength(Buffer buffer, int offset);
 
     virtual const int GetHeaderLenSize() {
-
-   //WINDOWS     return sizeof(struct nlmsghdr);
-		return 0; //WINDOWS
+        return sizeof(struct nlmsghdr);
     }
 
     virtual const int GetMaxMessageSize() {

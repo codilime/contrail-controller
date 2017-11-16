@@ -41,10 +41,9 @@
 //
 #ifndef controller_src_ksync_ksync_tx_queue_h
 #define controller_src_ksync_ksync_tx_queue_h
-#ifndef _WINDOWS
+
 #include <sys/eventfd.h>
-#include <boost/thread.hpp>
-#endif
+#include <pthread.h>
 #include <algorithm>
 #include <vector>
 #include <set>
@@ -93,7 +92,7 @@ private:
     KSyncSock *sock_;
     Queue queue_;
     tbb::atomic<bool> shutdown_;
-  //WINDOWS  pthread_t event_thread_;
+    pthread_t event_thread_;
     tbb::atomic<size_t> queue_len_;
     mutable size_t max_queue_len_;
 

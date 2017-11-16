@@ -1,10 +1,7 @@
 /*
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
-//WINDOWSFIX #include <sys/eventfd.h>
-#include <boost/asio.hpp>
-#include <windows.h>
-
+#include <sys/eventfd.h>
 #include <algorithm>
 #include <vector>
 #include <set>
@@ -63,13 +60,10 @@ void KSyncTxQueue::Init(bool use_work_queue) {
             (boost::bind(&KSyncSock::OnEmptyQueue, sock_, _1));
         return;
     }
-
-    #ifndef _WIN32
-    assert((event_fd_ = eventfd(0, (FD_CLOEXEC | EFD_SEMAPHORE))) >= 0);
+    assert((event_fd_ = eventfd(0, (EFD_CLOEXEC | EFD_SEMAPHORE))) >= 0);
 
     KSyncTxQueueTask *task = new KSyncTxQueueTask(scheduler, this);
     scheduler->Enqueue(task);
-    #endif
 }
 
 void KSyncTxQueue::Shutdown() {
@@ -82,7 +76,6 @@ void KSyncTxQueue::Shutdown() {
         return;
     }
 
-    #ifndef _WIN32
     uint64_t u = 1;
     assert(write(event_fd_, &u, sizeof(u)) == sizeof(u));
     while (queue_len_ != 0) {
@@ -93,7 +86,6 @@ void KSyncTxQueue::Shutdown() {
         usleep(1);
     }
     close(event_fd_);
-    #endif
 }
 
 bool KSyncTxQueue::EnqueueInternal(IoContext *io_context) {
@@ -109,8 +101,7 @@ bool KSyncTxQueue::EnqueueInternal(IoContext *io_context) {
     if (ncount == 1) {
         uint64_t u = 1;
         int res = 0;
-  //WINDOWS-TEMP      while ((res = write(event_fd_, &u, sizeof(u))) < (int)sizeof(u))
-		{
+        while ((res = write(event_fd_, &u, sizeof(u))) < (int)sizeof(u)) {
             int ec = errno;
             if (ec != EINTR && ec != EIO) {
                 LOG(ERROR, "KsyncTxQueue write failure : " << ec << " : "
@@ -125,13 +116,12 @@ bool KSyncTxQueue::EnqueueInternal(IoContext *io_context) {
 }
 
 bool KSyncTxQueue::Run() {
-#ifndef _WINDOWS //WINDOWS-TEMP
     while (1) {
         uint64_t u = 0;
         ssize_t num = 0;
 
         while (1) {
-           num = read(event_fd_, &u, sizeof(u));
+            num = read(event_fd_, &u, sizeof(u));
             if (num >= (int)sizeof(u)) {
                 break;
             }
@@ -160,6 +150,5 @@ bool KSyncTxQueue::Run() {
         if (t1)
             busy_time_ += (ClockMonotonicUsec() - t1);
     }
-#endif
     return true;
 }

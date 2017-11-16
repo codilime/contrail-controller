@@ -536,6 +536,7 @@ bool KSyncSockTypeMap::Validate(char *data) {
         assert(0);
         return true;
     }
+    return true;
 }
 static int IoVectorToData(char *data, uint32_t len, KSyncBufferList *iovec) {
     KSyncBufferList::iterator it = iovec->begin();
