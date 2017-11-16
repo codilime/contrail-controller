@@ -30,7 +30,6 @@
 #include "pkt/pkt_handler.h"
 #include "vrouter/ksync/nexthop_ksync.h"
 #include "vrouter/ksync/mirror_ksync.h"
-#include "vnswif_listener.h"
 #include "vrouter/ksync/ksync_init.h"
 
 // Name of clone device for creating tap interface

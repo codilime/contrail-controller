@@ -18,7 +18,10 @@
 #include <vrouter/ksync/qos_queue_ksync.h>
 #include <vrouter/ksync/forwarding_class_ksync.h>
 #include <vrouter/ksync/qos_config_ksync.h>
+
+#ifndef _WIN32
 #include "vnswif_listener.h"
+#endif
 
 class KSyncFlowMemory;
 class FlowTableKSyncObject;
