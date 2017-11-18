@@ -29,7 +29,7 @@ env.Prepend(LIBS=['thrift','xmpp', 'peer_sandesh', 'table_sandesh',
 
 if sys.platform != 'darwin':
     if sys.platform.startswith('win'):
-        env.Prepend(LIBS=['windowsstubs'])
+        env.Append(LIBS=['windowsstubs'])
     else:
         env.Append(LIBS=['rt'])
     env.Prepend(LIBS=['ksync', 'ksyncnl'])

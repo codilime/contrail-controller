@@ -46,14 +46,15 @@ void ContrailAgentInit::ProcessOptions
 void ContrailAgentInit::FactoryInit() {
     if (agent()->tsn_enabled() == false) {
         AgentObjectFactory::Register<AgentUveBase>
-            (boost::forward_adapter<boost::factory<AgentUveStats *> >(boost::factory<AgentUveStats *>()));
+            (boost::forward_adapter<boost::factory<AgentUveStats *> >
+                (boost::factory<AgentUveStats *>()));
     } else {
         AgentObjectFactory::Register<AgentUveBase>
             (boost::forward_adapter<boost::factory<AgentUve *> >(boost::factory<AgentUve *>()));
     }
     if (agent_param()->vrouter_on_nic_mode() || agent_param()->vrouter_on_host_dpdk()) {
 #ifdef _WIN32
-        LOG(DEBUG, "KSyncTcp is not supported on Windows");
+        LOG(ERROR, "KSyncTcp is not supported on Windows");
         assert(0);
 #else
         AgentObjectFactory::Register<KSync>
@@ -64,15 +65,21 @@ void ContrailAgentInit::FactoryInit() {
             (boost::forward_adapter<boost::factory<KSync *> >(boost::factory<KSync *>()));
     }
     AgentObjectFactory::Register<FlowStatsCollector>
-        (boost::forward_adapter<boost::factory<FlowStatsCollector *> >(boost::factory<FlowStatsCollector *>()));
+        (boost::forward_adapter<boost::factory<FlowStatsCollector *> >
+            (boost::factory<FlowStatsCollector *>()));
 }
 
 void ContrailAgentInit::CreateModules() {
     ContrailInitCommon::CreateModules();
 
     if (agent_param()->vrouter_on_host_dpdk()) {
+#ifdef _WIN32
+        LOG(ERROR, "Pkt0Socket is not supported on Windows");
+        assert(0);
+#else
         pkt0_.reset(new Pkt0Socket("unix",
                     agent()->event_manager()->io_service()));
+#endif
     } else if (agent_param()->vrouter_on_nic_mode()) {
         pkt0_.reset(new Pkt0RawInterface("pkt0",
                     agent()->event_manager()->io_service()));
@@ -81,14 +88,11 @@ void ContrailAgentInit::CreateModules() {
                     agent()->event_manager()->io_service()));
     }
     agent()->pkt()->set_control_interface(pkt0_.get());
-	Agent *pAgent = agent();//we need to pass an lvalue and not an rvalue to the reset function, so that
-	                        //there is problem converting from Agent* to Agent*&
-	uint32_t kDefaultIntervalL = AgentUveBase::kDefaultInterval, kIncrementalIntervalL = AgentUveBase::kIncrementalInterval;
-	uint64_t kBandwidthIntervalL = AgentUveBase::kBandwidthInterval;
+
     uve_.reset(AgentObjectFactory::Create<AgentUveBase>
-               (pAgent, kBandwidthIntervalL,
-				   kDefaultIntervalL,
-				   kIncrementalIntervalL));
+               (agent(), AgentUveBase::kBandwidthInterval,
+                AgentUveBase::kDefaultInterval,
+                AgentUveBase::kIncrementalInterval));
     agent()->set_uve(uve_.get());
 
     if (agent()->tsn_enabled() == false) {

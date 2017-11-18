@@ -95,12 +95,14 @@ void KSync::Init(bool create_vhost) {
     VRouterInterfaceSnapshot();
     InitFlowMem();
     ResetVRouter(true);
-    // On Windows, vhost interface is created when Hyper-V switch is created.
+
+// On Windows, vhost interface is created when Hyper-V switch is created.
 #ifndef _WIN32
     if (create_vhost) {
         CreateVhostIntf();
     }
 #endif
+
     interface_ksync_obj_.get()->Init();
     for (uint16_t i = 0; i < flow_table_ksync_obj_list_.size(); i++) {
         FlowTable *flow_table = agent_->pkt()->get_flow_proto()->GetTable(i);
@@ -229,11 +231,11 @@ void KSync::ResetVRouter(bool run_sync_mode) {
     KSyncSock::Start(run_sync_mode);
 }
 
-void KSync::VnswInterfaceListenerInit() {
 #ifndef _WIN32
+void KSync::VnswInterfaceListenerInit() {
     vnsw_interface_listner_->Init();
-#endif
 }
+#endif
 
 void KSync::CreateVhostIntf() {
 #if defined(__linux__)
