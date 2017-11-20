@@ -27,7 +27,7 @@ public:
                               uint32_t i);
     virtual ~ForwardingClassKSyncEntry();
 
-    KSyncDBObject *GetObject();
+    KSyncDBObject *GetObject() const;
     virtual bool IsLess(const KSyncEntry &rhs) const;
     virtual std::string ToString() const;
     virtual KSyncEntry *UnresolvedReference();
@@ -50,6 +50,7 @@ private:
     uint32_t vlan_priority_;
     uint32_t mpls_exp_;
     KSyncEntryPtr qos_queue_ksync_;
+    uint16_t nic_queue_id_;
     DISALLOW_COPY_AND_ASSIGN(ForwardingClassKSyncEntry);
 };
 

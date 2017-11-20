@@ -12,12 +12,12 @@
 #include <vrouter/ksync/route_ksync.h>
 #include <vrouter/ksync/vxlan_ksync.h>
 #include <vrouter/ksync/vrf_assign_ksync.h>
-#include <vrouter/ksync/interface_scan.h>
 #include <vrouter/ksync/ksync_flow_index_manager.h>
 #include <oper/agent_profile.h>
 #include <vrouter/ksync/qos_queue_ksync.h>
 #include <vrouter/ksync/forwarding_class_ksync.h>
 #include <vrouter/ksync/qos_config_ksync.h>
+#include <vrouter/ksync/ksync_bridge_table.h>
 
 #ifndef _WIN32
 #include "vnswif_listener.h"
@@ -25,6 +25,7 @@
 
 class KSyncFlowMemory;
 class FlowTableKSyncObject;
+class BridgeRouteAuditKSyncObject;
 
 class KSync {
 public:
@@ -54,9 +55,6 @@ public:
     FlowTableKSyncObject *flow_table_ksync_obj(uint16_t index) const {
         return flow_table_ksync_obj_list_[index];
     }
-    InterfaceKScan *interface_scanner() const {
-        return interface_scanner_.get();
-    }
 #ifndef _WIN32
     VnswInterfaceListener *vnsw_interface_listner() const  {
         return vnsw_interface_listner_.get();
@@ -81,6 +79,14 @@ public:
     QosConfigKSyncObject* qos_config_ksync_obj() const {
         return qos_config_ksync_obj_.get();
     }
+
+    BridgeRouteAuditKSyncObject* bridge_route_audit_ksync_obj() const {
+        return bridge_route_audit_ksync_obj_.get();
+    }
+
+    KSyncBridgeMemory* ksync_bridge_memory() const {
+        return ksync_bridge_memory_.get();
+    }
 protected:
     Agent *agent_;
     boost::scoped_ptr<InterfaceKSyncObject> interface_ksync_obj_; 
@@ -91,7 +97,6 @@ protected:
     boost::scoped_ptr<VrfKSyncObject> vrf_ksync_obj_;
     boost::scoped_ptr<VxLanKSyncObject> vxlan_ksync_obj_;
     boost::scoped_ptr<VrfAssignKSyncObject> vrf_assign_ksync_obj_;
-    boost::scoped_ptr<InterfaceKScan> interface_scanner_;
 #ifndef _WIN32
     boost::scoped_ptr<VnswInterfaceListener> vnsw_interface_listner_;
 #endif
@@ -100,11 +105,14 @@ protected:
     boost::scoped_ptr<QosQueueKSyncObject> qos_queue_ksync_obj_;
     boost::scoped_ptr<ForwardingClassKSyncObject> forwarding_class_ksync_obj_;
     boost::scoped_ptr<QosConfigKSyncObject> qos_config_ksync_obj_;
+    boost::scoped_ptr<BridgeRouteAuditKSyncObject>
+        bridge_route_audit_ksync_obj_;
+    boost::scoped_ptr<KSyncBridgeMemory> ksync_bridge_memory_;
     virtual void InitFlowMem();
-    void VRouterInterfaceSnapshot();
     void ResetVRouter(bool run_sync_mode);
     int Encode(Sandesh &encoder, uint8_t *buf, int buf_len);
 private:
+    void InitVrouterOps(vrouter_ops *v);
     void NetlinkInit();
     void CreateVhostIntf();
     DISALLOW_COPY_AND_ASSIGN(KSync);

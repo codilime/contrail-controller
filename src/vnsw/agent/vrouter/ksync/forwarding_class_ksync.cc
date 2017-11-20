@@ -9,6 +9,7 @@
 #include <ksync/ksync_netlink.h>
 #include <ksync/ksync_sock.h>
 #include <vrouter/ksync/ksync_init.h>
+#include <init/agent_param.h>
 #include "vrouter/ksync/qos_queue_ksync.h"
 #include "vrouter/ksync/forwarding_class_ksync.h"
 
@@ -33,7 +34,7 @@ ForwardingClassKSyncEntry::ForwardingClassKSyncEntry(
 ForwardingClassKSyncEntry::~ForwardingClassKSyncEntry() {
 }
 
-KSyncDBObject *ForwardingClassKSyncEntry::GetObject() {
+KSyncDBObject *ForwardingClassKSyncEntry::GetObject() const {
     return ksync_obj_;
 }
 
@@ -83,6 +84,19 @@ bool ForwardingClassKSyncEntry::Sync(DBEntry *e) {
         ret = true;
     }
 
+    uint16_t nic_queue = Agent::kInvalidQueueId;
+    if (fc->qos_queue_ref()) {
+        nic_queue = fc->qos_queue_ref()->nic_queue_id();
+    } else {
+        nic_queue = (static_cast<QosQueueKSyncObject *>(ksync_obj_))->ksync()->
+                         agent()->params()->default_nic_queue();
+    }
+
+    if (nic_queue_id_ != nic_queue) {
+        nic_queue_id_ = nic_queue;
+        ret = true;
+    }
+
     return ret;
 }
 
@@ -108,14 +122,7 @@ int ForwardingClassKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_le
     encoder.set_fmr_mpls_qos(mpls_exp_list);
 
     std::vector<int8_t> qos_queue_list;
-    const QosQueueKSyncEntry *qos_queue =
-         static_cast<const QosQueueKSyncEntry *>(qos_queue_ksync_.get());
-    if (qos_queue) {
-        qos_queue_list.push_back(qos_queue->id());
-    } else {
-        //Default for now
-        qos_queue_list.push_back(0);
-    }
+    qos_queue_list.push_back(nic_queue_id_);
     encoder.set_fmr_queue_id(qos_queue_list);
 
     int error = 0;

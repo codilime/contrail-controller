@@ -30,8 +30,10 @@
 #include <ksync/ksync_object.h>
 #include <ksync/ksync_netlink.h>
 #include <ksync/ksync_sock.h>
+#include <init/agent_param.h>
 
 #include "ksync_init.h"
+#include "vrouter/ksync/bridge_route_audit_ksync.h"
 #include "vrouter/ksync/interface_ksync.h"
 #include "vrouter/ksync/route_ksync.h"
 #include "vrouter/ksync/mirror_ksync.h"
@@ -56,15 +58,16 @@ KSync::KSync(Agent *agent)
       vrf_ksync_obj_(new VrfKSyncObject(this)),
       vxlan_ksync_obj_(new VxLanKSyncObject(this)),
       vrf_assign_ksync_obj_(new VrfAssignKSyncObject(this)),
-      interface_scanner_(new InterfaceKScan(agent)),
 #ifndef _WIN32
       vnsw_interface_listner_(new VnswInterfaceListener(agent)),
 #endif
-      ksync_flow_memory_(new KSyncFlowMemory(this)),
+      ksync_flow_memory_(new KSyncFlowMemory(this, 0)),
       ksync_flow_index_manager_(new KSyncFlowIndexManager(this)),
       qos_queue_ksync_obj_(new QosQueueKSyncObject(this)),
       forwarding_class_ksync_obj_(new ForwardingClassKSyncObject(this)),
-      qos_config_ksync_obj_(new QosConfigKSyncObject(this)) {
+      qos_config_ksync_obj_(new QosConfigKSyncObject(this)),
+      bridge_route_audit_ksync_obj_(new BridgeRouteAuditKSyncObject(this)),
+      ksync_bridge_memory_(new KSyncBridgeMemory(this, 1)) {
       for (uint16_t i = 0; i < agent->flow_thread_count(); i++) {
           FlowTableKSyncObject *obj = new FlowTableKSyncObject(this);
           flow_table_ksync_obj_list_.push_back(obj);
@@ -92,7 +95,6 @@ void KSync::RegisterDBClients(DB *db) {
 
 void KSync::Init(bool create_vhost) {
     NetlinkInit();
-    VRouterInterfaceSnapshot();
     InitFlowMem();
     ResetVRouter(true);
 
@@ -110,6 +112,7 @@ void KSync::Init(bool create_vhost) {
         flow_table_ksync_obj_list_[i]->Init();
     }
     ksync_flow_memory_.get()->Init();
+    ksync_bridge_memory_.get()->Init();
 }
 
 void KSync::InitDone() {
@@ -118,7 +121,7 @@ void KSync::InitDone() {
         flow_table_ksync_obj_list_[i]->set_flow_table(flow_table);
         flow_table->set_ksync_object(flow_table_ksync_obj_list_[i]);
     }
-    uint32_t count = ksync_flow_memory_->flow_table_entries_count();
+    uint32_t count = ksync_flow_memory_->table_entries_count();
     ksync_flow_index_manager_->InitDone(count);
     AgentProfile *profile = agent_->oper_db()->agent_profile();
     profile->RegisterKSyncStatsCb(boost::bind(&KSync::SetProfileData,
@@ -127,7 +130,8 @@ void KSync::InitDone() {
 }
 
 void KSync::InitFlowMem() {
-    ksync_flow_memory_.get()->InitFlowMem();
+    ksync_flow_memory_.get()->InitMem();
+    ksync_bridge_memory_.get()->InitMem();
 }
 
 void KSync::NetlinkInit() {
@@ -136,9 +140,12 @@ void KSync::NetlinkInit() {
     event_mgr = agent_->event_manager();
     boost::asio::io_service &io = *event_mgr->io_service();
 
-    KSyncSockNetlink::Init(io, NETLINK_GENERIC);
-    KSyncSock::SetAgentSandeshContext
-        (new KSyncSandeshContext(ksync_flow_memory_.get()));
+    KSyncSockNetlink::Init(io, NETLINK_GENERIC,
+                           agent_->params()->ksync_thread_cpu_pin_policy());
+    for (int i = 0; i < KSyncSock::kRxWorkQueueCount; i++) {
+        KSyncSock::SetAgentSandeshContext
+            (new KSyncSandeshContext(this), i);
+    }
     GenericNetlinkInit();
 }
 
@@ -165,44 +172,65 @@ void KSync::SetProfileData(ProfileData *data) {
         tx_queue->ClearStats();
     }
 
-    const KSyncSock::KSyncReceiveQueue *rx_queue =
-        sock->get_receive_work_queue(0);
     stats = &data->ksync_rx_queue_count_;
-    stats->name_ = rx_queue->Description();
-    stats->queue_count_ = rx_queue->Length();
-    stats->enqueue_count_ = rx_queue->NumEnqueues();
-    stats->dequeue_count_ = rx_queue->NumDequeues();
-    stats->max_queue_count_ = rx_queue->max_queue_len();
-    stats->start_count_ = rx_queue->task_starts();
-    stats->busy_time_ = rx_queue->busy_time();
-    rx_queue->set_measure_busy_time(agent()->MeasureQueueDelay());
-    if (agent()->MeasureQueueDelay()) {
-        rx_queue->ClearStats();
+    stats->queue_count_ = 0;
+    stats->enqueue_count_ = 0;
+    stats->dequeue_count_ = 0;
+    stats->max_queue_count_ = 0;
+    stats->start_count_ = 0;
+    stats->busy_time_ = 0;
+
+    for (int i = 0; i < IoContext::MAX_WORK_QUEUES; i++) {
+        const KSyncSock::KSyncReceiveQueue *rx_queue =
+            sock->get_receive_work_queue(i);
+        if (i == 0)
+            stats->name_ = rx_queue->Description();
+        stats->queue_count_ += rx_queue->Length();
+        stats->enqueue_count_ += rx_queue->NumEnqueues();
+        stats->dequeue_count_ += rx_queue->NumDequeues();
+        if (stats->max_queue_count_ < rx_queue->max_queue_len()) {
+            stats->max_queue_count_ = rx_queue->max_queue_len();
+        }
+        stats->start_count_ += rx_queue->task_starts();
+        stats->busy_time_ += rx_queue->busy_time();
+        rx_queue->set_measure_busy_time(agent()->MeasureQueueDelay());
+        if (agent()->MeasureQueueDelay()) {
+            rx_queue->ClearStats();
+        }
     }
 }
 
-void KSync::VRouterInterfaceSnapshot() {
-    interface_scanner_.get()->Init();
-
-    int len = 0;
-    KSyncSandeshContext *ctxt = static_cast<KSyncSandeshContext *>
-                                (KSyncSock::GetAgentSandeshContext());
-    ctxt->Reset();
-    KSyncSock *sock = KSyncSock::Get(0);
-    do {
-        vr_interface_req req;
-        req.set_h_op(sandesh_op::DUMP);
-        req.set_vifr_idx(0);
-        req.set_vifr_marker(ctxt->context_marker());
-        uint8_t msg[KSYNC_DEFAULT_MSG_SIZE];
-        len = Encode(req, msg, KSYNC_DEFAULT_MSG_SIZE);
-        sock->BlockingSend((char *)msg, len);
-        if (sock->BlockingRecv()) {
-            LOG(ERROR, "Error getting interface dump from VROUTER");
-            return;
-        }
-    } while (ctxt->response_code() & VR_MESSAGE_DUMP_INCOMPLETE);
-    ctxt->Reset();
+void KSync::InitVrouterOps(vrouter_ops *v) {
+    v->set_vo_rid(0);
+    v->set_vo_mpls_labels(-1);
+    v->set_vo_mpls_labels(-1);
+    v->set_vo_nexthops(-1);
+    v->set_vo_bridge_entries(-1);
+    v->set_vo_oflow_bridge_entries(-1);
+    v->set_vo_flow_entries(-1);
+    v->set_vo_oflow_entries(-1);
+    v->set_vo_interfaces(-1);
+    v->set_vo_mirror_entries(-1);
+    v->set_vo_vrfs(-1);
+    v->set_vo_log_level(0);
+    v->set_vo_perfr(-1);
+    v->set_vo_perfs(-1);
+    v->set_vo_from_vm_mss_adj(-1);
+    v->set_vo_to_vm_mss_adj(-1);
+    v->set_vo_perfr1(-1);
+    v->set_vo_perfr2(-1);
+    v->set_vo_perfr3(-1);
+    v->set_vo_perfp(-1);
+    v->set_vo_perfq1(-1);
+    v->set_vo_perfq2(-1);
+    v->set_vo_perfq3(-1);
+    v->set_vo_udp_coff(-1);
+    v->set_vo_flow_hold_limit(-1);
+    v->set_vo_mudp(-1);
+    v->set_vo_burst_tokens(-1);
+    v->set_vo_burst_interval(-1);
+    v->set_vo_burst_step(-1);
+    v->set_vo_memory_alloc_checks(-1);
 }
 
 void KSync::ResetVRouter(bool run_sync_mode) {
@@ -217,6 +245,18 @@ void KSync::ResetVRouter(bool run_sync_mode) {
     if (sock->BlockingRecv()) {
         LOG(ERROR, "Error resetting VROUTER. Skipping KSync Start");
         return;
+    }
+
+    //configure vrouter with priority_tagging configuration
+    encoder.set_h_op(sandesh_op::ADD);
+    encoder.set_vo_priority_tagging(agent_->params()->qos_priority_tagging());
+    //Initialize rest of the fields to values so that vrouter does not take any
+    //action on those field values
+    InitVrouterOps(&encoder);
+    len = Encode(encoder, msg, KSYNC_DEFAULT_MSG_SIZE);
+    sock->BlockingSend((char *)msg, len);
+    if (sock->BlockingRecv()) {
+        LOG(ERROR, "Error setting Qos priority-tagging for vrouter");
     }
 
     //Get configured mpls, vmi, vni and nexthop parameters
@@ -339,6 +379,7 @@ void KSync::Shutdown() {
     nh_ksync_obj_.reset(NULL);
     mpls_ksync_obj_.reset(NULL);
     ksync_flow_memory_.reset(NULL);
+    ksync_bridge_memory_.reset(NULL);
     mirror_ksync_obj_.reset(NULL);
     vrf_assign_ksync_obj_.reset(NULL);
     vxlan_ksync_obj_.reset(NULL);
@@ -374,6 +415,7 @@ KSyncTcp::KSyncTcp(Agent *agent): KSync(agent) {
 
 void KSyncTcp::InitFlowMem() {
     ksync_flow_memory_.get()->MapSharedMemory();
+    ksync_bridge_memory_.get()->MapSharedMemory();
 }
 
 void KSyncTcp::TcpInit() {
@@ -383,11 +425,14 @@ void KSyncTcp::TcpInit() {
     boost::asio::ip::address ip;
     ip = agent_->vrouter_server_ip();
     uint32_t port = agent_->vrouter_server_port();
-    KSyncSockTcp::Init(event_mgr, ip, port);
+    KSyncSockTcp::Init(event_mgr, ip, port,
+                       agent_->params()->ksync_thread_cpu_pin_policy());
     KSyncSock::SetNetlinkFamilyId(24);
 
-    KSyncSock::SetAgentSandeshContext
-        (new KSyncSandeshContext(ksync_flow_memory_.get()));
+    for (int i = 0; i < KSyncSock::kRxWorkQueueCount; i++) {
+        KSyncSock::SetAgentSandeshContext
+            (new KSyncSandeshContext(this), i);
+    }
     KSyncSockTcp *sock = static_cast<KSyncSockTcp *>(KSyncSock::Get(0));
     while (sock->connect_complete() == false) {
         sleep(1);
@@ -398,7 +443,6 @@ KSyncTcp::~KSyncTcp() { }
 
 void KSyncTcp::Init(bool create_vhost) {
     TcpInit();
-    VRouterInterfaceSnapshot();
     InitFlowMem();
     ResetVRouter(false);
     //Start async read of socket
@@ -409,5 +453,6 @@ void KSyncTcp::Init(bool create_vhost) {
         flow_table_ksync_obj_list_[i]->Init();
     }
     ksync_flow_memory_.get()->Init();
+    ksync_bridge_memory_.get()->Init();
 }
 #endif

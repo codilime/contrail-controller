@@ -34,7 +34,7 @@ public:
     InterfaceKSyncEntry *interface() const { 
         return static_cast<InterfaceKSyncEntry *>(interface_.get());
     }
-    KSyncDBObject *GetObject();
+    KSyncDBObject *GetObject() const;
 
     virtual bool IsLess(const KSyncEntry &rhs) const;
     virtual std::string ToString() const;
@@ -48,7 +48,11 @@ public:
     void SetEncap(InterfaceKSyncEntry *if_ksync, std::vector<int8_t> &encap);
     bool is_bridge() const { return is_bridge_; }
 
-    int MsgLen() { return kDefaultNhMsgSize; }
+    int MsgLen() {
+        // for larger component NH lists, increase message length
+        return kDefaultNhMsgSize * ((component_nh_list_.size() / 128) + 1);
+    }
+    uint8_t SetEcmpFieldsToUse();
 private:
     class KSyncComponentNH {
     public:
@@ -99,6 +103,14 @@ private:
     ComponentNHKeyList component_nh_key_list_;
     bool vxlan_nh_;
     bool flood_unknown_unicast_;
+    EcmpHashFields ecmp_hash_fieds_;
+    KSyncEntryPtr pbb_child_nh_;
+    uint32_t isid_;
+    uint32_t pbb_label_;
+    bool learning_enabled_;
+    bool need_pbb_tunnel_;
+    bool etree_leaf_;
+    bool layer2_control_word_;
     DISALLOW_COPY_AND_ASSIGN(NHKSyncEntry);
 };
 

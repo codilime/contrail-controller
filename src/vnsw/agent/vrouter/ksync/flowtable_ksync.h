@@ -28,7 +28,7 @@ class KSyncFlowIndexManager;
 struct FlowKSyncResponseInfo {
     int ksync_error_;
     uint32_t flow_handle_;
-    uint32_t gen_id_;
+    uint8_t gen_id_;
     uint64_t evict_flow_bytes_;
     uint64_t evict_flow_packets_;
     int32_t evict_flow_oflow_;
@@ -62,7 +62,7 @@ public:
         hash_id_ = hash_id;
     }
     int Encode(sandesh_op::type op, char *buf, int buf_len);
-    KSyncObject *GetObject();
+    KSyncObject *GetObject() const;
 
     std::string ToString() const;
     bool IsLess(const KSyncEntry &rhs) const;
@@ -70,8 +70,18 @@ public:
     int ChangeMsg(char *buf, int buf_len);
     int DeleteMsg(char *buf, int buf_len);
     void SetPcapData(FlowEntryPtr fe, std::vector<int8_t> &data);
+    // For flows allocate buffers in ksync-sock context
+    virtual bool pre_alloc_rx_buffer() const { return true; }
+    // KSync flow responses must be processed in multiple ksync response queues
+    // to support scaling. Distribute the flows based on flow-table index
+    virtual uint32_t GetTableIndex() const;
     virtual bool Sync();
     virtual KSyncEntry *UnresolvedReference();
+    virtual bool ShouldReEvalBackReference() const {
+        // no need to re-eval unresolved reference for flow entries, as they
+        // do not depend on anything
+        return false;
+    }
     bool AllowDeleteStateComp() {return false;}
     virtual void ErrorHandler(int, uint32_t, KSyncEvent) const;
     virtual std::string VrouterError(uint32_t error) const;
@@ -87,7 +97,7 @@ public:
         ksync_response_info_.Reset();
     }
     void SetKSyncResponseInfo(int ksync_error, uint32_t flow_handle,
-                              uint32_t gen_id, uint64_t evict_flow_bytes,
+                              uint8_t gen_id, uint64_t evict_flow_bytes,
                               uint64_t evict_flow_packets,
                               int32_t evict_flow_oflow) {
         ksync_response_info_.ksync_error_ = ksync_error;
@@ -108,8 +118,6 @@ public:
 private:
     friend class KSyncFlowEntryFreeList;
     friend class KSyncFlowIndexManager;
-
-    bool IgnoreVrouterError() const;
 
     FlowEntryPtr flow_entry_;
     uint8_t gen_id_;  // contains the last propagated genid from flow module
@@ -133,7 +141,7 @@ private:
     bool enable_rpf_;
     uint32_t src_nh_id_;
     FlowEvent::Event last_event_;
-    std::auto_ptr<FlowToken> token_;
+    boost::shared_ptr<Token> token_;
     FlowKSyncResponseInfo ksync_response_info_;
     FlowTableKSyncObject *ksync_obj_;
     boost::intrusive::list_member_hook<> free_list_node_;

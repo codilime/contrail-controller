@@ -58,7 +58,7 @@ public:
     bool no_arp() const { return no_arp_; }
     PhysicalInterface::EncapType encap_type() const { return encap_type_; }
 
-    KSyncDBObject *GetObject();
+    KSyncDBObject *GetObject() const;
     virtual bool Sync(DBEntry *e);
     virtual bool IsLess(const KSyncEntry &rhs) const;
     virtual std::string ToString() const;
@@ -87,12 +87,16 @@ private:
     uint32_t interface_id_;
     string interface_name_;     // Key
     uint32_t ip_;
+    Ip6Address primary_ip6_;
+    bool hc_active_;
     bool ipv4_active_;
     bool layer3_forwarding_;
     InterfaceKSyncObject *ksync_obj_;
     bool l2_active_;
     bool metadata_l2_active_;
+    bool metadata_ip_active_;
     bool bridging_;
+    VmInterface::ProxyArpMode proxy_arp_mode_;
     MacAddress mac_;
     MacAddress smac_;
     Interface::MirrorDirection mirror_direction_;
@@ -116,7 +120,15 @@ private:
     Interface::Transport transport_;
     bool flood_unknown_unicast_;
     VmInterface::FatFlowList fat_flow_list_;
+    std::set<MacAddress> aap_mac_list_;
     KSyncEntryPtr qos_config_;
+    bool learning_enabled_;
+    uint32_t isid_;
+    uint32_t pbb_cmac_vrf_;
+    MacAddress pbb_mac_;
+    bool etree_leaf_;
+    bool pbb_interface_;
+    uint8_t vhostuser_mode_;
     boost::optional<Interface::IfGuid> os_guid_;
     DISALLOW_COPY_AND_ASSIGN(InterfaceKSyncEntry);
 };

@@ -17,6 +17,7 @@
 #include "nl_util.h"
 #include "vr_types.h"
 #include "vr_flow.h"
+#include "vr_bridge.h"
 
 using boost::asio::ip::udp;
 
@@ -53,8 +54,14 @@ private:
 
 struct TestRouteCmp {
     bool operator()(const vr_route_req &lhs, const vr_route_req &rhs) const {
+        if (lhs.get_rtr_family() != rhs.get_rtr_family()) {
+            return lhs.get_rtr_family() < rhs.get_rtr_family();
+        }
         if (lhs.get_rtr_vrf_id() != rhs.get_rtr_vrf_id()) {
             return lhs.get_rtr_vrf_id() < rhs.get_rtr_vrf_id();
+        }
+        if (lhs.get_rtr_family() == AF_BRIDGE) {
+            return lhs.get_rtr_mac() < rhs.get_rtr_mac();
         }
         if (lhs.get_rtr_prefix_len() != rhs.get_rtr_prefix_len()) {
             return lhs.get_rtr_prefix_len() < rhs.get_rtr_prefix_len();
@@ -184,6 +191,11 @@ public:
     static void ResetEvictedFlag(int idx);
     static void FlowNatResponse(uint32_t seq_num, vr_flow_req *req);
     static void SetUnderlaySourcePort(int idx, int port);
+    vr_bridge_entry* BridgeMmapAlloc(int size);
+    void BridgeMmapFree();
+    vr_bridge_entry* GetBridgeEntry(int idx);
+    void SetBridgeEntry(uint32_t idx, vr_route_req *req, bool set);
+    void UpdateBridgeEntryInactiveFlag(int idx, bool set);
     friend class MockDumpHandlerBase;
     friend class RouteDumpHandler;
     friend class VrfAssignDumpHandler;
@@ -220,6 +232,7 @@ private:
     bool is_incremental_index_;
     static KSyncSockTypeMap *singleton_;
     static vr_flow_entry *flow_table_;
+    vr_bridge_entry *bridge_table_;
     static int error_code_;
     // List of nl_client messages to be sent. In case of bulk message, all
     // responses are initially put into this list and finally NL_MULTI
@@ -245,6 +258,8 @@ public:
     virtual Sandesh* GetFirst(Sandesh *);
     virtual Sandesh* GetNext(Sandesh *);
     virtual Sandesh* Get(int idx);
+private:
+    vr_drop_stats_req drop_stats_req;
 };
 
 class NHDumpHandler : public MockDumpHandlerBase {
@@ -418,9 +433,28 @@ private:
 
 class KSyncUserSockRouteContext : public KSyncUserSockContext {
 public:
-    KSyncUserSockRouteContext(uint32_t seq_num, vr_route_req *req) : KSyncUserSockContext(seq_num) {
+    KSyncUserSockRouteContext(uint32_t seq_num, vr_route_req *req) :
+        KSyncUserSockContext(seq_num) {
         if (req) {
-            req_ = new vr_route_req(*req);
+            /* For delete of AF_BRIDGE entries, we need rtr_index of
+             * vr_route_req to find vr_bridge_entry and reset its flags. The
+             * rtr_index is configured while doing add of AF_BRIDGE entry. When
+             * delete of AF_BRIDGE arrives, we do lookup of vr_route_req from
+             * our tree to figure out the rtr_index */
+            if ((req->get_h_op() == sandesh_op::DELETE) &&
+                (req->get_rtr_family() == AF_BRIDGE)) {
+                KSyncSockTypeMap *sock = KSyncSockTypeMap::GetKSyncSockTypeMap();
+                KSyncSockTypeMap::ksync_rt_tree::iterator it =
+                    sock->rt_tree.find(*req);
+                assert (it != sock->rt_tree.end());
+                const vr_route_req &tmp_req = *it;
+                req_ = new vr_route_req(tmp_req);
+                /* Change the operation to DELETE after picking request from
+                 * our tree */
+                req_->set_h_op(sandesh_op::DELETE);
+            } else {
+                req_ = new vr_route_req(*req);
+            }
         } else {
             req_ = NULL;
         }

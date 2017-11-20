@@ -20,6 +20,7 @@
 #include "oper/nexthop.h"
 #include "oper/route_common.h"
 #include "oper/mirror_table.h"
+#include "oper/agent_route_walker.h"
 
 #include "vrouter/ksync/interface_ksync.h"
 #include "vrouter/ksync/nexthop_ksync.h"
@@ -45,7 +46,8 @@ RouteKSyncEntry::RouteKSyncEntry(RouteKSyncObject* obj,
     tunnel_type_(entry->tunnel_type_),
     wait_for_traffic_(entry->wait_for_traffic_),
     local_vm_peer_route_(entry->local_vm_peer_route_),
-    flood_(entry->flood_), ethernet_tag_(entry->ethernet_tag_) {
+    flood_(entry->flood_), ethernet_tag_(entry->ethernet_tag_),
+    layer2_control_word_(entry->layer2_control_word_) {
 }
 
 RouteKSyncEntry::RouteKSyncEntry(RouteKSyncObject* obj, const AgentRoute *rt) :
@@ -53,7 +55,7 @@ RouteKSyncEntry::RouteKSyncEntry(RouteKSyncObject* obj, const AgentRoute *rt) :
     vrf_id_(rt->vrf_id()), mac_(), nh_(NULL), label_(0), proxy_arp_(false),
     flood_dhcp_(false), tunnel_type_(TunnelType::DefaultType()),
     wait_for_traffic_(false), local_vm_peer_route_(false),
-    flood_(false), ethernet_tag_(0) {
+    flood_(false), ethernet_tag_(0), layer2_control_word_(false) {
     boost::system::error_code ec;
     rt_type_ = rt->GetTableType();
     switch (rt_type_) {
@@ -98,7 +100,7 @@ RouteKSyncEntry::RouteKSyncEntry(RouteKSyncObject* obj, const AgentRoute *rt) :
 RouteKSyncEntry::~RouteKSyncEntry() {
 }
 
-KSyncDBObject *RouteKSyncEntry::GetObject() {
+KSyncDBObject *RouteKSyncEntry::GetObject() const {
     return ksync_obj_;
 }
 
@@ -312,9 +314,17 @@ bool RouteKSyncEntry::BuildArpFlags(const DBEntry *e, const AgentPath *path,
         } else {
             // Non local-route. Set flags based on the route
             proxy_arp = rt->proxy_arp();
-            flood = rt->ipam_subnet_route();
+            flood = rt->ipam_host_route();
         }
         break;
+    }
+
+    // There is an exception for IPAM subnet routes.
+    // IPAM subnet routes always result in flood of ARP even if the route
+    // is ECMP (resulting from gateway routes)
+    if (rt->ipam_subnet_route()) {
+        proxy_arp = false;
+        flood = true;
     }
 
     // If the route crosses a VN, we want packet to be routed. So, override
@@ -423,13 +433,29 @@ bool RouteKSyncEntry::Sync(DBEntry *e) {
         ret = true;
     }
 
+    if (route->GetActivePath()) {
+        if (layer2_control_word_ != route->GetActivePath()->layer2_control_word()) {
+            layer2_control_word_ = route->GetActivePath()->layer2_control_word();
+            ret = true;
+        }
+    }
+
     if (rt_type_ == Agent::INET4_UNICAST || rt_type_ == Agent::INET6_UNICAST) {
         VrfKSyncObject *obj = ksync_obj_->ksync()->vrf_ksync_obj();
         const InetUnicastRouteEntry *uc_rt =
             static_cast<const InetUnicastRouteEntry *>(e);
         MacAddress mac = MacAddress::ZeroMac();
+        bool wait_for_traffic = false;
+
         if (obj->RouteNeedsMacBinding(uc_rt)) {
             mac = obj->GetIpMacBinding(uc_rt->vrf(), addr_);
+            wait_for_traffic = obj->GetIpMacWaitForTraffic(uc_rt->vrf(), addr_);
+        }
+
+        if (wait_for_traffic_ == false &&
+            wait_for_traffic_ != wait_for_traffic) {
+            wait_for_traffic_ = wait_for_traffic;
+            ret = true;
         }
 
         if (mac != mac_) {
@@ -549,8 +575,12 @@ int RouteKSyncEntry::Encode(sandesh_op::type op, uint8_t replace_plen,
                                (nexthop->type() == NextHop::TUNNEL))) {
             flags |= VR_BE_LABEL_VALID_FLAG;
         }
-        if (flood_dhcp_)
+        if (flood_dhcp_) {
             flags |= VR_BE_FLOOD_DHCP_FLAG;
+        }
+        if (ksync_obj_->ksync()->agent()->tsn_no_forwarding_enabled()) {
+            flags |= VR_BE_EVPN_CONTROL_PROCESSING_FLAG;
+        }
     } else {
 
         if (proxy_arp_) {
@@ -564,6 +594,10 @@ int RouteKSyncEntry::Encode(sandesh_op::type op, uint8_t replace_plen,
         if (flood_) {
             flags |= VR_RT_ARP_FLOOD_FLAG;
         }
+    }
+
+    if (layer2_control_word_) {
+        flags |= VR_BE_L2_CONTROL_DATA_FLAG;
     }
 
     encoder.set_rtr_label_flags(flags);
@@ -633,9 +667,6 @@ int RouteKSyncEntry::DeleteMsg(char *buf, int buf_len) {
             route = static_cast<RouteKSyncEntry *>(found);
             if (route->IsResolved()) {
                 ksync_nh = route->nh();
-                //There is no need to check if VRF is resolved since
-                //route is resolved and its corresponding NH would be
-                //programmed
                 if(ksync_nh) {
                     return DeleteInternal(ksync_nh, route, buf, buf_len);
                 }
@@ -743,6 +774,8 @@ RouteKSyncObject::DBEntryFilter(const DBEntry *entry,
         return DBFilterIgnore;
     }
 
+    if (route->GetActivePath()->inactive())
+        return DBFilterIgnore;
     return DBFilterAccept;
 }
 
@@ -777,6 +810,12 @@ void RouteKSyncObject::EmptyTable() {
     }
 }
 
+VrfKSyncObject::VrfState::VrfState(Agent *agent) :
+    DBState(), seen_(false),
+    evpn_rt_table_listener_id_(DBTableBase::kInvalidId) {
+    ksync_route_walker_ = new KSyncRouteWalker(agent, this);
+}
+
 void VrfKSyncObject::VrfNotify(DBTablePartBase *partition, DBEntryBase *e) {
     VrfEntry *vrf = static_cast<VrfEntry *>(e);
     VrfState *state = static_cast<VrfState *>
@@ -785,13 +824,14 @@ void VrfKSyncObject::VrfNotify(DBTablePartBase *partition, DBEntryBase *e) {
         if (state) {
             UnRegisterEvpnRouteTableListener(vrf, state);
             vrf->ClearState(partition->parent(), vrf_listener_id_);
+            state->ksync_route_walker_->EnqueueDelete();
             delete state;
         }
         return;
     }
 
     if (state == NULL) {
-        state = new VrfState();
+        state = new VrfState(ksync_->agent());
         state->seen_ = true;
         vrf->SetState(partition->parent(), vrf_listener_id_, state);
 
@@ -829,6 +869,7 @@ void VrfKSyncObject::VrfNotify(DBTablePartBase *partition, DBEntryBase *e) {
                 rt_table->Register(boost::bind(&VrfKSyncObject::EvpnRouteTableNotify,
                                            this, _1, _2));
         }
+        state->ksync_route_walker_->NotifyRoutes(vrf);
     }
 }
 
@@ -840,7 +881,9 @@ void VrfKSyncObject::EvpnRouteTableNotify(DBTablePartBase *partition,
                         evpn_rt->mac());
     } else {
         AddIpMacBinding(evpn_rt->vrf(), evpn_rt->ip_addr(),
-                        evpn_rt->mac());
+                        evpn_rt->mac(),
+                        evpn_rt->GetActivePath()->path_preference().preference(),
+                        evpn_rt->WaitForTraffic());
     }
     return;
 }
@@ -856,8 +899,7 @@ void VrfKSyncObject::UnRegisterEvpnRouteTableListener(const VrfEntry *vrf,
     state->evpn_rt_table_listener_id_ = DBTableBase::kInvalidId;
 }
 
-VrfKSyncObject::VrfKSyncObject(KSync *ksync) 
-    : ksync_(ksync) {
+VrfKSyncObject::VrfKSyncObject(KSync *ksync) : ksync_(ksync) {
 }
 
 VrfKSyncObject::~VrfKSyncObject() {
@@ -960,13 +1002,25 @@ void VrfKSyncObject::NotifyUcRoute(VrfEntry *vrf, VrfState *state,
 }
 
 void VrfKSyncObject::AddIpMacBinding(VrfEntry *vrf, const IpAddress &ip,
-                                     const MacAddress &mac) {
+                                     const MacAddress &mac,
+                                     uint32_t pref,
+                                     bool wait_for_traffic) {
     VrfState *state = static_cast<VrfState *>
         (vrf->GetState(vrf->get_table(), vrf_listener_id_));
     if (state == NULL)
         return;
 
-    state->ip_mac_binding_[ip] = mac;
+    IpToMacBinding::iterator it = state->ip_mac_binding_.find(ip);
+
+    PathPreference path_pref(0, pref, wait_for_traffic, false);
+    if (it == state->ip_mac_binding_.end()) {
+        MacBinding mac_binding(mac, path_pref);
+        state->ip_mac_binding_.insert(
+                std::pair<IpAddress, MacBinding>(ip, mac_binding));
+    } else {
+        it->second.set_mac(path_pref, mac);
+    }
+
     NotifyUcRoute(vrf, state, ip);
 }
 
@@ -977,8 +1031,30 @@ void VrfKSyncObject::DelIpMacBinding(VrfEntry *vrf, const IpAddress &ip,
     if (state == NULL)
         return;
 
-    state->ip_mac_binding_.erase(ip);
+    IpToMacBinding::iterator it = state->ip_mac_binding_.find(ip);
+    if (it != state->ip_mac_binding_.end()) {
+        it->second.reset_mac(mac);
+        if (it->second.can_erase()) {
+            state->ip_mac_binding_.erase(ip);
+        }
+    }
     NotifyUcRoute(vrf, state, ip);
+}
+
+bool VrfKSyncObject::GetIpMacWaitForTraffic(VrfEntry *vrf,
+                                            const IpAddress &ip) const {
+    VrfState *state = static_cast<VrfState *>
+        (vrf->GetState(vrf->get_table(), vrf_listener_id_));
+    if (state == NULL) {
+        return false;
+    }
+
+    IpToMacBinding::const_iterator it = state->ip_mac_binding_.find(ip);
+    if (it == state->ip_mac_binding_.end()) {
+        return false;
+    }
+
+    return  it->second.WaitForTraffic();
 }
 
 MacAddress VrfKSyncObject::GetIpMacBinding(VrfEntry *vrf,
@@ -992,5 +1068,72 @@ MacAddress VrfKSyncObject::GetIpMacBinding(VrfEntry *vrf,
     if (it == state->ip_mac_binding_.end())
         return MacAddress::ZeroMac();
 
-    return it->second;
+    return it->second.get_mac();
+}
+
+KSyncRouteWalker::KSyncRouteWalker(Agent *agent, VrfKSyncObject::VrfState *state) :
+    AgentRouteWalker(agent, AgentRouteWalker::ALL), state_(state),
+    marked_for_deletion_(false) {
+}
+
+KSyncRouteWalker::~KSyncRouteWalker() {
+}
+
+bool IsStatePresent(AgentRoute *route, DBTableBase::ListenerId id,
+                    DBTablePartBase *partition) {
+    DBState *state = route->GetState(partition->parent(), id);
+    return (state != NULL);
+}
+
+void KSyncRouteWalker::EnqueueDelete() {
+    marked_for_deletion_ = true;
+    Delete();
+}
+
+bool KSyncRouteWalker::RouteWalkNotify(DBTablePartBase *partition,
+                                      DBEntryBase *e) {
+    if (marked_for_deletion_)
+        return true;
+
+    AgentRoute *route = static_cast<AgentRoute *>(e);
+
+    switch (route->GetTableType()) {
+    case Agent::INET4_UNICAST: {
+        if (IsStatePresent(route, state_->inet4_uc_route_table_->id(),
+                           partition) == false) {
+            state_->inet4_uc_route_table_->Notify(partition, route);
+        }
+        break;
+    }
+    case Agent::INET6_UNICAST: {
+        if (IsStatePresent(route, state_->inet6_uc_route_table_->id(),
+                           partition) == false) {
+            state_->inet6_uc_route_table_->Notify(partition, route);
+        }
+        break;
+    }
+    case Agent::INET4_MULTICAST: {
+        if (IsStatePresent(route, state_->inet4_mc_route_table_->id(),
+                           partition) == false) {
+            state_->inet4_mc_route_table_->Notify(partition, route);
+        }
+        break;
+    }
+    case Agent::BRIDGE: {
+        if (IsStatePresent(route, state_->bridge_route_table_->id(),
+                           partition) == false) {
+            state_->bridge_route_table_->Notify(partition, route);
+        }
+        break;
+    }
+    default: {
+        break;
+    }
+    }
+    return true;
+}
+
+void KSyncRouteWalker::NotifyRoutes(VrfEntry *vrf) {
+    if (marked_for_deletion_ == false)
+        StartRouteWalk(vrf);
 }

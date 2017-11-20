@@ -27,6 +27,7 @@
 #include "vrouter/ksync/nexthop_ksync.h"
 #include "vrouter/ksync/ksync_init.h"
 #include "vr_types.h"
+#include "oper/ecmp_load_balance.h"
 
 NHKSyncEntry::NHKSyncEntry(NHKSyncObject *obj, const NHKSyncEntry *entry,
                            uint32_t index) :
@@ -35,7 +36,7 @@ NHKSyncEntry::NHKSyncEntry(NHKSyncObject *obj, const NHKSyncEntry *entry,
     interface_(entry->interface_), sip_(entry->sip_), dip_(entry->dip_),
     sport_(entry->sport_), dport_(entry->dport_), smac_(entry->smac_),
     dmac_(entry->dmac_), valid_(entry->valid_), policy_(entry->policy_),
-    relaxed_policy_(false), is_mcast_nh_(entry->is_mcast_nh_),
+    is_mcast_nh_(entry->is_mcast_nh_),
     defer_(entry->defer_), component_nh_list_(entry->component_nh_list_),
     nh_(entry->nh_), vlan_tag_(entry->vlan_tag_),
     is_local_ecmp_nh_(entry->is_local_ecmp_nh_),
@@ -44,8 +45,13 @@ NHKSyncEntry::NHKSyncEntry(NHKSyncObject *obj, const NHKSyncEntry *entry,
     nh_id_(entry->nh_id()),
     component_nh_key_list_(entry->component_nh_key_list_),
     vxlan_nh_(entry->vxlan_nh_),
-    flood_unknown_unicast_(entry->flood_unknown_unicast_) {
-}
+    flood_unknown_unicast_(entry->flood_unknown_unicast_),
+    ecmp_hash_fieds_(entry->ecmp_hash_fieds_.HashFieldsToUse()),
+    pbb_child_nh_(entry->pbb_child_nh_), isid_(entry->isid_),
+    pbb_label_(entry->pbb_label_), learning_enabled_(entry->learning_enabled_),
+    need_pbb_tunnel_(entry->need_pbb_tunnel_), etree_leaf_(entry->etree_leaf_),
+    layer2_control_word_(entry->layer2_control_word_) {
+    }
 
 NHKSyncEntry::NHKSyncEntry(NHKSyncObject *obj, const NextHop *nh) :
     KSyncNetlinkDBEntry(kInvalidIndex), ksync_obj_(obj), type_(nh->GetType()),
@@ -54,7 +60,9 @@ NHKSyncEntry::NHKSyncEntry(NHKSyncObject *obj, const NextHop *nh) :
     is_mcast_nh_(false), nh_(nh),
     vlan_tag_(VmInterface::kInvalidVlanId), is_bridge_(false),
     tunnel_type_(TunnelType::INVALID), prefix_len_(32), nh_id_(nh->id()),
-    vxlan_nh_(false), flood_unknown_unicast_(false) {
+    vxlan_nh_(false), flood_unknown_unicast_(false),
+    learning_enabled_(nh->learning_enabled()), need_pbb_tunnel_(false),
+    etree_leaf_ (false), layer2_control_word_(false) {
 
     switch (type_) {
     case NextHop::ARP: {
@@ -151,11 +159,21 @@ NHKSyncEntry::NHKSyncEntry(NHKSyncObject *obj, const NextHop *nh) :
         break;
     }
 
+    case NextHop::PBB: {
+        const PBBNH *pbb_nh = static_cast<const PBBNH *>(nh);
+        vrf_id_ = pbb_nh->vrf_id();
+        dmac_ = pbb_nh->dest_bmac();
+        isid_ = pbb_nh->isid();
+        break;
+    }
+
     case NextHop::COMPOSITE: {
         const CompositeNH *comp_nh = static_cast<const CompositeNH *>(nh);
         component_nh_list_.clear();
         vrf_id_ = comp_nh->vrf()->vrf_id();
         comp_type_ = comp_nh->composite_nh_type();
+        ecmp_hash_fieds_ =
+            const_cast<CompositeNH *>(comp_nh)->CompEcmpHashFields().HashFieldsToUse();
         component_nh_key_list_ = comp_nh->component_nh_key_list();
         ComponentNHList::const_iterator component_nh_it =
             comp_nh->begin();
@@ -189,7 +207,7 @@ NHKSyncEntry::NHKSyncEntry(NHKSyncObject *obj, const NextHop *nh) :
 NHKSyncEntry::~NHKSyncEntry() {
 }
 
-KSyncDBObject *NHKSyncEntry::GetObject() {
+KSyncDBObject *NHKSyncEntry::GetObject() const {
     return ksync_obj_;
 }
 
@@ -275,6 +293,18 @@ bool NHKSyncEntry::IsLess(const KSyncEntry &rhs) const {
         return dport_ < entry.dport_;
     }
 
+    if (type_ == NextHop::PBB) {
+        if (vrf_id_ != entry.vrf_id_) {
+            return vrf_id_ < entry.vrf_id_;
+        }
+
+        if (dmac_ != entry.dmac_) {
+            return dmac_ < entry.dmac_;
+        }
+
+        return isid_ < entry.isid_;
+    }
+
     if (type_ == NextHop::COMPOSITE) {
         if (comp_type_ != entry.comp_type_) {
             return comp_type_ < entry.comp_type_;
@@ -321,6 +351,7 @@ bool NHKSyncEntry::IsLess(const KSyncEntry &rhs) const {
                 }
                 return left_nh->IsLess(*right_nh);
             }
+
         }
 
         if (it == component_nh_key_list_.end() &&
@@ -419,6 +450,11 @@ std::string NHKSyncEntry::ToString() const {
     case NextHop::INVALID: {
         s << "Invalid ";
     }
+
+    case NextHop::PBB: {
+        s << "PBB";
+        break;
+    }
     }
 
     if (interface_) {
@@ -433,6 +469,16 @@ bool NHKSyncEntry::Sync(DBEntry *e) {
 
     if (valid_ != nh->IsValid()) {
         valid_ = nh->IsValid();
+        ret = true;
+    }
+
+    if (learning_enabled_ != nh->learning_enabled()) {
+        learning_enabled_ = nh->learning_enabled();
+        ret = true;
+    }
+
+    if (etree_leaf_ != nh->etree_leaf()) {
+        etree_leaf_ = nh->etree_leaf();
         ret = true;
     }
 
@@ -471,7 +517,13 @@ bool NHKSyncEntry::Sync(DBEntry *e) {
             vlan_tag = vlan_tag_;
             vlan_tag_ = (static_cast<const VmInterface *>
                          (intf_nh->GetInterface()))->tx_vlan_id();
-            ret = vlan_tag != vlan_tag_;
+            if (vlan_tag != vlan_tag_) {
+                ret = true;
+            }
+        }
+        if (layer2_control_word_ != intf_nh->layer2_control_word()) {
+            layer2_control_word_ = intf_nh->layer2_control_word();
+            ret = true;
         }
         if (intf_nh->relaxed_policy() != relaxed_policy_) {
             relaxed_policy_ = intf_nh->relaxed_policy();
@@ -591,6 +643,24 @@ bool NHKSyncEntry::Sync(DBEntry *e) {
         break;
     }
 
+    case NextHop::PBB: {
+        PBBNH *pbb_nh = static_cast<PBBNH *>(e);
+        if (pbb_label_ != pbb_nh->label()) {
+            pbb_label_ = pbb_nh->label();
+            ret = true;
+        }
+
+        NHKSyncObject *nh_object =
+            ksync_obj_->ksync()->nh_ksync_obj();
+        NHKSyncEntry nhksync(nh_object, pbb_nh->child_nh());
+        KSyncEntry *ksync_nh = nh_object->GetReference(&nhksync);
+        if (ksync_nh != pbb_child_nh_) {
+            pbb_child_nh_ = ksync_nh;
+            ret = true;
+        }
+        break;
+    }
+
     case NextHop::COMPOSITE: {
         ret = true;
         CompositeNH *comp_nh = static_cast<CompositeNH *>(e);
@@ -614,6 +684,21 @@ bool NHKSyncEntry::Sync(DBEntry *e) {
             KSyncComponentNH ksync_component_nh(label, ksync_nh);
             component_nh_list_.push_back(ksync_component_nh);
             component_nh_it++;
+        }
+
+        if (comp_nh->EcmpHashFieldInUse() != ecmp_hash_fieds_.HashFieldsToUse()) {
+            ecmp_hash_fieds_ = comp_nh->CompEcmpHashFields().HashFieldsToUse();
+            ret = true;
+        }
+
+        if (need_pbb_tunnel_ != comp_nh->pbb_nh()) {
+            need_pbb_tunnel_ = comp_nh->pbb_nh();
+            ret = true;
+        }
+
+        if (layer2_control_word_ != comp_nh->layer2_control_word()) {
+            layer2_control_word_ = comp_nh->layer2_control_word();
+            ret = true;
         }
         break;
     }
@@ -639,6 +724,11 @@ bool NHKSyncEntry::Sync(DBEntry *e) {
             flood_unknown_unicast_ = vrf_nh->flood_unknown_unicast();
             ret = true;
         }
+
+        if (layer2_control_word_ != vrf_nh->layer2_control_word()) {
+            layer2_control_word_ = vrf_nh->layer2_control_word();
+            ret = true;
+        }
         break;
     }
     case NextHop::RECEIVE:
@@ -654,7 +744,6 @@ bool NHKSyncEntry::Sync(DBEntry *e) {
 
     return ret;
 };
-
 int NHKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     vr_nexthop_req encoder;
     int encode_len;
@@ -676,7 +765,6 @@ int NHKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     encoder.set_nhr_rid(0);
     encoder.set_nhr_vrf(vrf_id_);
     encoder.set_nhr_family(AF_INET);
-    encoder.set_nhr_label(MplsTable::kInvalidLabel);
     uint32_t flags = 0;
     if (valid_) {
         flags |= NH_FLAG_VALID;
@@ -689,6 +777,19 @@ int NHKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
             flags |= NH_FLAG_POLICY_ENABLED;
         }
     }
+
+    if (etree_leaf_ == false) {
+        flags |= NH_FLAG_ETREE_ROOT;
+    }
+
+    if (learning_enabled_) {
+        flags |= NH_FLAG_MAC_LEARN;
+    }
+
+    if (layer2_control_word_) {
+        flags |= NH_FLAG_L2_CONTROL_DATA;
+    }
+
     if_ksync = interface();
 
     switch (type_) {
@@ -806,17 +907,41 @@ int NHKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
 
         case NextHop::VRF:
             encoder.set_nhr_type(NH_VXLAN_VRF);
-            if (vxlan_nh_) {
-                flags |= NH_FLAG_VNID;
+            if (vxlan_nh_ == true) {
+                encoder.set_nhr_family(AF_BRIDGE);
             }
             if (flood_unknown_unicast_) {
                 flags |= NH_FLAG_UNKNOWN_UC_FLOOD;
             }
             break;
 
+        case NextHop::PBB: {
+            encoder.set_nhr_family(AF_BRIDGE);
+            encoder.set_nhr_type(NH_TUNNEL);
+            flags |= (NH_FLAG_TUNNEL_PBB | NH_FLAG_INDIRECT);
+            std::vector<int8_t> bmac;
+            for (size_t i = 0 ; i < dmac_.size(); i++) {
+                bmac.push_back(dmac_[i]);
+            }
+            encoder.set_nhr_pbb_mac(bmac);
+            if (pbb_child_nh_.get()) {
+                std::vector<int> sub_nh_list;
+                NHKSyncEntry *child_nh =
+                    static_cast<NHKSyncEntry *>(pbb_child_nh_.get());
+                sub_nh_list.push_back(child_nh->nh_id());
+                encoder.set_nhr_nh_list(sub_nh_list);
+
+                std::vector<int> sub_label_list;
+                sub_label_list.push_back(pbb_label_);
+                encoder.set_nhr_label_list(sub_label_list);
+            }
+            break;
+        }
+
         case NextHop::COMPOSITE: {
             std::vector<int> sub_nh_id;
             std::vector<int> sub_label_list;
+            std::vector<int> sub_flag_list;
             encoder.set_nhr_type(NH_COMPOSITE);
             assert(sip_.is_v4());
             assert(dip_.is_v4());
@@ -824,6 +949,7 @@ int NHKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
             encoder.set_nhr_tun_sip(htonl(sip_.to_v4().to_ulong()));
             encoder.set_nhr_tun_dip(htonl(dip_.to_v4().to_ulong()));
             encoder.set_nhr_encap_family(ETHERTYPE_ARP);
+            encoder.set_nhr_ecmp_config_hash(SetEcmpFieldsToUse());
             /* Proto encode in Network byte order */
             switch (comp_type_) {
             case Composite::L2INTERFACE:
@@ -866,6 +992,10 @@ int NHKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
                 assert(0);
             }
             }
+            if (need_pbb_tunnel_) {
+                flags |= NH_FLAG_TUNNEL_PBB;
+            }
+
             encoder.set_nhr_flags(flags);
             for (KSyncComponentNHList::iterator it = component_nh_list_.begin();
                     it != component_nh_list_.end(); it++) {
@@ -1083,6 +1213,13 @@ KSyncEntry *NHKSyncEntry::UnresolvedReference() {
         break;
     }
 
+    case NextHop::PBB: {
+        if (pbb_child_nh_ && pbb_child_nh_->IsResolved() == false) {
+             entry = pbb_child_nh_.get();
+        }
+        break;
+    }
+
     case NextHop::COMPOSITE: {
         for (KSyncComponentNHList::const_iterator it = 
                                 component_nh_list_.begin();
@@ -1161,6 +1298,29 @@ void NHKSyncEntry::SetEncap(InterfaceKSyncEntry *if_ksync,
     /* Proto encode in Network byte order */
     encap.push_back(0x08);
     encap.push_back(0x00);
+}
+
+uint8_t NHKSyncEntry::SetEcmpFieldsToUse() {
+    uint8_t ecmp_hash_fields_in_use = VR_FLOW_KEY_NONE;
+    uint8_t fields_in_byte = ecmp_hash_fieds_.HashFieldsToUse();
+    if (fields_in_byte & 1 << EcmpLoadBalance::SOURCE_IP) {
+        ecmp_hash_fields_in_use |= VR_FLOW_KEY_SRC_IP;
+    }
+    if (fields_in_byte & 1 << EcmpLoadBalance::DESTINATION_IP) {
+        ecmp_hash_fields_in_use |= VR_FLOW_KEY_DST_IP;
+    }
+    if (fields_in_byte & 1 << EcmpLoadBalance::IP_PROTOCOL) {
+        ecmp_hash_fields_in_use |= VR_FLOW_KEY_PROTO;
+    }
+    if (fields_in_byte & 1 << EcmpLoadBalance::SOURCE_PORT) {
+        ecmp_hash_fields_in_use |= VR_FLOW_KEY_SRC_PORT;
+    }
+    if (fields_in_byte & 1 << EcmpLoadBalance::DESTINATION_PORT) {
+        ecmp_hash_fields_in_use |= VR_FLOW_KEY_DST_PORT;
+    }
+
+    return ecmp_hash_fields_in_use;
+
 }
 
 NHKSyncObject::NHKSyncObject(KSync *ksync) :

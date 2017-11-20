@@ -39,7 +39,7 @@
 #include "vr_interface.h"
 #include <vector>
 
-KSyncSockTypeMap *KSyncSockTypeMap::singleton_; 
+KSyncSockTypeMap *KSyncSockTypeMap::singleton_;
 vr_flow_entry *KSyncSockTypeMap::flow_table_;
 int KSyncSockTypeMap::error_code_;
 using namespace boost::asio;
@@ -172,8 +172,17 @@ void KSyncSockTypeMap::FlowNatResponse(uint32_t seq_num, vr_flow_req *req) {
 
     buf += encode_len;
     buf_len -= encode_len;
-    req->set_fr_op(flow_op::FLOW_SET);
-    encode_len += req->WriteBinary(buf, buf_len, &error);
+
+    vr_flow_response resp;
+    resp.set_fresp_op(flow_op::FLOW_SET);
+    resp.set_fresp_flags(req->get_fr_flags());
+    resp.set_fresp_index(req->get_fr_index());
+    resp.set_fresp_gen_id(req->get_fr_gen_id());
+    resp.set_fresp_bytes(0);
+    resp.set_fresp_packets(0);
+    resp.set_fresp_stats_oflow(0);
+
+    encode_len += resp.WriteBinary(buf, buf_len, &error);
     if (error != 0) {
         SimulateResponse(seq_num, -ENOENT, 0);
         nl_free(&cl);
@@ -218,7 +227,7 @@ void KSyncSockTypeMap::SimulateResponse(uint32_t seq_num, int code, int flags) {
 
 void KSyncSockTypeMap::DisableReceiveQueue(bool disable) {
     for(int i = 0; i < IoContext::MAX_WORK_QUEUES; i++) {
-        receive_work_queue[i]->set_disable(disable);
+        ksync_rx_queue[i]->set_disable(disable);
     }
 }
 
@@ -327,10 +336,19 @@ void KSyncSockTypeMap::MirrorDelete(int id) {
 
 void KSyncSockTypeMap::RouteAdd(vr_route_req &req) {
     KSyncSockTypeMap *sock = KSyncSockTypeMap::GetKSyncSockTypeMap();
-    KSyncSockTypeMap::ksync_rt_tree::const_iterator it;
-    it = sock->rt_tree.find(req);
-    if (it == sock->rt_tree.end()) {
-        sock->rt_tree.insert(req);
+    //store in the route tree
+    std::pair<std::set<vr_route_req>::iterator, bool> ret;
+    ret = sock->rt_tree.insert(req);
+
+    /* If insertion fails, remove the existing entry and add the new one */
+    if (ret.second == false) {
+        int del_count = sock->rt_tree.erase(req);
+        assert(del_count);
+        ret = sock->rt_tree.insert(req);
+        assert(ret.second == true);
+    }
+    if (req.get_rtr_family() == AF_BRIDGE) {
+        sock->SetBridgeEntry((uint32_t)req.get_rtr_index(), &req, true);
     }
 }
 
@@ -612,8 +630,11 @@ void KSyncSockTypeMap::SetFlowEntry(vr_flow_req *req, bool set) {
 
     int family = (req->get_fr_family() == AF_INET)? Address::INET :
         Address::INET6;
-    IpAddress sip, dip;
-    VectorToIp(req->get_fr_flow_ip(), family, &sip, &dip);
+    IpAddress sip;
+    IpAddress dip;
+    U64ToIp(req->get_fr_flow_sip_u(), req->get_fr_flow_sip_l(),
+            req->get_fr_flow_dip_u(), req->get_fr_flow_dip_l(),
+            family, &sip, &dip);
     f->fe_flags = VR_FLOW_FLAG_ACTIVE;
     f->fe_stats.flow_bytes = 30;
     f->fe_stats.flow_packets = 1;
@@ -686,13 +707,64 @@ void KSyncSockTypeMap::SetOFlowStats(int idx, uint8_t pkts, uint16_t bytes) {
     }
 }
 
+vr_bridge_entry *KSyncSockTypeMap::BridgeMmapAlloc(int size) {
+    bridge_table_ = (vr_bridge_entry *)malloc(size);
+    bzero(bridge_table_, size);
+    return bridge_table_;
+}
+
+void KSyncSockTypeMap::BridgeMmapFree() {
+    if (bridge_table_) {
+        free(bridge_table_);
+        bridge_table_ = NULL;
+    }
+}
+
+vr_bridge_entry *KSyncSockTypeMap::GetBridgeEntry(int idx) {
+    return &bridge_table_[idx];
+}
+
+void KSyncSockTypeMap::SetBridgeEntry(uint32_t idx, vr_route_req *req,
+                                      bool set) {
+    vr_bridge_entry *be = &bridge_table_[idx];
+    if (!set) {
+        be->be_packets = 0;
+        return;
+    }
+
+    if (be->be_packets == 0) {
+        be->be_packets = 1;
+    }
+    vr_bridge_entry_key *key = &be->be_key;
+
+    //Copy VRF and mac
+    key->be_vrf_id = req->get_rtr_vrf_id();
+
+    uint8_t i = 0;
+    const std::vector<signed char> &prefix = req->get_rtr_mac();
+    for(std::vector<signed char>::const_iterator it = prefix.begin();
+        it != prefix.end(); ++it) {
+        key->be_mac[i] = ((uint8_t) *it);
+        i++;
+    }
+}
+
+void KSyncSockTypeMap::UpdateBridgeEntryInactiveFlag(int idx, bool set) {
+    vr_bridge_entry *be = &bridge_table_[idx];
+    if (set) {
+        be->be_flags |= VR_BE_MAC_NEW_FLAG;
+    } else {
+        be->be_flags &= ~VR_BE_MAC_NEW_FLAG;
+    }
+}
+
 //init ksync map
 void KSyncSockTypeMap::Init(boost::asio::io_service &ios) {
     assert(singleton_ == NULL);
 
     singleton_ = new KSyncSockTypeMap(ios);
     KSyncSock::SetSockTableEntry(singleton_);
-    KSyncSock::Init(true);
+    KSyncSock::Init(true, "disabled");
 
     singleton_->local_ep_.address
         (boost::asio::ip::address::from_string("127.0.0.1"));
@@ -781,7 +853,21 @@ void KSyncUserSockFlowContext::Process() {
                     /* Send reverse-flow index as one more than fwd-flow index */
                     fwd_flow_idx = req_->get_fr_rindex() + 1;
                 } else {
-                    fwd_flow_idx = rand() % 50000;
+                    fwd_flow_idx = rand() % 20000;
+                    /* Reserve first 20000 indexes for forwarding flow
+                     * Reverse flow indexes will start from 20000 always
+                     */
+                    fwd_flow_idx += 20000;
+                }
+                /* If the randomly allocated index is used already then
+                 * find out the next randon index which is free
+                 */
+                while (sock->flow_map.find(fwd_flow_idx) != sock->flow_map.end()) {
+                    fwd_flow_idx = rand() % 20000;
+                    /* Reserve first 20000 indexes for forwarding flow
+                     * Reverse flow indexes will start from 20000 always
+                     */
+                    fwd_flow_idx += 20000;
                 }
                 req_->set_fr_index(fwd_flow_idx);
                 req_->set_fr_gen_id((fwd_flow_idx % 255));
@@ -894,23 +980,17 @@ void KSyncUserSockRouteContext::Process() {
 
     //delete from the route tree, if the command is delete
     if (req_->get_h_op() == sandesh_op::DEL) {
+        if (req_->get_rtr_family() == AF_BRIDGE) {
+            sock->UpdateBridgeEntryInactiveFlag(req_->get_rtr_index(), false);
+        }
         sock->rt_tree.erase(*req_);
     } else if (req_->get_h_op() == sandesh_op::DUMP) {
         RouteDumpHandler dump;
+        sock->SetBridgeEntry(req_->get_rtr_index(), req_, false);
         dump.SendDumpResponse(GetSeqNum(), req_);
         return;
     } else {
-        //store in the route tree
-        std::pair<std::set<vr_route_req>::iterator, bool> ret;
-        ret = sock->rt_tree.insert(*req_);
-
-        /* If insertion fails, remove the existing entry and add the new one */
-        if (ret.second == false) {
-            int del_count = sock->rt_tree.erase(*req_);
-            assert(del_count);
-            ret = sock->rt_tree.insert(*req_);
-            assert(ret.second == true);
-        }
+        sock->RouteAdd(*req_);
     }
     KSyncSockTypeMap::SimulateResponse(GetSeqNum(), 0, 0); 
 }
@@ -1194,7 +1274,9 @@ void MockDumpHandlerBase::SendGetResponse(uint32_t seq_num, int idx) {
      * KSyncSockTypeMap::set_error_code() with required error code and 
      * invoke get request */
     if (KSyncSockTypeMap::error_code()) {
-        KSyncSockTypeMap::SimulateResponse(seq_num, -KSyncSockTypeMap::error_code(), 0); 
+        int ret_code = -KSyncSockTypeMap::error_code();
+        ret_code &= ~VR_MESSAGE_DUMP_INCOMPLETE;
+        KSyncSockTypeMap::SimulateResponse(seq_num, ret_code, 0);
         return;
     }
     Sandesh *req = Get(idx);
@@ -1255,21 +1337,36 @@ Sandesh* IfDumpHandler::GetFirst(Sandesh *from_req) {
 
     if (it != sock->if_map.end()) {
         req = it->second;
+        req.set_vifr_flags(orig_req->get_vifr_flags());
         return &req;
     }
     return NULL;
 }
 
 Sandesh* IfDumpHandler::GetNext(Sandesh *input) {
+    static int last_intf_id = 0;
+    static int32_t last_if_flags = 0;
     KSyncSockTypeMap *sock = KSyncSockTypeMap::GetKSyncSockTypeMap();
     KSyncSockTypeMap::ksync_map_if::const_iterator it;
     static vr_interface_req req, *r;
 
-    r = static_cast<vr_interface_req *>(input);
-    it = sock->if_map.upper_bound(r->get_vifr_idx());
+    r = dynamic_cast<vr_interface_req *>(input);
+    if (r != NULL) {
+        /* GetNext on vr_interface_req should return a dummy drop-stats object.
+         * We need to store the interface index which will be used during
+         * GetNext of IfDumpHandler when invoked with vr_drop_stats_req as
+         * argument */
+        last_intf_id = r->get_vifr_idx();
+        last_if_flags = r->get_vifr_flags();
+        if (r->get_vifr_flags() & VIF_FLAG_GET_DROP_STATS) {
+            return &drop_stats_req;
+        }
+    }
+    it = sock->if_map.upper_bound(last_intf_id);
 
     if (it != sock->if_map.end()) {
         req = it->second;
+        req.set_vifr_flags(last_if_flags);
         return &req;
     }
     return NULL;
@@ -1419,21 +1516,33 @@ Sandesh* RouteDumpHandler::GetFirst(Sandesh *from_req) {
     vr_route_req *orig_req, key;
     orig_req = static_cast<vr_route_req *>(from_req);
 
-    if (orig_req->get_rtr_marker().size()) {
-        key.set_rtr_vrf_id(orig_req->get_rtr_vrf_id());
-        key.set_rtr_prefix(orig_req->get_rtr_marker());
-        key.set_rtr_prefix_len(orig_req->get_rtr_marker_plen());
+    key.set_rtr_family(orig_req->get_rtr_family());
+    key.set_rtr_vrf_id(orig_req->get_rtr_vrf_id());
+    if (orig_req->get_rtr_marker().size() || orig_req->get_rtr_mac().size()) {
+        if (orig_req->get_rtr_family() == AF_BRIDGE) {
+            key.set_rtr_mac(orig_req->get_rtr_mac());
+        } else {
+            key.set_rtr_prefix(orig_req->get_rtr_marker());
+            key.set_rtr_prefix_len(orig_req->get_rtr_marker_plen());
+        }
         it = sock->rt_tree.upper_bound(key);
     } else {
         std::vector<int8_t> rtr_prefix;
-        key.set_rtr_vrf_id(orig_req->get_rtr_vrf_id());
-        key.set_rtr_prefix(rtr_prefix);
-        key.set_rtr_prefix_len(0);
+        if (orig_req->get_rtr_family() == AF_BRIDGE) {
+            key.set_rtr_mac(rtr_prefix);
+        } else {
+            key.set_rtr_prefix(rtr_prefix);
+            key.set_rtr_prefix_len(0);
+        }
         it = sock->rt_tree.lower_bound(key);
     }
 
 
     if (it != sock->rt_tree.end()) {
+        if ((it->get_rtr_vrf_id() != orig_req->get_rtr_vrf_id()) ||
+            (it->get_rtr_family() != orig_req->get_rtr_family())) {
+            return NULL;
+        }
         req = *it;
         return &req;
     }
@@ -1448,11 +1557,20 @@ Sandesh* RouteDumpHandler::GetNext(Sandesh *input) {
     r = static_cast<vr_route_req *>(input);
 
     key.set_rtr_vrf_id(r->get_rtr_vrf_id());
-    key.set_rtr_prefix(r->get_rtr_prefix());
-    key.set_rtr_prefix_len(r->get_rtr_prefix_len());
+    key.set_rtr_family(r->get_rtr_family());
+    if (r->get_rtr_family() == AF_BRIDGE) {
+        key.set_rtr_mac(r->get_rtr_mac());
+    } else {
+        key.set_rtr_prefix(r->get_rtr_prefix());
+        key.set_rtr_prefix_len(r->get_rtr_prefix_len());
+    }
     it = sock->rt_tree.upper_bound(key);
 
     if (it != sock->rt_tree.end()) {
+        if ((it->get_rtr_vrf_id() != r->get_rtr_vrf_id()) ||
+            (it->get_rtr_family() != r->get_rtr_family())) {
+            return NULL;
+        }
         req = *it;
         return &req;
     }

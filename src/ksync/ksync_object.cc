@@ -623,6 +623,7 @@ std::string KSyncEntry::StateString() const {
     }
 
     str << '(' << state_ << ')';
+    str << '(' << refcount_ << ')';
     return str.str();
 }
 
@@ -1398,7 +1399,8 @@ void KSyncObject::NotifyEvent(KSyncEntry *entry, KSyncEntry::KSyncEvent event) {
     }
 
     entry->SetState(state);
-    if (dep_reval == true && entry->IsResolved()) {
+    if (dep_reval == true && entry->IsResolved() &&
+        entry->ShouldReEvalBackReference()) {
         BackRefReEval(entry);
     }
 
@@ -1435,6 +1437,8 @@ bool KSyncObject::StaleEntryCleanupCb() {
             break;
         }
         KSyncEntry *entry = (*it).get();
+        // Notify entry of stale timer expiration
+        entry->StaleTimerExpired();
         // Delete removes entry from stale entry tree
         Delete(entry);
         it = stale_entry_tree_.begin();
@@ -1641,7 +1645,7 @@ public:
     bool Add() { return false;}
     bool Change() { return false; }
     bool Delete() { return false; }
-    KSyncObject *GetObject() { return NULL; }
+    KSyncObject *GetObject() const { return NULL; }
     KSyncEntry *UnresolvedReference() { return NULL; }
     bool IsDataResolved() {return false;}
 private:

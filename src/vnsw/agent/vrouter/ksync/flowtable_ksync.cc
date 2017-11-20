@@ -129,6 +129,7 @@ void FlowTableKSyncEntry::Reset() {
     trap_flow_ = false;
     old_drop_reason_ = 0;
     ecmp_ = false;
+    enable_rpf_ = true;
     src_nh_id_ = NextHopTable::kRpfDiscardIndex;
     last_event_ = FlowEvent::INVALID;
     token_.reset();
@@ -142,10 +143,15 @@ void FlowTableKSyncEntry::Reset(FlowEntry *flow, uint32_t hash_id) {
     gen_id_ = flow->gen_id();
 }
 
-KSyncObject *FlowTableKSyncEntry::GetObject() {
+KSyncObject *FlowTableKSyncEntry::GetObject() const {
     return ksync_obj_;
 }
 
+uint32_t FlowTableKSyncEntry::GetTableIndex() const {
+    FlowTableKSyncObject *obj =
+        static_cast<FlowTableKSyncObject *>(GetObject());
+    return (obj->flow_table()->table_index());
+}
 void FlowTableKSyncEntry::ReleaseToken() {
     if (token_.get())
         token_.reset();
@@ -187,6 +193,19 @@ void FlowTableKSyncEntry::SetPcapData(FlowEntryPtr fe,
     data.push_back(0x0);
 }
 
+static void EncodeKSyncIp(vr_flow_req *req, const IpAddress &sip,
+                          const IpAddress &dip) {
+    uint64_t supper, dupper, slower, dlower;
+
+
+    IpToU64(sip, dip, &supper, &slower, &dupper, &dlower);
+    req->set_fr_flow_sip_l(slower);
+    req->set_fr_flow_sip_u(supper);
+    req->set_fr_flow_dip_l(dlower);
+    req->set_fr_flow_dip_u(dupper);
+
+}
+
 int FlowTableKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     vr_flow_req &req = ksync_obj_->flow_req();
     int encode_len;
@@ -210,8 +229,7 @@ int FlowTableKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     req.set_fr_index(hash_id_);
     req.set_fr_gen_id(gen_id_);
     const FlowKey *fe_key = &flow_entry_->key();
-    req.set_fr_flow_ip(IpToVector(fe_key->src_addr, fe_key->dst_addr,
-                                  flow_entry_->key().family));
+    EncodeKSyncIp(&req, fe_key->src_addr, fe_key->dst_addr);
     req.set_fr_flow_proto(fe_key->protocol);
     req.set_fr_flow_sport(htons(fe_key->src_port));
     req.set_fr_flow_dport(htons(fe_key->dst_port));
@@ -233,12 +251,6 @@ int FlowTableKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
         // the right token
         last_event_ = (FlowEvent::Event)flow_entry_->last_event();
     } else {
-        FlowEntry *rev_flow = flow_entry_->reverse_flow_entry();
-        if (rev_flow &&
-            rev_flow->flow_handle() == FlowEntry::kInvalidFlowHandle) {
-            return 0;
-        }
-
         flags = VR_FLOW_FLAG_ACTIVE;
         uint32_t fe_action = flow_entry_->match_p().action_info.action;
         if ((fe_action) & (1 << TrafficAction::PASS)) {
@@ -304,8 +316,12 @@ int FlowTableKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
             req.set_fr_pcap_meta_data(pcap_data);
         }
 
-        req.set_fr_ftable_size(0);
-        req.set_fr_ecmp_nh_index(flow_entry_->data().component_nh_idx);
+        if (flow_entry_->data().component_nh_idx !=
+                (uint32_t)CompositeNH::kInvalidComponentNHIdx) {
+            req.set_fr_ecmp_nh_index(flow_entry_->data().component_nh_idx);
+        } else {
+            req.set_fr_ecmp_nh_index(-1);
+        }
 
         if (action == VR_FLOW_ACTION_NAT) {
             FlowEntry *nat_flow = flow_entry_->reverse_flow_entry();
@@ -328,13 +344,14 @@ int FlowTableKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
                 }
             }
 
-            //TODO Seperate flags for BgpRouterService??
-            if (nat_flow->is_flags_set(FlowEntry::LinkLocalBindLocalSrcPort) ||
-                nat_flow->is_flags_set(FlowEntry::BgpRouterService)) {
+            //Link local, flag determines relaxed policy
+            if (nat_flow->is_flags_set(FlowEntry::LinkLocalBindLocalSrcPort)) {
                 flags |= VR_FLOW_FLAG_LINK_LOCAL;
-                if (nat_flow->is_flags_set(FlowEntry::BgpRouterService)) {
-                    flags |= VR_FLOW_BGP_SERVICE;
-                }
+            }
+
+            //Bgp service, flag determines relaxed policy
+            if (nat_flow->is_flags_set(FlowEntry::BgpRouterService)) {
+                flags |= VR_FLOW_BGP_SERVICE;
             }
 
             flags |= VR_FLOW_FLAG_VRFT;
@@ -361,9 +378,29 @@ int FlowTableKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
             req.set_fr_src_nh_index(0);
         }
 
+        FlowEntry *rev_flow = flow_entry_->reverse_flow_entry();
         if (rev_flow) {
             flags |= VR_RFLOW_VALID;
             req.set_fr_rindex(rev_flow->flow_handle());
+            if (rev_flow->flow_handle() == FlowEntry::kInvalidFlowHandle) {
+                const FlowKey &rkey = rev_flow->key();
+                req.set_fr_rflow_nh_id(rkey.nh);
+                uint64_t supper, dupper, slower, dlower;
+
+                IpToU64(rkey.src_addr, rkey.dst_addr, &supper, &slower,
+                        &dupper, &dlower);
+                req.set_fr_rflow_sip_l(slower);
+                req.set_fr_rflow_sip_u(supper);
+                req.set_fr_rflow_dip_l(dlower);
+                req.set_fr_rflow_dip_u(dupper);
+
+                req.set_fr_rflow_sport(htons(rkey.src_port));
+                req.set_fr_rflow_dport(htons(rkey.dst_port));
+            }
+        }
+
+        if (flow_entry_->IsShortFlow()) {
+            action = VR_FLOW_ACTION_DROP;
         }
 
         req.set_fr_flags(flags);
@@ -386,8 +423,9 @@ bool FlowTableKSyncEntry::Sync() {
     FlowEntry *rev_flow = flow_entry_->reverse_flow_entry();   
     if (rev_flow) {
         if (old_reverse_flow_id_ != rev_flow->flow_handle()) {
+            if (old_reverse_flow_id_ != FlowEntry::kInvalidFlowHandle)
+                changed = true;
             old_reverse_flow_id_ = rev_flow->flow_handle();
-            changed = true;
         }
     }
 
@@ -460,8 +498,8 @@ bool FlowTableKSyncEntry::Sync() {
     }
 
     uint32_t nh_id = NextHopTable::kRpfDiscardIndex;
-    if (flow_entry_->data().nh.get()) {
-        nh_id = flow_entry_->data().nh.get()->id();
+    if (flow_entry_->data().rpf_nh.get()) {
+        nh_id = flow_entry_->data().rpf_nh.get()->id();
     }
     if (src_nh_id_ != nh_id) {
         src_nh_id_ = nh_id;
@@ -530,19 +568,8 @@ void FlowTableKSyncEntry::ErrorHandler(int err, uint32_t seq_no,
                     ":", VrouterError(err), ">. Object <", ToString(),
                     ">. Operation <", AckOperationString(event),
                     ">. Message number :", seq_no);
-        return;
     }
-    if (err == EINVAL && IgnoreVrouterError()) {
-        return;
-    }
-    KSyncEntry::ErrorHandler(err, seq_no, event);
-}
-
-bool FlowTableKSyncEntry::IgnoreVrouterError() const {
-    if (flow_entry_->deleted())
-        return true;
-
-    return false;
+    return;
 }
 
 std::string FlowTableKSyncEntry::VrouterError(uint32_t error) const {

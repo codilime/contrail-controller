@@ -50,43 +50,47 @@ int KSyncSandeshContext::VrResponseMsgHandler(vr_response *r) {
     return 0;
 }
 
-static void LogFlowError(vr_flow_req *r, int err) {
+void KSyncSandeshContext::BridgeTableInfoHandler(vr_bridge_table_data *r) {
+    assert(r->get_btable_op() == sandesh_op::GET);
+    ksync_->ksync_bridge_memory()->set_major_devid(r->get_btable_dev());
+    ksync_->ksync_bridge_memory()->set_table_size(r->get_btable_size());
+    if (r->get_btable_file_path() != Agent::NullString()) {
+        ksync_->ksync_bridge_memory()->
+            set_table_path(r->get_btable_file_path());
+    }
+    LOG(DEBUG, "Flow table size : " << r->get_btable_size());
+    return;
+}
+
+void KSyncSandeshContext::FlowTableInfoHandler(vr_flow_table_data *r) {
+    assert(r->get_ftable_op() == flow_op::FLOW_TABLE_GET);
+    ksync_->ksync_flow_memory()->set_major_devid(r->get_ftable_dev());
+    ksync_->ksync_flow_memory()->set_table_size(r->get_ftable_size());
+    if (r->get_ftable_file_path() != Agent::NullString()) {
+        ksync_->ksync_flow_memory()->set_table_path(r->get_ftable_file_path());
+    }
+    LOG(DEBUG, "Flow table size : " << r->get_ftable_size());
+}
+
+static void LogFlowError(vr_flow_response *r, int err) {
     string op;
-    if (r->get_fr_flags() != 0) {
+    if (r->get_fresp_flags() != 0) {
         op = "Add/Update";
     } else {
         op = "Delete";
     }
 
-    int family = (r->get_fr_family() == AF_INET)? Address::INET :
-        Address::INET6;
-    IpAddress sip, dip;
-    VectorToIp(r->get_fr_flow_ip(), family, &sip, &dip);
     LOG(ERROR, "Error Flow entry op = " << op
-        << " nh = " << (int) r->get_fr_flow_nh_id()
-        << " src = " << sip.to_string() << ":"
-        << ntohs(r->get_fr_flow_sport())
-        << " dst = " << dip.to_string()
-        << ntohs(r->get_fr_flow_dport())
-        << " proto = " << (int)r->get_fr_flow_proto()
-        << " flow_handle = " << (int) r->get_fr_index());
+        << " flow_handle = " << (int) r->get_fresp_index()
+        << " gen-id = " << (int) r->get_fresp_gen_id());
 }
 
 // Handle vr_flow response from VRouter
 // We combine responses from both vr_flow and vr_response messages and
 // generate single event. Copy the results in vr_flow in KSync entry.
 // On receiving vr_response message, event will be generated for both messages
-void KSyncSandeshContext::FlowMsgHandler(vr_flow_req *r) {
-    assert(r->get_fr_op() == flow_op::FLOW_TABLE_GET || 
-           r->get_fr_op() == flow_op::FLOW_SET);
-
-    if (r->get_fr_op() == flow_op::FLOW_TABLE_GET) {
-        flow_ksync_->set_major_devid(r->get_fr_ftable_dev());
-        flow_ksync_->set_flow_table_size(r->get_fr_ftable_size());
-        flow_ksync_->set_flow_table_path(r->get_fr_file_path());
-        LOG(DEBUG, "Flow table size : " << r->get_fr_ftable_size());
-        return;
-    } 
+void KSyncSandeshContext::FlowResponseHandler(vr_flow_response *r) {
+    assert(r->get_fresp_op() == flow_op::FLOW_SET);
 
     const KSyncIoContext *ioc = ksync_io_ctx();
     FlowTableKSyncEntry *ksync_entry =
@@ -97,7 +101,7 @@ void KSyncSandeshContext::FlowMsgHandler(vr_flow_req *r) {
     // be filled below as necessary
     ksync_entry->ResetKSyncResponseInfo();
 
-    assert(r->get_fr_op() == flow_op::FLOW_SET);
+    assert(r->get_fresp_op() == flow_op::FLOW_SET);
     int err = GetErrno();
     if (err == EBADF) {
         LogFlowError(r, err);
@@ -108,21 +112,24 @@ void KSyncSandeshContext::FlowMsgHandler(vr_flow_req *r) {
         return;
     }
 
-    ksync_entry->SetKSyncResponseInfo(err, r->get_fr_index(),
-                                      r->get_fr_gen_id(),
-                                      r->get_fr_flow_bytes(),
-                                      r->get_fr_flow_packets(),
-                                      r->get_fr_flow_stats_oflow());
+    ksync_entry->SetKSyncResponseInfo(err, r->get_fresp_index(),
+                                      r->get_fresp_gen_id(),
+                                      r->get_fresp_bytes(),
+                                      r->get_fresp_packets(),
+                                      r->get_fresp_stats_oflow());
     return;
 }
 
+void KSyncSandeshContext::FlowMsgHandler(vr_flow_req *r) {
+    assert(0);
+}
+
 void KSyncSandeshContext::IfMsgHandler(vr_interface_req *r) {
-    flow_ksync_->ksync()->interface_scanner()->KernelInterfaceData(r); 
     context_marker_ = r->get_vifr_idx();
 }
 
 void KSyncSandeshContext::VrouterOpsMsgHandler(vrouter_ops *r) {
-    Agent *agent = flow_ksync_->ksync()->agent();
+    Agent *agent = ksync_->agent();
     agent->set_vrouter_max_labels(r->get_vo_mpls_labels());
     agent->set_vrouter_max_nexthops(r->get_vo_nexthops());
     agent->set_vrouter_max_bridge_entries(r->get_vo_bridge_entries());
@@ -134,5 +141,6 @@ void KSyncSandeshContext::VrouterOpsMsgHandler(vrouter_ops *r) {
     agent->set_vrouter_max_flow_entries(r->get_vo_flow_entries());
     agent->set_vrouter_max_oflow_entries(r->get_vo_oflow_entries());
     agent->set_vrouter_build_info(r->get_vo_build_info());
+    agent->set_vrouter_priority_tagging(r->get_vo_priority_tagging());
     return;
 }

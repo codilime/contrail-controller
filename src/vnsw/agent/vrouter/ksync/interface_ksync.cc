@@ -18,6 +18,7 @@
 #include <ksync/ksync_object.h>
 #include <ksync/ksync_netlink.h>
 #include <ksync/ksync_sock.h>
+#include <init/agent_param.h>
 #include "vrouter/ksync/agent_ksync_types.h"
 #include "vr_types.h"
 #include "base/logging.h"
@@ -47,11 +48,14 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
     has_service_vlan_(entry->has_service_vlan_),
     interface_id_(entry->interface_id_),
     interface_name_(entry->interface_name_),
-    ip_(entry->ip_), ipv4_active_(false),
+    ip_(entry->ip_), primary_ip6_(entry->primary_ip6_),
+    hc_active_(false), ipv4_active_(false),
     layer3_forwarding_(entry->layer3_forwarding_),
     ksync_obj_(obj), l2_active_(false),
     metadata_l2_active_(entry->metadata_l2_active_),
+    metadata_ip_active_(entry->metadata_ip_active_),
     bridging_(entry->bridging_),
+    proxy_arp_mode_(VmInterface::PROXY_ARP_NONE),
     mac_(entry->mac_),
     smac_(entry->smac_),
     mirror_direction_(entry->mirror_direction_),
@@ -75,6 +79,11 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
     transport_(entry->transport_),
     flood_unknown_unicast_ (entry->flood_unknown_unicast_),
     qos_config_(entry->qos_config_),
+    learning_enabled_(entry->learning_enabled_),
+    isid_(entry->isid_), pbb_cmac_vrf_(entry->pbb_cmac_vrf_),
+    etree_leaf_(entry->etree_leaf_),
+    pbb_interface_(entry->pbb_interface_),
+    vhostuser_mode_(entry->vhostuser_mode_),
     os_guid_(entry->os_guid_) {
 }
 
@@ -90,12 +99,15 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
     interface_id_(intf->id()),
     interface_name_(intf->name()),
     ip_(0),
+    hc_active_(false),
     ipv4_active_(false),
     layer3_forwarding_(true),
     ksync_obj_(obj),
     l2_active_(false),                
     metadata_l2_active_(false),
+    metadata_ip_active_(false),
     bridging_(true),
+    proxy_arp_mode_(VmInterface::PROXY_ARP_NONE),
     mac_(),
     smac_(),
     mirror_direction_(Interface::UNKNOWN),
@@ -115,8 +127,10 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
     no_arp_(false),
     encap_type_(PhysicalInterface::ETHERNET),
     transport_(Interface::TRANSPORT_INVALID),
-    flood_unknown_unicast_(false),
-    qos_config_(NULL),
+    flood_unknown_unicast_(false), qos_config_(NULL),
+    learning_enabled_(false), isid_(VmInterface::kInvalidIsid),
+    pbb_cmac_vrf_(VrfEntry::kInvalidIndex), etree_leaf_(false),
+    pbb_interface_(false), vhostuser_mode_(VmInterface::vHostUserClient),
     os_guid_(intf->os_guid()) {
 
     if (intf->flow_key_nh()) {
@@ -126,12 +140,12 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
     if (type_ == Interface::VM_INTERFACE) {
         const VmInterface *vmitf =
             static_cast<const VmInterface *>(intf);
-        if (vmitf->do_dhcp_relay()) {
-            ip_ = vmitf->primary_ip_addr().to_ulong();
-        }
+        ip_ = vmitf->primary_ip_addr().to_ulong();
+        primary_ip6_ = vmitf->primary_ip6_addr();
         network_id_ = vmitf->vxlan_id();
         rx_vlan_id_ = vmitf->rx_vlan_id();
         tx_vlan_id_ = vmitf->tx_vlan_id();
+        vhostuser_mode_ = vmitf->vhostuser_mode();
         if (vmitf->parent()) {
             InterfaceKSyncEntry tmp(ksync_obj_, vmitf->parent());
             parent_ = ksync_obj_->GetReference(&tmp);
@@ -164,7 +178,7 @@ InterfaceKSyncEntry::InterfaceKSyncEntry(InterfaceKSyncObject *obj,
 InterfaceKSyncEntry::~InterfaceKSyncEntry() {
 }
 
-KSyncDBObject *InterfaceKSyncEntry::GetObject() {
+KSyncDBObject *InterfaceKSyncEntry::GetObject() const {
     return ksync_obj_;
 }
 
@@ -188,6 +202,11 @@ std::string InterfaceKSyncEntry::ToString() const {
 bool InterfaceKSyncEntry::Sync(DBEntry *e) {
     Interface *intf = static_cast<Interface *>(e);
     bool ret = false;
+
+    if (hc_active_ != intf->is_hc_active()) {
+        hc_active_ = intf->is_hc_active();
+        ret = true;
+    }
 
     if (ipv4_active_ != intf->ipv4_active()) {
         ipv4_active_ = intf->ipv4_active();
@@ -226,17 +245,16 @@ bool InterfaceKSyncEntry::Sync(DBEntry *e) {
             ret = true;
         }
 
-        if (vm_port->do_dhcp_relay()) {
-            if (ip_ != vm_port->primary_ip_addr().to_ulong()) {
-                ip_ = vm_port->primary_ip_addr().to_ulong();
-                ret = true;
-            }
-        } else {
-            if (ip_) {
-                ip_ = 0;
-                ret = true;
-            }
+        if (ip_ != vm_port->primary_ip_addr().to_ulong()) {
+            ip_ = vm_port->primary_ip_addr().to_ulong();
+            ret = true;
         }
+
+        if (primary_ip6_ != vm_port->primary_ip6_addr()) {
+            primary_ip6_ = vm_port->primary_ip6_addr();
+            ret = true;
+        }
+
         if (layer3_forwarding_ != vm_port->layer3_forwarding()) {
             layer3_forwarding_ = vm_port->layer3_forwarding();
             ret = true;
@@ -252,6 +270,11 @@ bool InterfaceKSyncEntry::Sync(DBEntry *e) {
             ret = true;
         }
 
+        if (proxy_arp_mode_ != vm_port->proxy_arp_mode()) {
+            proxy_arp_mode_ = vm_port->proxy_arp_mode();
+            ret = true;
+        }
+
         if (rx_vlan_id_ != vm_port->rx_vlan_id()) {
             rx_vlan_id_ = vm_port->rx_vlan_id();
             ret = true;
@@ -259,6 +282,11 @@ bool InterfaceKSyncEntry::Sync(DBEntry *e) {
 
         if (tx_vlan_id_ != vm_port->tx_vlan_id()) {
             tx_vlan_id_ = vm_port->tx_vlan_id();
+            ret = true;
+        }
+
+        if (vhostuser_mode_ != vm_port->vhostuser_mode()) {
+            vhostuser_mode_ = vm_port->vhostuser_mode();
             ret = true;
         }
 
@@ -279,6 +307,39 @@ bool InterfaceKSyncEntry::Sync(DBEntry *e) {
                 vm_port->metadata_l2_active();
             ret = true;
         }
+
+        if (metadata_ip_active_ !=
+            vm_port->metadata_ip_active()) {
+            metadata_ip_active_ =
+                vm_port->metadata_ip_active();
+            ret = true;
+        }
+
+        if (learning_enabled_ != vm_port->learning_enabled()) {
+            learning_enabled_ = vm_port->learning_enabled();
+            ret = true;
+        }
+
+        if (pbb_interface_ != vm_port->pbb_interface()) {
+            pbb_interface_ = vm_port->pbb_interface();
+            ret = true;
+        }
+
+        if (l2_active_ && pbb_interface_ && isid_ != vm_port->GetIsid()) {
+            isid_ = vm_port->GetIsid();
+            ret = true;
+        }
+
+        if (l2_active_ && pbb_interface_ &&
+            pbb_cmac_vrf_ != vm_port->GetPbbVrf()) {
+            pbb_cmac_vrf_ = vm_port->GetPbbVrf();
+            ret = true;
+        }
+
+        if (etree_leaf_ != vm_port->etree_leaf()) {
+            etree_leaf_ = vm_port->etree_leaf();
+            ret = true;
+        }
     }
 
     uint32_t vrf_id = VIF_VRF_INVALID;
@@ -286,7 +347,7 @@ bool InterfaceKSyncEntry::Sync(DBEntry *e) {
     std::string analyzer_name;
     Interface::MirrorDirection mirror_direction = Interface::UNKNOWN;
     bool has_service_vlan = false;
-    if (l2_active_ || ipv4_active_ || metadata_l2_active_) {
+    if (l2_active_ || ipv4_active_ || metadata_l2_active_ || metadata_ip_active_) {
         vrf_id = intf->vrf_id();
         if (vrf_id == VrfEntry::kInvalidIndex) {
             vrf_id = VIF_VRF_INVALID;
@@ -376,6 +437,18 @@ bool InterfaceKSyncEntry::Sync(DBEntry *e) {
             fat_flow_list_ = vm_intf->fat_flow_list();
             ret = true;
         }
+        std::set<MacAddress> aap_mac_list;
+        for (VmInterface::AllowedAddressPairSet::iterator aap_it =
+             vm_intf->allowed_address_pair_list().list_.begin();
+             aap_it != vm_intf->allowed_address_pair_list().list_.end();
+             ++aap_it) {
+            aap_mac_list.insert(aap_it->mac_);
+        }
+        if (aap_mac_list_ != aap_mac_list) {
+            aap_mac_list_.swap(aap_mac_list);
+            ret = true;
+        }
+        pbb_mac_ = vm_intf->vm_mac();
     }
     case Interface::PACKET:
         dmac = table->agent()->vrrp_mac();
@@ -527,20 +600,7 @@ bool IsValidOsIndex(size_t os_index, Interface::Type type, uint16_t vlan_id,
 int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     vr_interface_req encoder;
     int encode_len;
-
-    // Dont send message if interface index not known
-    if (IsValidOsIndex(os_index_, type_, rx_vlan_id_, vmi_type_, transport_) == false) {
-        return 0;
-    }
-
-    if (type_ == Interface::LOGICAL || type_ == Interface::REMOTE_PHYSICAL) {
-        return 0;
-    }
-
-    // No need to add VLAN sub-interface if there is no parent
-    if (vmi_device_type_ == VmInterface::VM_VLAN_ON_VMI && !parent_.get()) {
-        return 0;
-    }
+    uint32_t vrf_id = vrf_id_;
 
     uint32_t flags = 0;
     encoder.set_h_op(op);
@@ -561,6 +621,10 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
         encoder.set_vifr_qos_map_index(-1);
     }
 
+    if (etree_leaf_ == false) {
+        flags |= VIF_FLAG_ETREE_ROOT;
+    }
+
     switch (type_) {
     case Interface::VM_INTERFACE: {
         if (vmi_device_type_ == VmInterface::TOR)
@@ -579,6 +643,12 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
         }
         if (flood_unknown_unicast_) {
             flags |= VIF_FLAG_UNKNOWN_UC_FLOOD;
+        }
+        if (learning_enabled_) {
+            flags |= VIF_FLAG_MAC_LEARN;
+        }
+        if (proxy_arp_mode_ == VmInterface::PROXY_ARP_UNRESTRICTED) {
+            flags |= VIF_FLAG_MAC_PROXY;
         }
         MacAddress mac;
         if (parent_.get() != NULL) {
@@ -608,12 +678,28 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
         encoder.set_vifr_mac(intf_mac);
 
         if (ksync_obj_->ksync()->agent()->isVmwareVcenterMode()) {
-            encoder.set_vifr_src_mac(std::vector<int8_t>
-                                     ((const int8_t *)smac(),
-                                      (const int8_t *)smac() + smac().size()));
+            std::vector<int8_t> mac;
+            mac.insert(mac.begin(), (const int8_t *)smac(),
+                       (const int8_t *)smac() + smac().size());
+            for (std::set<MacAddress>::iterator it = aap_mac_list_.begin();
+                 it != aap_mac_list_.end(); ++it) {
+                mac.insert(mac.end(), (const int8_t *)(*it),
+                           (const int8_t *)(*it) + (*it).size());
+            }
+            encoder.set_vifr_src_mac(mac);
         }
 
-        if (fat_flow_list_.list_.size() != 0) {
+        // Disable fat-flow when health-check status is inactive
+        // If fat-flow is active, then following problem happens,
+        //    1. Health Check Request from vhost0 interface creates a flow
+        //    2. Health Check response is received from VMI with fat-flow
+        //       - Response creates new flow due to fat-flow configuration
+        //       - If health-check status is inactive routes for interface are
+        //         withdrawn
+         //      - Flow created from response fails due to missing routes
+        // If fat-flow is disabled, the reverse packet hits flow created (1)
+        // and succeeds
+        if (hc_active_ && fat_flow_list_.list_.size() != 0) {
             std::vector<int32_t> fat_flow_list;
             for (VmInterface::FatFlowEntrySet::const_iterator it =
                  fat_flow_list_.list_.begin(); it != fat_flow_list_.list_.end();
@@ -622,6 +708,24 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
             }
             encoder.set_vifr_fat_flow_protocol_port(fat_flow_list);
         }
+
+        if (pbb_interface_) {
+            std::vector<int8_t> pbb_mac((int8_t *)pbb_mac_,
+                                        (int8_t *)pbb_mac_ + mac.size());
+            encoder.set_vifr_pbb_mac(pbb_mac);
+            encoder.set_vifr_isid(isid_);
+            if (pbb_cmac_vrf_ != VrfEntry::kInvalidIndex) {
+                vrf_id = pbb_cmac_vrf_;
+            }
+        }
+
+        if (!primary_ip6_.is_unspecified()) {
+            uint64_t data[2];
+            Ip6AddressToU64Array(primary_ip6_, data, 2);
+            encoder.set_vifr_ip6_u(data[0]);
+            encoder.set_vifr_ip6_l(data[1]);
+        }
+        encoder.set_vifr_vhostuser_mode(vhostuser_mode_);
         break;
     }
 
@@ -641,6 +745,15 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
             flags |= VIF_FLAG_NATIVE_VLAN_TAG;
         }
         encoder.set_vifr_name(display_name_);
+
+        AgentParam *params = ksync_obj_->ksync()->agent()->params();
+        std::vector<int16_t> nic_queue_list;
+        for (std::set<uint16_t>::const_iterator it =
+                 params->nic_queue_list().begin();
+                 it != params->nic_queue_list().end(); it++) {
+            nic_queue_list.push_back(*it);
+        }
+        encoder.set_vifr_hw_queues(nic_queue_list);
         break;
     }
 
@@ -697,6 +810,30 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
                 flags |= VIF_FLAG_MIRROR_TX;
             }
             encoder.set_vifr_mir_id(idx);
+
+            const VrfEntry* vrf =
+                ksync_obj_->ksync()->agent()->vrf_table()->FindVrfFromId(vrf_id_);
+            if (vrf && vrf->vn()) {
+                const std::string &vn_name = vrf->vn()->GetName() ;
+                // TLV for RX Mirror
+                std::vector<int8_t> srcdata;
+                srcdata.push_back(FlowEntry::PCAP_SOURCE_VN);
+                srcdata.push_back(vn_name.size());
+                srcdata.insert(srcdata.end(), vn_name.begin(),
+                               vn_name.end());
+                srcdata.push_back(FlowEntry::PCAP_TLV_END);
+                srcdata.push_back(0x0);
+                encoder.set_vifr_in_mirror_md(srcdata);
+                // TLV for TX Mirror
+                std::vector<int8_t> destdata;
+                destdata.push_back(FlowEntry::PCAP_DEST_VN);
+                destdata.push_back(vn_name.size());
+                destdata.insert(destdata.end(), vn_name.begin(),
+                                vn_name.end());
+                destdata.push_back(FlowEntry::PCAP_TLV_END);
+                destdata.push_back(0x0);
+                encoder.set_vifr_out_mirror_md(destdata);
+            }
         }
 
         if (has_service_vlan_) {
@@ -728,7 +865,7 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
 
     encoder.set_vifr_flags(flags);
 
-    encoder.set_vifr_vrf(vrf_id_);
+    encoder.set_vifr_vrf(vrf_id);
     encoder.set_vifr_idx(interface_id_);
     encoder.set_vifr_rid(0);
     encoder.set_vifr_os_idx(os_index_);
@@ -736,7 +873,7 @@ int InterfaceKSyncEntry::Encode(sandesh_op::type op, char *buf, int buf_len) {
     if (type_ != Interface::PHYSICAL) {
         encoder.set_vifr_name(interface_name_);
     }
-    encoder.set_vifr_ip(ip_);
+    encoder.set_vifr_ip(htonl(ip_));
     encoder.set_vifr_nh_id(flow_key_nh_id_);
 
     // GUIDs are used as interface identifiers on Windows
@@ -770,6 +907,7 @@ void InterfaceKSyncEntry::FillObjectLog(sandesh_op::type op,
     if (op == sandesh_op::ADD) {
         info.set_os_idx(os_index_);
         info.set_vrf_id(vrf_id_);
+        info.set_hc_active(hc_active_);
         info.set_l2_active(l2_active_);
         info.set_active(ipv4_active_);
         info.set_policy_enabled(policy_enabled_);

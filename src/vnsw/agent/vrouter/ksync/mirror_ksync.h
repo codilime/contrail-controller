@@ -29,7 +29,7 @@ public:
     NHKSyncEntry *nh() const {
         return static_cast<NHKSyncEntry *>(nh_.get());
     }
-    KSyncDBObject *GetObject();
+    KSyncDBObject *GetObject() const;
     virtual bool IsLess(const KSyncEntry &rhs) const;
     virtual std::string ToString() const;
     virtual KSyncEntry *UnresolvedReference();
@@ -49,6 +49,8 @@ private:
     std::string analyzer_name_;
     uint8_t mirror_flag_;
     uint32_t vni_;
+    bool nic_assisted_mirroring_;
+    uint16_t nic_assisted_mirroring_vlan_;
     DISALLOW_COPY_AND_ASSIGN(MirrorKSyncEntry);
 };
 
