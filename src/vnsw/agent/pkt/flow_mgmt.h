@@ -7,6 +7,7 @@
 #include <boost/scoped_ptr.hpp>
 #include "pkt/flow_table.h"
 #include "pkt/flow_mgmt_request.h"
+#include "pkt/flow_mgmt_dbclient.h"
 #include "pkt/flow_event.h"
 
 ////////////////////////////////////////////////////////////////////////////
