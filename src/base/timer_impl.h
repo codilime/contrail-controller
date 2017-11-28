@@ -2,7 +2,7 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
-#ifndef BASE_TIMER_IMPL_H_
+#ifndef BASE_TIMER_IMPL_H__
 #define BASE_TIMER_IMPL_H__
 
 

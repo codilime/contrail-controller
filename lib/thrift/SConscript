@@ -50,7 +50,8 @@ for hf in headerfiles:
 
 headerfiles =  glob.glob(abs_vpath + r'\lib\cpp\src\windows\*.h')
 for hf in headerfiles:
-    env.Install('#/build/include/thrift/windows', hf)
+    if 'GetTimeOfDay.h' not in hf:
+        env.Install('#/build/include/thrift/windows', hf)
 
 headerfiles =  glob.glob(abs_vpath + r'\lib\cpp\src\transport\*.h')
 for hf in headerfiles:
@@ -77,8 +78,8 @@ headerfiles =  glob.glob(abs_vpath + r'\lib\cpp\src\*.h')
 for hf in headerfiles:
     env.Install('#/build/include/thrift', hf)
 
+# Ugly workaround for no patching on Windows
+env.Install('#/build/include/thrift/windows', '#/controller/lib/thrift/msvc15/GetTimeOfDay.h')
+
 env.Command(thrift_exe, str(Dir(vpath)) , build_thrift_exe_for_windows)
 env.Command(thrift_libs, str(Dir(vpath)) , build_thrift_libs_for_windows)
-
-#Default(thrift_exe)
-#Default(thrift_libs)

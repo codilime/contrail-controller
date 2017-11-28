@@ -619,6 +619,7 @@ TEST_F(QueueTaskTest, WaterMarkParallelTest) {
     work_queue_.ResetHighWaterMark();
     // Wait till the watermark callback is finished
     TASK_UTIL_EXPECT_FALSE(wm_callback_running_);
+    task_util::WaitForIdle(1);
 }
 
 TEST_F(QueueTaskTest, OnExitParallelTest) {
