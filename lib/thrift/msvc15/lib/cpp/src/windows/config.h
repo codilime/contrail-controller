@@ -73,7 +73,7 @@ struct timespec {
 typedef ptrdiff_t ssize_t;
 
 // Missing functions.
-#define usleep(ms) Sleep(ms)
+#define thrift_usleep(ms) Sleep(ms)
 
 #if WINVER <= 0x0502
 #define poll(fds, nfds, timeout) \
