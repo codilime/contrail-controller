@@ -417,7 +417,7 @@ void FlowEntry::Reset() {
     is_flow_on_unresolved_list = false;
     pending_actions_.Reset();
     assert(flow_mgmt_request_ == NULL);
-    assert(flow_mgmt_info_ == NULL);
+    assert(flow_mgmt_info_.get() == NULL);
 }
 
 void FlowEntry::Reset(const FlowKey &k) {
