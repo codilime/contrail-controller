@@ -5,7 +5,6 @@ import glob
 from distutils.dir_util import copy_tree
 from shutil import copyfile, copy
 
-print 'installing thrift'
 vpath = '#/third_party/thrift-0.8.0'
 env = DefaultEnvironment()
 
@@ -27,16 +26,11 @@ def build_thrift_libs_for_windows(target,source,env):
     copy_tree(os.path.join( Dir('.').srcnode().abspath, r'controller\lib\thrift\msvc15\lib'), os.path.join(abs_vpath, 'lib'))
     subprocess.call([msbuild, 'thrift.sln', '/p:Configuration=' + configuration, '/p:Platform=x64', '/p:PlatformToolset=v140'], cwd=os.path.join(abs_vpath, r'lib\cpp'))
     copyfile(os.path.join(abs_vpath, r'lib\cpp\x64\\' + configuration + r'\libthrift.lib'), os.path.join(env.Dir(env['TOP_LIB']).abspath, r'thrift.lib'))
-    copyfile(os.path.join(abs_vpath, r'lib\cpp\x64\\' + configuration + r'\libthriftnb.lib'), os.path.join(env.Dir(env['TOP_LIB']).abspath, r'thriftnb.lib'))
-    files = glob.iglob(os.path.join(abs_vpath, r'lib\cpp\src\*.h'))
-    if not os.path.exists(include_path):
-        os.makedirs(include_path)
-    for file in files:
-        copy(file, include_path)
+    copyfile(os.path.join(abs_vpath, r'lib\cpp\x64\\' + configuration + r'\libthriftnb.lib'), os.path.join(env.Dir(env['TOP_LIB']).abspath, r'thriftasio.lib'))
 
 
 thrift_exe = '#/build/bin/thrift.exe'
-thrift_libs = ['#/build/lib/thrift.lib', '#build/lib/thriftnb.lib']
+thrift_libs = ['#/build/lib/thrift.lib', '#build/lib/thriftasio.lib']
 
 
 headerfiles =  glob.glob(abs_vpath + r'\lib\cpp\src\protocol\*.h')
