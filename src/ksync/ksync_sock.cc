@@ -539,6 +539,9 @@ KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol) :
         LOG(ERROR, "Error while assigning KSync pipe: " << ec);
         assert(0);
     }
+
+    // TODO: JW-990: Windows implementation currently supports only singular message transfers
+    max_bulk_msg_count_ = 1;
 }
 #else
 KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol)
@@ -570,15 +573,17 @@ KSyncSockNetlink::~KSyncSockNetlink() {
 #endif
 }
 
-void KSyncSockNetlink::Init(io_service &ios, int protocol) {
+void KSyncSockNetlink::Init(io_service &ios, int protocol, bool on_windows) {
     KSyncSock::SetSockTableEntry(new KSyncSockNetlink(ios, protocol));
-#ifdef _WIN32
-    // Windows doesn't support event_fd mechanism, so use (slower) work_queue.
-    // See comment in ksync_tx_queue for more info.
-    const bool use_work_queue = true;
-#else
-    const bool use_work_queue = false;
-#endif
+
+    bool use_work_queue;
+    if (on_windows) {
+        // Windows doesn't support event_fd mechanism, so use (slower) work_queue.
+        // See comment in ksync_tx_queue for more info.
+        use_work_queue = true;
+    } else {
+        use_work_queue = false;
+    }
     KSyncSock::Init(use_work_queue);
 }
 
