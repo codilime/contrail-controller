@@ -522,9 +522,9 @@ bool KSyncSock::SendAsyncImpl(IoContext *ioc) {
 /////////////////////////////////////////////////////////////////////////////
 #ifdef _WIN32
 KSyncSockNetlink::KSyncSockNetlink(boost::asio::io_service &ios, int protocol) : pipe_(ios) {
-    const DWORD access_flags = GENERIC_READ | GENERIC_WRITE;
-    const DWORD attrs = OPEN_EXISTING;
-    const DWORD config_flags = FILE_FLAG_OVERLAPPED;
+    static const DWORD access_flags = GENERIC_READ | GENERIC_WRITE;
+    static const DWORD attrs = OPEN_EXISTING;
+    static const DWORD config_flags = FILE_FLAG_OVERLAPPED;
 
     nl_client_->cl_win_pipe = CreateFile(KSYNC_PATH, access_flags, 0, NULL,
                                          attrs, config_flags, NULL);
