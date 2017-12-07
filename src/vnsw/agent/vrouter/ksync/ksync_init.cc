@@ -131,8 +131,15 @@ void KSync::NetlinkInit() {
     event_mgr = agent_->event_manager();
     boost::asio::io_service &io = *event_mgr->io_service();
 
-    bool on_windows = agent_->vrouter_on_windows();
-    KSyncSockNetlink::Init(io, NETLINK_GENERIC, on_windows);
+    bool use_work_queue;
+    if (agent_->vrouter_on_windows()) {
+        // Windows doesn't support event_fd mechanism, so use (slower) work_queue.
+        // See comment in ksync_tx_queue for more info.
+        use_work_queue = true;
+    } else {
+        use_work_queue = false;
+    }
+    KSyncSockNetlink::Init(io, NETLINK_GENERIC, use_work_queue);
     KSyncSock::SetAgentSandeshContext
         (new KSyncSandeshContext(ksync_flow_memory_.get()));
     GenericNetlinkInit();
