@@ -55,7 +55,7 @@ void Options::Initialize(EventManager &evm,
     // Command line only options.
     generic.add_options()
         ("conf_file", opt::value<string>()->default_value(
-                                            AgentConstants::contrail_control_conf),
+                                            "/etc/contrail/contrail-control.conf"),
              "Configuration file")
          ("help", "help message")
         ("version", "Display version information")
@@ -140,15 +140,15 @@ void Options::Initialize(EventManager &evm,
              "Enable authentication over Xmpp")
         ("DEFAULT.xmpp_server_cert",
              opt::value<string>()->default_value(
-             AgentConstants::contrail_ssl_certs_server_pem),
+             "/etc/contrail/ssl/certs/server.pem"),
              "XMPP Server ssl certificate")
         ("DEFAULT.xmpp_server_key",
              opt::value<string>()->default_value(
-             AgentConstants::contrail_ssl_server_privkey_pem),
+             "/etc/contrail/ssl/private/server-privkey.pem"),
              "XMPP Server ssl private key")
         ("DEFAULT.xmpp_ca_cert",
              opt::value<string>()->default_value(
-             AgentConstants::contrail_ssl_certs_ca_cert_pem),
+             "/etc/contrail/ssl/certs/ca-cert.pem"),
              "XMPP CA ssl certificate")
         ("DEFAULT.sandesh_send_rate_limit",
               opt::value<uint32_t>()->default_value(
