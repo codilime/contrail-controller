@@ -30,14 +30,9 @@ env.Prepend(LIBS = ['dbtest', 'ifmap_vnc', 'task_test',
                     'pugixml', 'curl', 'net',
                     'ifmap_test_util', 'ifmap_test_util_server',
                     'ifmap_server', 'ifmap_common',
-                    'ifmapio', 'process_info',
+                    'ifmapio', 'crypto', 'ssl', 'process_info',
                     'db', 'sandeshvns', 'io', 'base', 'xml',
                     'boost_regex', 'boost_program_options', 'gunit'])
-
-if sys.platform.startswith('win'):
-    env.Append(LIBS = ['ssleay32', 'libeay32'])
-else:
-    env.Append(LIBS = ['crypto'])
 
 env.Prepend(LIBS=['dns_cfg', 'cmn', 'mgr', 'agent_xmpp', 'bind_interface'])
 env.Append(LIBS=['sandesh', 'http', 'http_parser'])

@@ -25,13 +25,13 @@ env.Prepend(LIBS=['ifmap_vnc', 'ifmap_server', 'ifmap_common', 'net', 'ifmapio',
                   'xmpp', 'ds', 'sandeshvns', 'peer_sandesh', 'table_sandesh',
                   'httpc', 'curl', 'process_info',
                   'db', 'io', 'base', 'xml', 'pugixml',
-                  'boost_regex', 'boost_program_options',
+                  'boost_regex', 'boost_chrono', 'boost_program_options',
                   'libeay32', 'ssleay32', 'boost_filesystem'])
 
 if sys.platform.startswith('win'):
     env.Prepend(LIBS=['xml2', 'advapi32', 'gdi32', 'version'])
 else:
-    env.Prepend(LIBS=['libxml2', 'boost_chrono'])
+    env.Prepend(LIBS=['libxml2'])
 
 env.Prepend(LIBS=['dns_cfg', 'cmn', 'mgr', 'agent_xmpp', 'bind_interface', 'dns_uve'])
 env.Append(LIBS=['sandesh', 'http', 'http_parser'])
