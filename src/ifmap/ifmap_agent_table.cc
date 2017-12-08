@@ -1,8 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+
 #include "ifmap/ifmap_agent_table.h"
 
 #include <boost/algorithm/string.hpp>
