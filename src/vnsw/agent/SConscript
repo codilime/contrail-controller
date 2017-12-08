@@ -3,7 +3,6 @@
 #
 
 import sys
-import os
 
 if sys.platform == 'darwin':
     Return()
@@ -28,8 +27,6 @@ if GetOption('with_libvirt'):
 env.Prepend(CPPPATH = '#/vrouter/include')
 env.Prepend(CPPPATH = env['TOP_INCLUDE'] + '/thrift')
 env.Prepend(CPPPATH = env['TOP'] + '/tools/sandesh/library/common')
-if os.name == 'nt':
- env.Append(CPPPATH = ['#windows'])
 
 # Function to append TOP level directory
 def AddTopDir(list):
@@ -56,6 +53,7 @@ if sys.platform.startswith('linux'):
     cpppath.append('vnsw/agent/vrouter/ksync/linux')
 elif sys.platform.startswith('freebsd'):
     cpppath.append('vnsw/agent/vrouter/ksync/freebsd')
+
 env.Prepend(CPPPATH = AddTopDir(cpppath))
 
 
@@ -102,7 +100,6 @@ env.Append(LIBPATH = MapBuildDir([
     'third_party/bind-9.9.2-P1/lib/isc',
     'vnsw/agent/nexthop_server',
 ]))
-env.Append(LIBPATH='#/build/debug/tools/sandesh/library/cpp')
 
 ##########################################################################
 # Build LIBS - Libraries to be linked
@@ -135,8 +132,8 @@ env.Prepend(LIBS = [
     'db',
     'cpuinfo',
     'io',
-    'ssleay32',
-    'libeay32',
+    'ssl',
+    'crypto',
     'sandesh',
     'nodeinfo',
     'cpuinfo',
@@ -144,14 +141,22 @@ env.Prepend(LIBS = [
     'http',
     'http_parser',
     'base',
-    'thriftnb',
+    'thriftasio',
     'thrift',
     'boost_filesystem',
     'boost_program_options',
     'boost_regex',
-    'windowsstubs.lib',
-    'gdi32.lib'
 ])
+
+if sys.platform == 'win32':
+    env.Prepend(LIBS = [
+        'windowsstubs',
+        'gdi32',
+    ])
+else:
+    env.Prepend(LIBS = [
+        'rt',
+    ])
 
 # Libvirt library
 if GetOption('with_libvirt'):
@@ -186,9 +191,10 @@ env.Prepend(LIBS = AGENT_MULTIPATH_LIBS)
 def MakeLinkCmd(list):
     return map(lambda x: '-l' + x, list)
 
-#env.Prepend(LINKFLAGS = [ '-Wl,--whole-archive', '-rdynamic'] + 
-#                          MakeLinkCmd(AGENT_MULTIPATH_LIBS) +
-#                        ['-Wl,--no-whole-archive'])
+if sys.platform != 'win32':
+    env.Prepend(LINKFLAGS = [ '-Wl,--whole-archive', '-rdynamic'] +
+                              MakeLinkCmd(AGENT_MULTIPATH_LIBS) +
+                            ['-Wl,--no-whole-archive'])
 # Prefer linking against the self-built libraries over the system ones
 env.AppendENVPath('LD_RUN_PATH', '#/build/lib')
 
@@ -210,8 +216,12 @@ AgentEnv.AppendUnique(CONTRAIL_LIBS = [
     'ksyncnl',
     'kstate',
     'vrutil',
-#    'isc',
 ])
+
+if sys.platform != 'win32':
+    AgentEnv.AppendUnique(CONTRAIL_LIBS = [
+        'isc',
+    ])
 
 # Common libraries for agent test code
 AgentEnv.AppendUnique(TEST_CMN_LIBS_PRE = [
@@ -228,9 +238,13 @@ AgentEnv.AppendUnique(TEST_CMN_LIBPATH = [
     env['TOP'] + '/base/test',
     env['TOP'] + '/vnsw/agent/test',
 ])
-AgentEnv.AppendUnique(TEST_CMN_CCFLAGS = [
-    '/w'
-])
+if sys.platform == 'win32':
+    AgentEnv['TEST_CMN_CCFLAGS'] = []
+else:
+    AgentEnv.AppendUnique(TEST_CMN_CCFLAGS = [
+        '-Wno-return-type',
+        '-Wno-unused-function'
+    ])
 
 ##########################################################################
 # Utility functions
@@ -275,7 +289,7 @@ def MakeTestEnvFn(self, env):
     env.Append(CCFLAGS = AgentEnv['TEST_CMN_CCFLAGS'])
     env.Prepend(LIBS = AgentEnv['CONTRAIL_LIBS'])
     env.Prepend(LIBS = AgentEnv['TEST_CMN_LIBS_PRE'])
-    if sys.platform.startswith('win'):
+    if sys.platform == 'win32':
         env.Prepend(LIBS = ['Dbghelp', 'Iphlpapi'])
     env.Append(LIBS = AgentEnv['TEST_CMN_LIBS_POST'])
     cflags = env['CCFLAGS']
@@ -394,7 +408,7 @@ env.SConscript('test-xml/SConscript', exports=['AgentEnv', 'BuildEnv'],
 # Utility functions
 ##########################################################################
 #cflags = AgentEnv['CCFLAGS']
-#cflags.remove('-W4')
+#cflags.remove('-Wno-return-type')
 #AgentEnv.Replace(CCFLAGS = cflags)
 #Export('AgentEnv')
 
