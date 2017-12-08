@@ -20,7 +20,7 @@ env.Append(LIBPATH = env['TOP'] + '/base/test')
 env.Prepend(LIBS = ['task_test', 'io', 'sandesh', 'http',
                     'sandeshvns', 'process_info', 'io', 'base',
                     'http_parser', 'curl',
-                    'boost_program_options', 'pugixml', 'ssl', 'crypto', 'gtest', 'windowsstubs'])
+                    'boost_program_options', 'pugixml', 'ssl', 'crypto', 'gtest'])
 
 
 event_manager_test = env.UnitTest('event_manager_test',

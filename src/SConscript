@@ -46,8 +46,10 @@ include = ['#/controller/src', '#/build/include', '#controller/lib']
 libpath = ['#/build/lib']
 
 libs = ['boost_system', 'log4cplus']
-if not sys.platform.startswith('win'):
-    libs.append(['pthread'])
+if sys.platform.startswith('win'):
+    libs.append('windowsstubs')
+else:
+    libs.append('pthread')
 
 common = DefaultEnvironment().Clone()
 
