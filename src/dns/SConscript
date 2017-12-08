@@ -26,7 +26,7 @@ env.Prepend(LIBS=['ifmap_vnc', 'ifmap_server', 'ifmap_common', 'net', 'ifmapio',
                   'httpc', 'curl', 'process_info',
                   'db', 'io', 'base', 'xml', 'pugixml',
                   'boost_regex', 'boost_chrono', 'boost_program_options',
-                  'libeay32', 'ssleay32', 'boost_filesystem'])
+                  'crypto', 'ssl', 'boost_filesystem'])
 
 if sys.platform.startswith('win'):
     env.Prepend(LIBS=['xml2', 'advapi32', 'gdi32', 'version'])
