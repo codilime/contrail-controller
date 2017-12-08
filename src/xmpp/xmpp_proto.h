@@ -5,10 +5,6 @@
 #ifndef __XMPP_STANZA_H__
 #define __XMPP_STANZA_H__
 
-#ifdef _WINDOWS
-#undef interface //conflict with windows specific "interface"  in objbase.h
-#endif
-
 #include "xmpp/xmpp_str.h"
 #include "xml/xml_base.h"
 
@@ -110,7 +106,7 @@ public:
             CHAT = 2,
             GROUPCHAT = 3,
             HEADLINE = 4, 
-            ERR = 5
+            ERROR = 5
         };
 
         XmppMessageStateType state;
@@ -142,7 +138,7 @@ public:
             GET = 1,
             SET = 2,
             RESULT = 3,
-            ERR = 4
+            ERROR = 4
         };
 
         enum XmppIqErrorType {
