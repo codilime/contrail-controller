@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-#include <boost/thread.hpp>
+#include <pthread.h>
 #include <boost/program_options.hpp>
 #include <base/logging.h>
 #include <base/misc_utils.h>

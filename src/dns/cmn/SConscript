@@ -10,21 +10,35 @@ env = DnsEnv.Clone()
 SandeshGenFiles = env.SandeshGenCpp('dns.sandesh')
 SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)
 
-buildinfo_dep_libs = ['../../dns/cfg/dns_cfg.lib', '../../dns/mgr/mgr.lib', '../../dns/agent/agent_xmpp.lib', 
-                      '../../dns/bind/bind_interface.lib', 
-                      '../../schema/ifmap_vnc.lib', '../../ifmap/ifmap_server.lib', '../../ifmap/ifmap_common.lib', 
-                      '../../net/net.lib', '../../../lib/ifmapio.lib', '../../xmpp/xmpp.lib', '../../../lib/sandeshvns.lib',
-                      '../../../lib/sandesh.lib', '../../../lib/http.lib', '../../../lib/http_parser.lib', 
-                      '../../db/db.lib', '../../io/io.lib', '../../base/base.lib', 
-                      '../../xml/xml.lib', '../../../lib/pugixml.lib',
-                      '../../dns/uve/dns_uve.lib'
+buildinfo_dep_libs = ['../../dns/cfg/' + env['LIBPREFIX'] + 'dns_cfg' + env['LIBSUFFIX'],
+                      '../../dns/mgr/' + env['LIBPREFIX'] + 'mgr' + env['LIBSUFFIX'],
+                      '../../dns/agent/' + env['LIBPREFIX'] + 'agent_xmpp' + env['LIBSUFFIX'],
+                      '../../dns/bind/' + env['LIBPREFIX'] + 'bind_interface' + env['LIBSUFFIX'],
+                      '../../schema/' + env['LIBPREFIX'] + 'ifmap_vnc' + env['LIBSUFFIX'],
+                      '../../ifmap/' + env['LIBPREFIX'] + 'ifmap_server' + env['LIBSUFFIX'],
+                      '../../ifmap/' + env['LIBPREFIX'] + 'ifmap_common' + env['LIBSUFFIX'],
+                      '../../net/' + env['LIBPREFIX'] + 'net' + env['LIBSUFFIX'],
+                      '../../../lib/' + env['LIBPREFIX'] + 'ifmapio' + env['LIBSUFFIX'],
+                      '../../xmpp/' + env['LIBPREFIX'] + 'xmpp' + env['LIBSUFFIX'],
+                      '../../../lib/' + env['LIBPREFIX'] + 'sandeshvns' + env['LIBSUFFIX'],
+                      '../../../lib/' + env['LIBPREFIX'] + 'sandesh' + env['LIBSUFFIX'],
+                      '../../../lib/' + env['LIBPREFIX'] + 'http' + env['LIBSUFFIX'],
+                      '../../../lib/' + env['LIBPREFIX'] + 'http_parser' + env['LIBSUFFIX'],
+                      '../../db/' + env['LIBPREFIX'] + 'db' + env['LIBSUFFIX'],
+                      '../../io/' + env['LIBPREFIX'] + 'io' + env['LIBSUFFIX'],
+                      '../../base/' + env['LIBPREFIX'] + 'base' + env['LIBSUFFIX'],
+                      '../../xml/' + env['LIBPREFIX'] + 'xml' + env['LIBSUFFIX'],
+                      '../../../lib/' + env['LIBPREFIX'] + 'pugixml' + env['LIBSUFFIX'],
+                      '../../dns/uve/' + env['LIBPREFIX'] + 'dns_uve' + env['LIBSUFFIX']
                   ]
 
 cmn_sources = ['dns.cc', 'dns_options.cc']
+
 env.GenerateBuildInfoCode(
     target = ['buildinfo.h', 'buildinfo.cc'],
     source = buildinfo_dep_libs + ['../main.cc'],
     path = Dir('.').path)
+
 env.Depends('dns.o', 'buildinfo.cc')
 except_env = DnsEnv.Clone()
 except_env.CppEnableExceptions()
