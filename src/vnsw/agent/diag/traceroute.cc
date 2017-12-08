@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
-#include <netinet/icmp.h>
 #include "vr_defs.h"
 #include <sandesh/sandesh.h>
 #include <sandesh/sandesh_types.h>

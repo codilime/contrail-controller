@@ -3,8 +3,6 @@
  *   */
 
 #include <stdint.h>
-#include <net/ethernet.h>
-#include <netinet/icmp.h>
 #include "base/os.h"
 #include <map>
 #include "vr_defs.h"
