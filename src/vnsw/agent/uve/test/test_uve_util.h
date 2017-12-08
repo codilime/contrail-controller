@@ -93,8 +93,9 @@ public:
               0) {
     }
     virtual bool Run() {
-        return Agent::GetInstance()->flow_stats_manager()->
+        Agent::GetInstance()->flow_stats_manager()->
             default_flow_stats_collector()->Run();
+        return true;
     }
     std::string Description() const { return "FlowStatsCollectorTask"; }
 };
