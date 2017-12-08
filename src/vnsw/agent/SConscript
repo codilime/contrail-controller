@@ -149,14 +149,9 @@ env.Prepend(LIBS = [
 ])
 
 if sys.platform == 'win32':
-    env.Prepend(LIBS = [
-        'windowsstubs',
-        'gdi32',
-    ])
+    env.Prepend(LIBS = 'gdi32')
 else:
-    env.Prepend(LIBS = [
-        'rt',
-    ])
+    env.Prepend(LIBS = 'rt')
 
 # Libvirt library
 if GetOption('with_libvirt'):
