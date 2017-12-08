@@ -2,13 +2,9 @@
  * Copyright (c) 2015 Juniper Networks, Inc. All rights reserved.
  */
 
-#include <pkt/flow_entry.h>
-
 #include <vector>
 #include <bitset>
-
 #include <arpa/inet.h>
-
 #include <netinet/in.h>
 #include <base/os.h>
 
@@ -49,6 +45,7 @@
 #include <pkt/pkt_sandesh_flow.h>
 #include <pkt/flow_mgmt.h>
 #include <pkt/flow_event.h>
+#include <pkt/flow_entry.h>
 
 const std::map<FlowEntry::FlowPolicyState, const char*>
     FlowEntry::FlowPolicyStateStr = boost::assign::map_list_of
@@ -173,10 +170,10 @@ void VmFlowRef::FreeFd() {
     FlowProto *proto = flow_->flow_table()->agent()->pkt()->get_flow_proto();
     proto->update_linklocal_flow_count(-1);
     flow_->flow_table()->DelLinkLocalFlowInfo(fd_);
-#ifndef _WINDOWS
-    close(fd_);
+#ifdef _WIN32
+    closesocket(fd_);
 #else
-	closesocket(fd_);
+    close(fd_);
 #endif
 
     fd_ = kInvalidFd;
@@ -227,19 +224,15 @@ bool VmFlowRef::AllocateFd(Agent *agent, uint8_t l3_proto) {
 
     // allow the socket to be reused upon close
     int optval = 1;
-#ifndef _WINDOWS
-    setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-#else
-	setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval));
-#endif
+    setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval, sizeof(optval));
 
     struct sockaddr_in address;
     memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
-   if (::bind(fd_, (struct sockaddr*) &address, sizeof(address)) < 0) {
+    if (::bind(fd_, (struct sockaddr*) &address, sizeof(address)) < 0) {
         FreeFd();
         return false;
-   }
+    }
 
     struct sockaddr_in bound_to;
     socklen_t len = sizeof(bound_to);

@@ -3,20 +3,16 @@
  */
 
 #include <pkt/pkt_sandesh_flow.h>
-
 #include <vector>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <sstream>
 #include <algorithm>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <cmn/agent_stats.h>
 #include <uve/agent_uve.h>
 #include <vrouter/flow_stats/flow_stats_collector.h>
 #include <vrouter/ksync/ksync_init.h>
 #include <vrouter/ksync/ksync_flow_index_manager.h>
-
-using boost::system::error_code;
 
 #define SET_SANDESH_FLOW_DATA(agent, data, fe, info)                        \
     data.set_vrf(fe->data().vrf);                                           \

@@ -1,8 +1,7 @@
 /*
  * Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+
 #include "base/logging.h"
 #include "base/timer.h"
 #include <sandesh/sandesh.h>
