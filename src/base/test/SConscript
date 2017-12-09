@@ -20,9 +20,6 @@ env.Prepend(LIBS = ['base', 'gunit', 'task_test', 'io', 'sandesh', 'io', 'sandes
 if sys.platform not in ['win32', 'darwin']:
     env.Append(LIBS = ['rt'])
 
-if sys.platform == 'win32':
-    env.Append(LIBS = 'windowsstubs')
-
 libtask_test = env.Library('task_test',
                            ['task_test_util.cc',
                             'addr_test_util.cc'])

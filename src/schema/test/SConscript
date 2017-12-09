@@ -18,9 +18,6 @@ env.Prepend(LIBS = ['sandesh', 'http', 'http_parser', 'curl', 'db',
                     'process_info', 'sandeshvns', 'io', 'base', 
                     'gunit', 'pugixml'])
 
-if sys.platform == 'win32':
-    env.Append(LIBS = ['windowsstubs'])
-
 if sys.platform not in ['win32', 'darwin']:
     env.Append(LIBS = ['rt'])
 
