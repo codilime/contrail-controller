@@ -33,7 +33,7 @@ env.Prepend(LIBS = ['task_test', 'gunit', 'xmpp', 'xml', 'pugixml', 'sandesh',
                     'sandesh'])
 
 if sys.platform == 'win32':
-    env.Append(LIBS = ['advapi32', 'gdi32', 'windowsstubs'])
+    env.Append(LIBS = ['advapi32', 'gdi32'])
 
 if sys.platform not in ['win32', 'darwin']:
     env.Append(LIBS = ['rt'])

@@ -11,8 +11,7 @@ Import('AgentEnv')
 env = AgentEnv.Clone()
 
 if not sys.platform.startswith('win'):
-    env.Append(CCFLAGS=['-Wno-return-type', '-fexceptions',
-                        '-Wno-unused-variable'])
+    env.Append(CCFLAGS = ['-Wno-return-type', '-fexceptions', '-Wno-unused-variable'])
 
 
 ##########################################################################
@@ -54,7 +53,7 @@ buildinfo_dep_libs += MapBuildCmnLib([
     'vrouter/utils/' + env['LIBPREFIX'] + 'vrutil' + env['LIBSUFFIX'],
     'xml/' + env['LIBPREFIX'] + 'xml' + env['LIBSUFFIX'],
     'xmpp/' + env['LIBPREFIX'] + 'xmpp' + env['LIBSUFFIX'],
-	 ])
+     ])
 
 def MapBuildAgentLib(list):
     return map(lambda x: File('../' + x).abspath, list)
@@ -89,13 +88,14 @@ env.Depends('main.o', 'buildinfo.cc')
 # Add contrail-vrouter-agent specific libraries
 env.Prepend(LIBS = AgentEnv['CONTRAIL_LIBS'])
 
-# Whole-arhive flag causes the library to be included in the resulting output
-# even though there may not be any calls requiring its presence. We need this
-# for kstate library so that the HTML file for kstate  is listed in agent
-# introspect page
-#env.Prepend(LINKFLAGS = ['-Wl,--whole-archive', '-rdynamic', '-lkstate', '-ldiag',
-#                         '-Wl,--no-whole-archive'])
-env.Prepend(LINKFLAGS = 'Iphlpapi.lib')
+if not sys.platform.startswith('win'):
+    # Whole-arhive flag causes the library to be included in the resulting output
+    # even though there may not be any calls requiring its presence. We need this
+    # for kstate library so that the HTML file for kstate  is listed in agent
+    # introspect page
+    env.Prepend(LINKFLAGS = ['-Wl,--whole-archive', '-rdynamic', '-lkstate', '-ldiag',
+                             '-Wl,--no-whole-archive'])
+
 #Add -Wno-return-type to ignore errors from thrift generated code in
 #InstanceService.h
 if sys.platform.startswith('freebsd'):
@@ -103,9 +103,8 @@ if sys.platform.startswith('freebsd'):
 elif sys.platform.startswith('linux'):
     platform_dependent = 'linux/pkt0_interface.cc'
 elif sys.platform.startswith('win'):
-    # for checking OS version in base/misc_utils.cc, eg. GetFileVersionInfoA
-    env.Append(LIBS=['version'])
-    platform_dependent = ['windows/pkt0_interface.cc','#build/lib/windowsstubs.lib', env.RES('windows/resource.rc')]
+    env.Append(LIBS = ['version', 'iphlpapi.lib'])
+    platform_dependent = ['windows/pkt0_interface.cc', env.RES('windows/resource.rc')]
 
 
 contrail_vrouter_agent = env.Program(target = 'contrail-vrouter-agent',

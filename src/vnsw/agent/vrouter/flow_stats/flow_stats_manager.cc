@@ -136,14 +136,11 @@ void FlowStatsManager::AddReqHandler(boost::shared_ptr<FlowStatsCollectorReq>
     }
 
     uint32_t instance_id = instance_table_.Insert(NULL);
-	AgentUveBase *pAgentUVEBase = agent()->uve();
-	FlowAgingTableKey *pFlowAgingTableKey = &(req->key);
-	FlowStatsManager *pThisFlowStatsManager = this;
     FlowAgingTablePtr aging_table(
         AgentObjectFactory::Create<FlowStatsCollector>(
         *(agent()->event_manager()->io_service()),
         req->flow_stats_interval, req->flow_cache_timeout,
-        pAgentUVEBase, instance_id, pFlowAgingTableKey, pThisFlowStatsManager));
+        agent()->uve(), instance_id, &(req->key), this));
 
     flow_aging_table_map_.insert(FlowAgingTableEntry(req->key, aging_table));
     if (req->key.proto == kCatchAllProto && req->key.port == 0) {
