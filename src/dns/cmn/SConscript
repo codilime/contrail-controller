@@ -51,4 +51,5 @@ for src in SandeshGenSrcs:
 
 dns_cmn = env.Library('cmn',
                       sandesh_objs + cmn_sources +
-                      ['buildinfo.cc'])
+                      ['buildinfo.cc',
+                      ])

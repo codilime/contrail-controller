@@ -6,6 +6,7 @@
 import sys
 Import('DnsEnv')
 env = DnsEnv.Clone()
+
 dns_mgr = env.Library('mgr',
                       ['dns_mgr.cc',
                        'dns_oper.cc',
