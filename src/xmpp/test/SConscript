@@ -28,14 +28,12 @@ libxmpptest = env.Library('xmpptest',
 
 env.Prepend(LIBS = ['task_test', 'gunit', 'xmpp', 'xml', 'pugixml', 'sandesh', 
                     'http', 'http_parser', 'curl', 'process_info', 
-                    'io', 'sandeshvns', 'base', 'peer_sandesh',
+                    'io', 'ssl', 'crypto', 'sandeshvns', 'base', 'peer_sandesh',
                     'table_sandesh', 'boost_regex', 'xmpptest', 'control_node',
                     'sandesh'])
 
-if sys.platform.startswith('win'):
-    env.Append(LIBS = ['ssleay32', 'libeay32', 'advapi32', 'gdi32'])
-else:
-    env.Append(LIBS = ['ssl', 'crypto'])
+if sys.platform == 'win32':
+    env.Append(LIBS = ['advapi32', 'gdi32'])
 
 if sys.platform not in ['win32', 'darwin']:
     env.Append(LIBS = ['rt'])

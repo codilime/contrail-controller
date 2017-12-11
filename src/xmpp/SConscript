@@ -47,7 +47,7 @@ libxmpp = env.Library('xmpp',
                       ] + sandesh_files_ )
 
 env.Prepend(LIBS=['sandesh', 'http_parser', 'curl', 'http',
-                  'io', 'ssleay32', 'pugixml', 'xml', 'boost_regex'])
+                  'io', 'ssl', 'pugixml', 'xml', 'boost_regex'])
 
 if sys.platform != 'darwin':
     env.Append(LIBS=['rt'])
@@ -64,7 +64,7 @@ env.Append(CPPPATH=xmpp_include)
 env.Append(CPPPATH = [env['TOP'] + '/bgp'])
 env.Append(CPPPATH = [env['TOP'] + '/io'])
 env.Append(CPPPATH = [env['TOP'] + '/tools/sandesh/library/common'])
-env.Append(CPPPATH = '#/third_party/OpenSSLWin32/include')
+
 xmppd = env.Program(target = 'xmppd',
                    source = ['main.cc'])
 
