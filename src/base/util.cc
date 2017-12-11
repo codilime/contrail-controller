@@ -4,7 +4,7 @@
 #include <sstream>
 #include <windows.h>
 
-static inline std::string GetFormattedWindowsErrorMsg() {
+std::string GetFormattedWindowsErrorMsg() {
     DWORD error = GetLastError();
     LPSTR message = NULL;
 
