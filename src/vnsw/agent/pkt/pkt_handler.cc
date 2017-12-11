@@ -1,15 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include "pkt/pkt_handler.h"
-
-#ifdef _WINDOWS
-#include <netinet/udp.h>
-#include <netinet/ip.h>
-#include <netinet/icmp.h>
-#include <netinet/tcp.h>
-#include <winnw.h>
-#endif
 
 #include "base/os.h"
 #include <sys/types.h>
@@ -27,6 +18,7 @@
 #include "oper/vrf.h"
 #include "oper/tunnel_nh.h"
 #include "pkt/control_interface.h"
+#include "pkt/pkt_handler.h"
 #include "pkt/proto.h"
 #include "pkt/flow_table.h"
 #include "pkt/flow_proto.h"
@@ -84,6 +76,7 @@ void PktHandler::Send(const AgentHdr &hdr, const PacketBufferPtr &buff) {
     if (agent_->pkt()->control_interface()->Send(hdr, buff) <= 0) {
         PKT_TRACE(Err, "Error sending packet");
     }
+    return;
 }
 
 void PktHandler::CalculatePort(PktInfo *pkt) {
@@ -1056,10 +1049,10 @@ std::size_t PktInfo::hash(const EcmpLoadBalance &ecmp_load_balance) const {
             boost::hash_combine(seed, ip_daddr.to_v4().to_ulong());
         }
     } else if (family == Address::INET6) {
-        uint32_t *words;
+        const uint32_t *words;
 
         if (ecmp_load_balance.is_source_ip_set()) {
-            words = (uint32_t *) (ip_saddr.to_v6().to_bytes().data());
+            words = (const uint32_t *) (ip_saddr.to_v6().to_bytes().data());
             boost::hash_combine(seed, words[0]);
             boost::hash_combine(seed, words[1]);
             boost::hash_combine(seed, words[2]);
@@ -1067,7 +1060,7 @@ std::size_t PktInfo::hash(const EcmpLoadBalance &ecmp_load_balance) const {
         }
 
         if (ecmp_load_balance.is_destination_ip_set()) {
-            words = (uint32_t *) (ip_daddr.to_v6().to_bytes().data());
+            words = (const uint32_t *) (ip_daddr.to_v6().to_bytes().data());
             boost::hash_combine(seed, words[0]);
             boost::hash_combine(seed, words[1]);
             boost::hash_combine(seed, words[2]);

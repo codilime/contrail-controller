@@ -199,7 +199,6 @@
 // Forward declaration
 class FlowMgmtManager;
 class VrfFlowMgmtTree;
-class FlowMgmtDbClient;
 
 ////////////////////////////////////////////////////////////////////////////
 // Flow Management module maintains following data structures

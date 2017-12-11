@@ -1,12 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
-#include <boost/asio.hpp>
-#include <windows.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#endif
 
 #include <stdint.h>
 #include "base/os.h"
@@ -14,7 +8,6 @@
 #include "vr_defs.h"
 #include "base/timer.h"
 #include "cmn/agent_cmn.h"
-
 #include "pkt/proto.h"
 #include "pkt/proto_handler.h"
 #include "diag/diag.h"

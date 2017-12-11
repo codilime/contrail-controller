@@ -1,24 +1,13 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include "pkt/proto_handler.h"
-
-#ifdef _WINDOWS
-#include <winsock2.h>
-#include <netinet/ip.h>
-#include <netinet/icmp.h>
-#include <netinet/ip6.h>
-#include <netinet/udp.h>
-#include <netinet/icmp6.h>
-#include <winnw.h>
-#endif
 
 #include <stdint.h>
 #include "base/os.h"
 #include "vr_defs.h"
+#include "pkt/proto_handler.h"
 #include "pkt/pkt_init.h"
 #include "pkt/packet_buffer.h"
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -187,7 +176,7 @@ uint16_t ProtoHandler::IcmpHdr(char *buff, uint16_t buf_len, uint8_t type,
     if (buf_len < sizeof(hdr))
         return 0;
 
-    bzero((unsigned char*)hdr, sizeof(struct icmp));
+    memset(hdr, 0, sizeof(struct icmp));
 
     hdr->icmp_type = type;
     hdr->icmp_code = code;

@@ -9,9 +9,6 @@
 #include "vr_types.h"
 #include "vr_defs.h"
 #include "vr_mpls.h"
-#ifdef _WINDOWS
-#include <winnw.h>
-#endif
 
 // VrouterControlInterface is implementation of ControlInterface for platforms
 // using vrouter. This class assumes agent_hdr defined in

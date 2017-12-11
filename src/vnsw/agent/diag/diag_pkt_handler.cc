@@ -1,15 +1,6 @@
 /*
  *  * Copyright (c) 2014 Juniper Networks, Inc. All rights reserved.
  *   */
-#ifdef _WINDOWS
-#include <boost/asio.hpp>
-#include <windows.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <netinet/ip.h>
-#include <netinet/icmp.h>
-#include <winnw.h>
-#endif
 
 #include <stdint.h>
 #include "base/os.h"
@@ -25,9 +16,6 @@
 #include "diag/overlay_ping.h"
 #include "oper/mirror_table.h"
 #include <oper/vxlan.h>
-
-
-
 using namespace boost::posix_time; 
 void DiagPktHandler::SetReply() {
     AgentDiagPktData *ad = (AgentDiagPktData *)pkt_info_->data;
@@ -141,7 +129,7 @@ void DiagPktHandler::SendTimeExceededPacket() {
 
     Send(GetInterfaceIndex(), pkt_info_->vrf, AgentHdr::TX_SWITCH,
          PktHandler::ICMP);
-	delete[] icmp_payload;
+    delete[] icmp_payload;
 }
 
 bool DiagPktHandler::HandleTraceRouteResponse() {

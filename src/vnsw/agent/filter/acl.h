@@ -11,11 +11,11 @@
 #include <tbb/atomic.h>
 
 #include <oper/oper_db.h>
-#include<filter/packet_header.h>
 #include <filter/traffic_action.h>
 #include <filter/acl_entry_match.h>
 #include <filter/acl_entry_spec.h>
 #include <filter/acl_entry.h>
+#include <filter/packet_header.h>
 
 struct FlowKey;
 
