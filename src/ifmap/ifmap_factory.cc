@@ -1,4 +1,3 @@
-
 #include "ifmap/ifmap_factory.h"
 
 template <>

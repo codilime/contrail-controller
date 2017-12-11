@@ -46,7 +46,7 @@ struct IFMapObjectPtr {
 struct IFMapListEntry {
     enum EntryType {
         UPDATE,         // add or change operation
-        DEL,         // delete
+        DEL,            // delete
         MARKER
     };
     IFMapListEntry(EntryType type) :
