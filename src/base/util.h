@@ -162,4 +162,9 @@ private:
     T *ptr_;
 };
 
+#ifdef _WIN32
+#include <string>
+std::string GetFormattedWindowsErrorMsg();
+#endif /* _WIN32 */
+
 #endif /* UTIL_H_ */

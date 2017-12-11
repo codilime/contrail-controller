@@ -62,6 +62,9 @@ libbase_src = [VersionInfoSandeshGenSrcs +
                 'task_sandesh.cc', 'task_trigger.cc', 'tdigest.c', timer,
                 taskinfo_sandesh_files_]]
 
+if sys.platform == 'win32':
+    libbase_src.append('util.cc')
+
 if not sys.platform.startswith('win'):
     libbase_src.append('backtrace.cc')
 
