@@ -85,8 +85,8 @@ public:
 
     // Check whether 'this' is more specific than rhs.
     virtual bool IsMoreSpecific(const std::string &match) const;
-    virtual u_int16_t Afi() const { return BgpAf::IPv4; }
-    virtual u_int8_t Safi() const { return BgpAf::Unicast; }
+    virtual uint16_t Afi() const { return BgpAf::IPv4; }
+    virtual uint8_t Safi() const { return BgpAf::Unicast; }
 
 private:
     Ip4Prefix prefix_;
