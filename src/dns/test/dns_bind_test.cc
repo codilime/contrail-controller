@@ -33,7 +33,7 @@ using namespace std;
 class NamedConfigTest : public NamedConfig {
 public:
     NamedConfigTest(const std::string &conf_dir, const std::string &conf_file) :
-                    NamedConfig(conf_dir, conf_file, "/var/log/named/bind.log",
+                    NamedConfig(conf_dir, conf_file, AgentConstants::named_bind_log,
                                 "rndc.conf", "xvysmOR8lnUQRBcunkC6vg==", "100M") {}
     static void Init() {
         assert(singleton_ == NULL);
@@ -232,8 +232,7 @@ TEST_F(DnsBindTest, Config) {
 #endif
 
 // TODO(WINDOWS): JW-1168: NamedConfig is not used in the Agent
-#ifndef _WIN32
-TEST_F(DnsBindTest, Reordered) {
+TEST_F(DnsBindTest, DISABLED_Reordered) {
     string content = FileRead("controller/src/dns/testdata/config_test_2.xml");
     EXPECT_TRUE(parser_.Parse(content));
     task_util::WaitForIdle();
@@ -520,7 +519,8 @@ TEST_F(DnsBindTest, Reordered) {
     }
 }
 
-TEST_F(DnsBindTest, ReorderedExternalReverseResolutionDisabled) {
+// TODO(WINDOWS): JW-1168: NamedConfig is not used in the Agent
+TEST_F(DnsBindTest, DISABLED_ReorderedExternalReverseResolutionDisabled) {
     string content = FileRead("controller/src/dns/testdata/config_test_2_disable_flags.xml");
     EXPECT_TRUE(parser_.Parse(content));
     task_util::WaitForIdle();
@@ -802,7 +802,7 @@ TEST_F(DnsBindTest, ReorderedExternalReverseResolutionDisabled) {
         EXPECT_FALSE(FileExists(s1.c_str()));
     }
 }
-#endif
+
 TEST_F(DnsBindTest, DnsClassTest) {
     std::string cl = BindUtil::DnsClass(4);
     EXPECT_TRUE(cl == "4");
