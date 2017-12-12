@@ -139,7 +139,7 @@ class TOutput {
     time_t now;
     char dbgtime[26];
     time(&now);
-    ctime_r(&now, dbgtime);
+    thrift_ctime_r(&now, dbgtime);
     dbgtime[24] = 0;
     fprintf(stderr, "Thrift: %s %s\n", dbgtime, msg);
   }

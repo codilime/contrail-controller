@@ -38,7 +38,7 @@ class NexthopDBServer
     NexthopDBEntry::NexthopPtr FindOrCreateNexthop(const std::string &str);
     void FindAndRemoveNexthop(const std::string &str);
     void Run();
-    void EventHandler(UnixDomainSocketServer *, WindowsDomainSocketSession *,
+    void EventHandler(UnixDomainSocketServer *, UnixDomainSocketSession *,
                       UnixDomainSocketServer::Event);
     void RemoveClient(uint64_t);
 

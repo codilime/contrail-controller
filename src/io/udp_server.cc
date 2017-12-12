@@ -4,11 +4,9 @@
 
 #include <boost/bind.hpp>
 #include <base/logging.h>
-#include<sys/wintypes.h>
 #include <io/udp_server.h>
 #include <io/io_log.h>
 #include <io/io_utils.h>
-
 
 using boost::asio::buffer_cast;
 using boost::asio::mutable_buffer;
@@ -153,7 +151,7 @@ bool UdpServer::Initialize(udp::endpoint local_endpoint) {
 }
 
 mutable_buffer UdpServer::AllocateBuffer(std::size_t s) {
-    u_int8_t *p = new u_int8_t[s];
+    uint8_t *p = new uint8_t[s];
     {
         tbb::mutex::scoped_lock lock(mutex_);
         pbuf_.push_back(p);
@@ -166,10 +164,10 @@ mutable_buffer UdpServer::AllocateBuffer() {
 }
 
 void UdpServer::DeallocateBuffer(const_buffer &buffer) {
-    const u_int8_t *p = buffer_cast<const uint8_t *>(buffer);
+    const uint8_t *p = buffer_cast<const uint8_t *>(buffer);
     {
         tbb::mutex::scoped_lock lock(mutex_);
-        std::vector<u_int8_t *>::iterator f = std::find(pbuf_.begin(),
+        std::vector<uint8_t *>::iterator f = std::find(pbuf_.begin(),
             pbuf_.end(), p);
         if (f != pbuf_.end())
             pbuf_.erase(f);

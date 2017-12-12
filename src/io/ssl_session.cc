@@ -115,7 +115,7 @@ std::size_t SslSession::WriteSome(const uint8_t *data, std::size_t len,
     }
 }
 
-void SslSession::AsyncWrite(const u_int8_t *data, std::size_t size) {
+void SslSession::AsyncWrite(const uint8_t *data, std::size_t size) {
     if (IsSslHandShakeSuccessLocked()) {
         boost::asio::async_write(
             *ssl_socket_.get(), buffer(data, size),

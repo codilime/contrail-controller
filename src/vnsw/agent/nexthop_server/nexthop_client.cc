@@ -5,19 +5,18 @@
  *
  *                {RemoveNexthop()}
  *                {AddNexthop()}             {Send()}
- * [NexthopDBServer] ------ [NexthopDBClient] ----- [WindowsDomainSocketSession]
+ * [NexthopDBServer] ------ [NexthopDBClient] ----- [UnixDomainSocketSession]
  *                     1:n                     1:1
  */
 #include <base/logging.h>
 #include "nexthop_server/nexthop_server.h"
-#include <boost/thread.hpp>
+#include <pthread.h>
 #include "rapidjson/document.h"
 #include "rapidjson/filestream.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-#include "sys/wintypes.h"
 
-NexthopDBClient::NexthopDBClient(WindowsDomainSocketSession *session,
+NexthopDBClient::NexthopDBClient(UnixDomainSocketSession *session,
                                  NexthopDBServer *server)
   :  nexthop_list_()
 {
@@ -36,12 +35,12 @@ NexthopDBClient::~NexthopDBClient()
 }
 
 void
-NexthopDBClient::EventHandler(WindowsDomainSocketSession *session,
-                              WindowsDomainSocketSession::Event event)
+NexthopDBClient::EventHandler(UnixDomainSocketSession *session,
+                              UnixDomainSocketSession::Event event)
 {
-    if (event == WindowsDomainSocketSession::READY) {
+    if (event == UnixDomainSocketSession::READY) {
         WriteMessage();
-    } else if (event == WindowsDomainSocketSession::CLOSE) {
+    } else if (event == UnixDomainSocketSession::CLOSE) {
         LOG (DEBUG, "[NexthopServer] Client " << session->session_id() <<
              " closed session");
         server_->RemoveClient(session->session_id());
@@ -94,7 +93,7 @@ NexthopDBClient::NextMessage(int *data_len)
         NexthopDBEntry::NexthopPtr tnh = *iter;
 
         if ((pdu_len + tnh->EncodedLength()) >
-            WindowsDomainSocketSession::kPDUDataLen) {
+            UnixDomainSocketSession::kPDUDataLen) {
             break;
         }
 

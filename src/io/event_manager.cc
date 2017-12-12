@@ -2,17 +2,7 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
-#include<time.h>
-#include "winutils.h"
-
 #include "Thrift.h"
-
-#ifdef _WIN32
-// Thrift defines a lot of functions from posix as macros (sometimes incorrectly)
-// and it breaks the build on Windows
-#undef usleep
-#undef ctime_r
-#endif
 
 #include "io/event_manager.h"
 #include "base/logging.h"

@@ -7,12 +7,12 @@
  * message from the front of the queue is sent.
  */
 #include "usock_server.h"
-#include <sys/wintypes.h>
+
 using boost::asio::buffer_cast;
 using boost::asio::buffer;
 using boost::asio::mutable_buffer;
 
-WindowsDomainSocketSession::~WindowsDomainSocketSession()
+UnixDomainSocketSession::~UnixDomainSocketSession()
 {
     if (observer_) {
         observer_(this, CLOSE);
@@ -27,14 +27,14 @@ WindowsDomainSocketSession::~WindowsDomainSocketSession()
 }
 
 void
-WindowsDomainSocketSession::Start()
+UnixDomainSocketSession::Start()
 {
     if (observer_) {
         observer_(this, READY);
     }
 
     socket_.async_read_some(boost::asio::buffer(data_),
-                            boost::bind(&WindowsDomainSocketSession::
+                            boost::bind(&UnixDomainSocketSession::
                                         HandleRead, shared_from_this(),
                                         boost::asio::placeholders::error,
                                         boost::asio::placeholders::
@@ -42,7 +42,7 @@ WindowsDomainSocketSession::Start()
 }
 
 void
-WindowsDomainSocketSession::Send(const uint8_t * data, int data_len)
+UnixDomainSocketSession::Send(const uint8_t * data, int data_len)
 {
     if (!data || !data_len) {
         return;
@@ -55,7 +55,7 @@ WindowsDomainSocketSession::Send(const uint8_t * data, int data_len)
 }
 
 void
-WindowsDomainSocketSession::WriteToSocket()
+UnixDomainSocketSession::WriteToSocket()
 {
     if (buffer_queue_.empty()) {
         return;
@@ -65,13 +65,13 @@ WindowsDomainSocketSession::WriteToSocket()
     boost::asio::async_write(socket_,
                              buffer(buffer_cast <const uint8_t *>(head),
                                     boost::asio::buffer_size(head)),
-                             boost::bind(&WindowsDomainSocketSession::
+                             boost::bind(&UnixDomainSocketSession::
                                          HandleWrite, shared_from_this(),
                                          boost::asio::placeholders::error));
 }
 
 void
-WindowsDomainSocketSession::AppendBuffer(const uint8_t *src, int bytes)
+UnixDomainSocketSession::AppendBuffer(const uint8_t *src, int bytes)
 {
     u_int8_t *data = new u_int8_t[bytes];
     memcpy(data, src, bytes);
@@ -81,7 +81,7 @@ WindowsDomainSocketSession::AppendBuffer(const uint8_t *src, int bytes)
 }
 
 void
-WindowsDomainSocketSession::DeleteBuffer(boost::asio::mutable_buffer buffer)
+UnixDomainSocketSession::DeleteBuffer(boost::asio::mutable_buffer buffer)
 {
     const uint8_t *data = buffer_cast <const uint8_t *>(buffer);
     delete []data;
@@ -89,7 +89,7 @@ WindowsDomainSocketSession::DeleteBuffer(boost::asio::mutable_buffer buffer)
 }
 
 void
-WindowsDomainSocketSession::HandleRead(const boost::system::error_code &error,
+UnixDomainSocketSession::HandleRead(const boost::system::error_code &error,
                                     size_t bytes_transferred)
 {
     if (error) {
@@ -101,7 +101,7 @@ WindowsDomainSocketSession::HandleRead(const boost::system::error_code &error,
 }
 
 void
-WindowsDomainSocketSession::HandleWrite(const boost::system::error_code &error)
+UnixDomainSocketSession::HandleWrite(const boost::system::error_code &error)
 {
     /*
      * async_write() is atomic in that it returns success once the entire message
@@ -127,7 +127,7 @@ WindowsDomainSocketSession::HandleWrite(const boost::system::error_code &error)
      * Engage on the socket to keep it alive.
      */
     socket_.async_read_some(boost::asio::buffer(data_),
-                            boost::bind(&WindowsDomainSocketSession::
+                            boost::bind(&UnixDomainSocketSession::
                                         HandleRead, shared_from_this(),
                                         boost::asio::placeholders::error,
                                         boost::asio::placeholders::
@@ -137,21 +137,21 @@ WindowsDomainSocketSession::HandleWrite(const boost::system::error_code &error)
 UnixDomainSocketServer::UnixDomainSocketServer(boost::asio::io_service &io,
                                                const std::string &file)
   : io_service_(io),
-   //WINDOWS-TEMP acceptor_(io, boost::asio::local::stream_protocol::endpoint(file)),
+    acceptor_(io, boost::asio::local::stream_protocol::endpoint(file)),
     session_idspace_(0)
 {
-    SessionPtr new_session(new WindowsDomainSocketSession(io_service_));
-    //WINDOWS-TEMP acceptor_.async_accept(new_session->socket(),
-                  //         boost::bind(&UnixDomainSocketServer::
-                  //                     HandleAccept, this, new_session,
-                 //                      boost::asio::placeholders::error));
+    SessionPtr new_session(new UnixDomainSocketSession(io_service_));
+    acceptor_.async_accept(new_session->socket(),
+                           boost::bind(&UnixDomainSocketServer::
+                                       HandleAccept, this, new_session,
+                                       boost::asio::placeholders::error));
 }
 
 void
 UnixDomainSocketServer::HandleAccept(SessionPtr session,
                                      const boost::system::error_code &error)
 {
-    WindowsDomainSocketSession *socket_session = session.get();
+    UnixDomainSocketSession *socket_session = session.get();
 
     if (error) {
         if (observer_) {
@@ -166,9 +166,9 @@ UnixDomainSocketServer::HandleAccept(SessionPtr session,
         session->Start();
     }
 
-    SessionPtr new_session(new WindowsDomainSocketSession(io_service_));
-   //WINDOWS-TEMP acceptor_.async_accept(new_session->socket(),
-   //WINDOWS-TEMP                       boost::bind(&UnixDomainSocketServer::
-   //WINDOWS-TEMP                                   HandleAccept, this, new_session,
-   //WINDOWS-TEMP                                boost::asio::placeholders::error));
+    SessionPtr new_session(new UnixDomainSocketSession(io_service_));
+    acceptor_.async_accept(new_session->socket(),
+                           boost::bind(&UnixDomainSocketServer::
+                                       HandleAccept, this, new_session,
+                                       boost::asio::placeholders::error));
 }

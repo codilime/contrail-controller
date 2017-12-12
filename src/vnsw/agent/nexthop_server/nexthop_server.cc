@@ -4,12 +4,12 @@
  *     keyed through a string representation of the nexthop address.
  * (2) client_table: a std::map DB of client entries (NexthopDBClient)
  *     keyed through the session_id of the underlying session
- *     (WindowsDomainSocketSession).
+ *     (UnixDomainSocketSession).
  */
 #include <base/logging.h>
 #include "nexthop_client.h"
 #include "nexthop_server.h"
-#include <boost/thread.hpp>
+#include <pthread.h>
 #include "rapidjson/document.h"
 #include "rapidjson/filestream.h"
 #include "rapidjson/stringbuffer.h"
@@ -33,7 +33,7 @@ NexthopDBServer::Run()
 
 void
 NexthopDBServer::EventHandler(UnixDomainSocketServer * server,
-                              WindowsDomainSocketSession * session,
+                              UnixDomainSocketSession * session,
                               UnixDomainSocketServer::Event event)
 {
     tbb::mutex::scoped_lock lock(mutex_);
