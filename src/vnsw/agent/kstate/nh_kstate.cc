@@ -6,9 +6,10 @@
 #include "nh_kstate.h"
 #include "vr_nexthop.h"
 #include <net/ethernet.h>
+#include <netinet/if_ether.h>
 #include <iomanip>
 #include <sstream>
-#define ETHERTYPE_ARP (0x0806) //WINDOWS-TEMP move to header
+
 using namespace std;
 
 NHKState::NHKState(KNHResp *obj, const std::string &resp_ctx,
