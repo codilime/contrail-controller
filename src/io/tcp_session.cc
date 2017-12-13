@@ -719,7 +719,7 @@ boost::system::error_code TcpSession::SetSocketKeepaliveOptions(int keepalive_ti
         return ec;
     }
 #endif
-// TCP_KEEPCNT and TCP_KEEPINTVL are not supported on our windows. But boost tries to set them, causing
+// TCP_KEEPCNT and TCP_KEEPINTVL are not supported on windows. But boost tries to set them, causing
 // an exception. See:
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms738596(v=vs.85).aspx
 // Issue similar to this one:
