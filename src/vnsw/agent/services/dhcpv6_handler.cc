@@ -19,12 +19,6 @@
 #include "bind/xmpp_dns_agent.h"
 
 #include <boost/assign/list_of.hpp>
-
-#ifdef _WIN32
-#include <netinet/ip6.h>
-#include <netinet/udp.h>
-#endif
-
 using namespace boost::assign;
 
 // since the DHCPv4 and DHCPv6 option codes mean different things

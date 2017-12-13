@@ -10,9 +10,6 @@
 #include <pkt/control_interface.h>
 #include <oper/interface_common.h>
 #include <services/icmp_proto.h>
-#ifdef _WIN32
-#include<netinet/icmp.h>
-#endif
 
 IcmpHandler::IcmpHandler(Agent *agent, boost::shared_ptr<PktInfo> info,
                          boost::asio::io_service &io)

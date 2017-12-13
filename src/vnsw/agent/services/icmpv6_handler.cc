@@ -18,11 +18,6 @@
 #include <oper/path_preference.h>
 #include <oper/vn.h>
 
-#ifdef _WIN32
-#include <netinet/ip6.h>
-#include <winnw.h>
-#endif
-
 const Ip6Address::bytes_type Icmpv6Handler::kPrefix =
     { {0xFF, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0xFF, 0, 0, 0} };
 const Ip6Address::bytes_type Icmpv6Handler::kSuffix =

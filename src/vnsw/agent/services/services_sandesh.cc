@@ -1,14 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WIN32
-#include "winsock2.h"
-#include "netinet/ip.h"
-#include "netinet/ip6.h"
-#include "netinet/udp.h"
-#include "netinet/icmp.h"
-#include "net/ethernet.h"
-#endif
 
 #include "base/os.h"
 #include <netinet/icmp6.h>
