@@ -94,10 +94,10 @@ void DiagPktHandler::SendTimeExceededPacket() {
     uint16_t icmp_len = pkt_info_->ip->ip_hl * 4 + 128;
     if (ntohs(pkt_info_->ip->ip_len) < icmp_len)
         icmp_len = ntohs(pkt_info_->ip->ip_len);
-    uint8_t *icmp_payload = new uint8_t[icmp_len];
-    memcpy(icmp_payload, pkt_info_->ip, icmp_len);
+    boost::scoped_array<uint8_t> icmp_payload(new uint8_t[icmp_len]);
+    memcpy(icmp_payload.get(), pkt_info_->ip, icmp_len);
     DiagEntry::DiagKey key = -1;
-    if (!ParseIcmpData(icmp_payload, icmp_len, (uint16_t *)&key))
+    if (!ParseIcmpData(icmp_payload.get(), icmp_len, (uint16_t *)&key))
         return;
 
     char *ptr = (char *)pkt_info_->pkt;
@@ -121,7 +121,7 @@ void DiagPktHandler::SendTimeExceededPacket() {
     memset((uint8_t *)hdr, 0, 8);
     hdr->icmp_type = ICMP_TIME_EXCEEDED;
     hdr->icmp_code = ICMP_EXC_TTL;
-    memcpy(ptr + len + 8, icmp_payload, icmp_len);
+    memcpy(ptr + len + 8, icmp_payload.get(), icmp_len);
     IcmpChecksum((char *)hdr, 8 + icmp_len);
     len += 8 + icmp_len;
 
@@ -129,7 +129,6 @@ void DiagPktHandler::SendTimeExceededPacket() {
 
     Send(GetInterfaceIndex(), pkt_info_->vrf, AgentHdr::TX_SWITCH,
          PktHandler::ICMP);
-    delete[] icmp_payload;
 }
 
 bool DiagPktHandler::HandleTraceRouteResponse() {
