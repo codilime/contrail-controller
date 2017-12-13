@@ -150,7 +150,6 @@ env.Prepend(LIBS = [
 if sys.platform == 'win32':
     env.Prepend(LIBS = [
         'gdi32',
-        'dbghelp',
         'iphlpapi',
     ])
 else:

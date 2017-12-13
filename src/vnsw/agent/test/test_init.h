@@ -13,7 +13,7 @@
 #include <linux/if_packet.h>
 #endif
 #include <net/ethernet.h>
-#include <boost/thread.hpp>
+#include <pthread.h>
 
 #include <fstream>
 #include <stdio.h>

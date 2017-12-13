@@ -11,6 +11,7 @@
 #include <uve/test/agent_uve_test.h>
 #include <vrouter/ksync/test/ksync_test.h>
 #include <boost/functional/factory.hpp>
+#include <boost/thread.hpp>
 #include <cmn/agent_factory.h>
 
 namespace opt = boost::program_options;
