@@ -148,8 +148,6 @@ flaky_test = env.TestSuite('agent-flaky-test', flaky_agent_suite)
 env.Alias('controller/src/vnsw/agent:flaky_test', flaky_test)
 
 env.Prepend(LIBS = [ 'dbtest', 'task_test' ])
-if sys.platform.startswith('win'):
-    env.Prepend(LIBS = ['Dbghelp'])
 env.Prepend(LIBPATH = [ '../../../db/test', '../../../base/test' ])
 test = env.TestSuite('agent-test', agent_suite)
 env.Alias('agent:agent_test', test)

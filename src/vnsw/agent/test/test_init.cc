@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
 
 #include "base/os.h"
 #include "test/test_init.h"
@@ -25,13 +23,7 @@ void *asio_poll() {
 }
 
 void AsioRun() {
-    try {
-        asio_thread = boost::thread(asio_poll);
-    }
-    catch (const std::exception &e) {
-        LOG(ERROR, std::string("boost::thread failed: ") + std::string(e.what()));
-        assert(0);
-    }
+    asio_thread = boost::thread(asio_poll);
 }
 
 void AsioStop() {
