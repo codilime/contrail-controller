@@ -45,23 +45,23 @@ void AgentSignal::NotifyDefault(const boost::system::error_code &error,
 }
 
 void AgentSignal::HandleSig(const boost::system::error_code &error, int sig) {
-#if 0 //WINDOWSFIX
     if (!error) {
         int status = 0;
         pid_t pid = 0;
 
         switch (sig) {
+#ifndef _WIN32
             case SIGCHLD:
                 while ((pid = ::waitpid(-1, &status, WNOHANG)) > 0) {
                     NotifySigChld(error, sig, pid, status);
                 }
                 break;
+#endif
             default:
                 NotifyDefault(error, sig);
         }
         RegisterSigHandler();
     }
-#endif
 }
 
 void AgentSignal::RegisterSigHandler() {
@@ -70,16 +70,17 @@ void AgentSignal::RegisterSigHandler() {
 
 void AgentSignal::Initialize() {
     boost::system::error_code ec;
-#if 0 //WINDOWSFIX
+
     /*
      * FIX(safchain) currently only handling SIGCHLD
      */
+#ifndef _WIN32
     signal_.add(SIGCHLD, ec);
     if (ec) {
         LOG(ERROR, "SIGCHLD registration failed");
     }
-    RegisterSigHandler();
 #endif
+    RegisterSigHandler();
 }
 
 void AgentSignal::Terminate() {

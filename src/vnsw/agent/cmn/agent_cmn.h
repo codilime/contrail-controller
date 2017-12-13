@@ -45,11 +45,6 @@
 #include <cmn/agent.h>
 #include <cmn/agent_db.h>
 
-#ifdef _WINDOWS
-#include "winutils.h"
-#endif
-
-
 static inline bool UnregisterDBTable(DBTable *table, 
                                      DBTableBase::ListenerId id) {
     table->Unregister(id);
@@ -79,15 +74,10 @@ static inline void CfgUuidSet(uint64_t ms_long, uint64_t ls_long,
 }
 
 static inline void CloseTaskFds(void) {
-#ifdef _WINDOWS
-	WindowsCloseTaskFiles();
-#else
     int max_open_fds = sysconf(_SC_OPEN_MAX);
     int fd;
     for(fd = 3; fd < max_open_fds; fd++)
         close(fd);
-#endif
-
 }
 
 extern SandeshTraceBufferPtr OperConfigTraceBuf;

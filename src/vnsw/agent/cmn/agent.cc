@@ -1,8 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+
 #include <string>
 #include <vector>
 #include <base/logging.h>
@@ -43,10 +42,6 @@
 #include <base/task_tbbkeepawake.h>
 #include <net/if.h>
 
-#ifdef _WINDOWS
-#include <winnw.h>
-#endif
-
 const std::string Agent::null_string_ = "";
 const std::set<std::string> Agent::null_string_list_;
 const std::string Agent::fabric_vn_name_ =
@@ -60,8 +55,8 @@ const std::string Agent::link_local_vrf_name_ =
 const MacAddress Agent::vrrp_mac_(0x00, 0x00, 0x5E, 0x00, 0x01, 0x00);
 const MacAddress Agent::pkt_interface_mac_(0x00, 0x00, 0x00, 0x00, 0x00, 0x01);
 const std::string Agent::bcast_mac_ = "FF:FF:FF:FF:FF:FF";
-const std::string Agent::config_file_ = "contrail-vrouter-agent.conf";
-const std::string Agent::log_file_ = "vrouter.log";
+const std::string Agent::config_file_ = "/etc/contrail/contrail-vrouter-agent.conf";
+const std::string Agent::log_file_ = "/var/log/contrail/vrouter.log";
 const std::string Agent::xmpp_dns_server_connection_name_prefix_ = "dns-server:";
 const std::string Agent::xmpp_control_node_connection_name_prefix_ = "control-node:";
 
@@ -468,17 +463,13 @@ void Agent::Shutdown() {
     tbb_awake_task_->ShutTbbKeepAwakeTask();
 }
 
-static bool interface_exist(string &name) 
-{
+static bool interface_exist(string &name) {
 	struct if_nameindex *ifs = NULL;
 	struct if_nameindex *head = NULL;
 	bool ret = false;
 	string tname = "";
-#ifdef _WINDOWS
-    ifs = windows_if_nameindex();
-#else
-    ifs = if_nameindex();
-#endif
+
+	ifs = if_nameindex();
 	if (ifs == NULL) {
 		LOG(INFO, "No interface exists!");
 		return ret;
@@ -493,11 +484,7 @@ static bool interface_exist(string &name)
 		}
 		ifs++;
 	}
-#ifdef _WINDOWS
-    windows_if_freenameindex(head);
-#else
-    if_freenameindex(head);
-#endif
+	if_freenameindex(head);
 	return ret;
 }
 
