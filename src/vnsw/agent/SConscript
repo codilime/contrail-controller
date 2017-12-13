@@ -3,7 +3,6 @@
 #
 
 import sys
-
 if sys.platform == 'darwin':
     Return()
 
@@ -149,7 +148,11 @@ env.Prepend(LIBS = [
 ])
 
 if sys.platform == 'win32':
-    env.Prepend(LIBS = 'gdi32')
+    env.Prepend(LIBS = [
+        'gdi32',
+        'dbghelp',
+        'iphlpapi',
+    ])
 else:
     env.Prepend(LIBS = 'rt')
 
@@ -284,8 +287,6 @@ def MakeTestEnvFn(self, env):
     env.Append(CCFLAGS = AgentEnv['TEST_CMN_CCFLAGS'])
     env.Prepend(LIBS = AgentEnv['CONTRAIL_LIBS'])
     env.Prepend(LIBS = AgentEnv['TEST_CMN_LIBS_PRE'])
-    if sys.platform == 'win32':
-        env.Prepend(LIBS = ['Dbghelp', 'Iphlpapi'])
     env.Append(LIBS = AgentEnv['TEST_CMN_LIBS_POST'])
     cflags = env['CCFLAGS']
     if '-fno-exceptions' in cflags:
