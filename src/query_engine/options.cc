@@ -15,7 +15,6 @@
 #include "viz_constants.h"
 
 #include "options.h"
-#include "AgentConstants.h"
 
 using namespace std;
 using namespace boost::asio::ip;
@@ -48,7 +47,7 @@ void Options::Initialize(EventManager &evm,
     }
 
     vector<string> conf_files;
-    conf_files.push_back(AgentConstants::contrail_query_engine_conf);
+    conf_files.push_back("/etc/contrail/contrail-query-engine.conf");
 
     opt::options_description generic("Generic options");
 
