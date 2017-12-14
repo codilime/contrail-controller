@@ -232,9 +232,9 @@ std::string VnEntry::GetProject() const {
     // Currently, this info doesnt come to the agent
     std::string name(name_.c_str());
     char *saveptr;
-    if (strtok_s(const_cast<char *>(name.c_str()), ":", &saveptr) == NULL)
+    if (strtok_r(const_cast<char *>(name.c_str()), ":", &saveptr) == NULL)
         return "";
-    char *project = strtok_s(NULL, ":", &saveptr);
+    char *project = strtok_r(NULL, ":", &saveptr);
     return (project == NULL) ? "" : std::string(project);
 }
 

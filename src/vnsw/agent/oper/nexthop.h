@@ -5,9 +5,7 @@
 #ifndef vnsw_agent_nexthop_hpp
 #define vnsw_agent_nexthop_hpp
 
-#ifndef _WINDOWS
 #include <netinet/in.h>
-#endif
 #include <net/ethernet.h>
 
 #include <cmn/agent_cmn.h>

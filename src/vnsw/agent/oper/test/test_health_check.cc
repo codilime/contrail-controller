@@ -5,7 +5,6 @@
 #include "base/os.h"
 #include <sys/socket.h>
 
-#include<WinSock2.h> 
 #include <net/if.h>
 
 #ifdef __linux__
