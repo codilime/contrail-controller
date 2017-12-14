@@ -10,7 +10,6 @@
 
 #include <net/ethernet.h>
 #include <sys/socket.h>
-#include <Winsock2.h>
 
 class MacAddress {
 public:
