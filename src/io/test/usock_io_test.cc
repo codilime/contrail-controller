@@ -1,5 +1,5 @@
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
+#include <pthread.h>
 
 #include "testing/gunit.h"
 #include "base/task.h"
@@ -19,7 +19,7 @@ public:
     }
 
     void EventHandler (UnixDomainSocketServer *server,
-                       WindowsDomainSocketSession *session, Event event)
+                       UnixDomainSocketSession *session, Event event)
     {
         if (event == NEW_SESSION) {
             LOG(DEBUG, "Session created");

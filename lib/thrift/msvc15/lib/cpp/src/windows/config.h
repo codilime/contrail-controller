@@ -65,15 +65,16 @@ struct timespec {
 };
 #endif
 #	define USE_BOOST_THREAD 1
-#	define ctime_r( _clock, _buf ) \
-        ( strcpy( (_buf), ctime( (_clock) ) ),  \
-          (_buf) )
 #endif
 
 typedef ptrdiff_t ssize_t;
 
 // Missing functions.
 #define thrift_usleep(ms) Sleep(ms)
+
+#define thrift_ctime_r( _clock, _buf ) \
+        ( strcpy( (_buf), ctime( (_clock) ) ),  \
+          (_buf) )
 
 #if WINVER <= 0x0502
 #define poll(fds, nfds, timeout) \

@@ -7,6 +7,7 @@
 #include <boost/asio/connect.hpp>
 #include <boost/asio/placeholders.hpp>
 #include <boost/bind.hpp>
+#include <netinet/tcp.h>
 #include <errno.h>
 
 #include "base/logging.h"
@@ -14,8 +15,6 @@
 #include "io/tcp_session.h"
 #include "io/io_log.h"
 #include "io/io_utils.h"
-#include "winsock2.h"
-#include<netinet/tcp.h>
 
 using namespace boost::asio::ip;
 using namespace std;
@@ -451,7 +450,7 @@ int TcpServer::SetMd5SocketOption(int fd, uint32_t peer_ip,
     memcpy(md5sig.tcpm_key, md5_password.c_str(), md5_password.size());
     md5sig.tcpm_keylen = md5_password.size();
     memcpy(&md5sig.tcpm_addr, &local_addr, sizeof(local_addr));
-    int retval = setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, (const char*)&md5sig,
+    int retval = setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, (const char *)&md5sig,
                             sizeof(md5sig));
     if (retval < 0) {
         TCP_SERVER_LOG_ERROR(this, TCP_DIR_NA,

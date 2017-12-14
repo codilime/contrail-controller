@@ -3,7 +3,7 @@
 #
 
 # -*- mode: python; -*-
-
+import sys
 Import('BuildEnv')
 
 env = BuildEnv.Clone()
@@ -16,28 +16,31 @@ SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)
 except_env = BuildEnv.Clone()
 except_env.Append(CPPPATH = env['TOP_INCLUDE'] + '/thrift')
 except_env.Append(CPPPATH = [env['TOP']])
-except_env.Append(CPPPATH = '#third_party\OpenSSLWin32\include')
 
-EventManagerSrc = except_env.Object('event_manager', 'event_manager.cc')
-SslServerSrc = except_env.Object('ssl_server', 'ssl_server.cc')
+EventManagerSrc = except_env.Object('event_manager.cc')
+SslServerSrc = except_env.Object('ssl_server.cc')
 
 usock_env = BuildEnv.Clone()
 usock_env.CppEnableExceptions()
 usock_env.Append(CPPPATH = env['TOP'])
-usock_server = usock_env.Object('usock_server', 'usock_server.cc')
+usock_server = usock_env.Object('usock_server.cc')
+
+IoSrc = [
+    'io_utils.cc',
+    'ssl_session.cc',
+    'tcp_message_write.cc',
+    'tcp_server.cc',
+    'tcp_session.cc',
+    'udp_server.cc',
+]
+
+if sys.platform != 'win32':
+    IoSrc.append(usock_server)
 
 libio = env.Library('io',
             SandeshGenSrcs +
             EventManagerSrc +
             SslServerSrc +
-            [
-             'io_utils.cc',
-             'ssl_session.cc',
-             'tcp_message_write.cc',
-             'tcp_server.cc',
-             'tcp_session.cc',
-             'udp_server.cc',
-             usock_server,
-            ])
+            IoSrc)
 
 env.SConscript('test/SConscript', exports='BuildEnv', duplicate = 0)

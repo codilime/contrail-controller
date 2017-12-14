@@ -6,7 +6,7 @@
 #include <boost/asio.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/thread.hpp>
+#include <pthread.h>
 
 #include "testing/gunit.h"
 #include "base/task.h"

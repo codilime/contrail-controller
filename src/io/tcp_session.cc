@@ -83,7 +83,7 @@ TcpSession::~TcpSession() {
 }
 
 mutable_buffer TcpSession::AllocateBuffer() {
-    u_int8_t *data = new u_int8_t[buffer_size_];
+    uint8_t *data = new uint8_t[buffer_size_];
     mutable_buffer buffer = mutable_buffer(data, buffer_size_);
     {
         tbb::mutex::scoped_lock lock(mutex_);
@@ -171,9 +171,9 @@ void TcpSession::DeferWriter() {
     // Update socket write block count.
     stats_.write_blocked++;
     server_->stats_.write_blocked++;
-	socket()->async_write_some(boost::asio::null_buffers(),
-		boost::bind(&TcpSession::WriteReadyInternal, TcpSessionPtr(this),
-			boost::asio::placeholders::error, UTCTimestampUsec()));
+    socket()->async_write_some(boost::asio::null_buffers(),
+                               boost::bind(&TcpSession::WriteReadyInternal, TcpSessionPtr(this),
+                                           boost::asio::placeholders::error, UTCTimestampUsec()));
 }
 
 void TcpSession::AsyncReadSome(boost::asio::mutable_buffer buffer) {
@@ -187,7 +187,7 @@ std::size_t TcpSession::WriteSome(const uint8_t *data, std::size_t len,
     return socket()->write_some(boost::asio::buffer(data, len), error);
 }
 
-void TcpSession::AsyncWrite(const u_int8_t *data, std::size_t size) {
+void TcpSession::AsyncWrite(const uint8_t *data, std::size_t size) {
     boost::asio::async_write(
         *socket(), buffer(data, size),
         boost::bind(&TcpSession::AsyncWriteHandler, TcpSessionPtr(this),
@@ -374,7 +374,7 @@ void TcpSession::AsyncWriteHandler(TcpSessionPtr session,
     }
 }
 
-bool TcpSession::Send(const u_int8_t *data, size_t size, size_t *sent) {
+bool TcpSession::Send(const uint8_t *data, size_t size, size_t *sent) {
     bool ret = true;
     tbb::mutex::scoped_lock lock(mutex_);
 
@@ -711,22 +711,20 @@ boost::system::error_code TcpSession::SetSocketKeepaliveOptions(int keepalive_ti
 #endif
 #ifdef TCP_KEEPALIVE
     typedef boost::asio::detail::socket_option::integer< IPPROTO_TCP, TCP_KEEPALIVE > keepalive_idle_time;
-    keepalive_idle_time keepalive_time_option(keepalive_time);
-    socket()->set_option(keepalive_time_option, ec);
+    keepalive_idle_time keepalive_idle_time_option(keepalive_time);
+    socket()->set_option(keepalive_idle_time_option, ec);
     if (ec) {
         TCP_SESSION_LOG_ERROR(this, TCP_DIR_OUT,
                 "keepalive_idle_time: " << keepalive_time << " set error: " << ec);
         return ec;
     }
 #endif
-
-// TCP_KEEPCNT and TCP_KEEPINTVL are not supported on our windows. But boost tries to set them, causing
+// TCP_KEEPCNT and TCP_KEEPINTVL are not supported on windows. But boost tries to set them, causing
 // an exception. See:
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms738596(v=vs.85).aspx
 // Issue similar to this one:
 // https://git.openstack.org/cgit/openstack/python-keystoneclient/commit/?id=33b24a6984c8de2f26af7900202bb85b6b5db125
 #ifndef _WIN32
-
 #ifdef TCP_KEEPINTVL
     typedef boost::asio::detail::socket_option::integer< IPPROTO_TCP, TCP_KEEPINTVL > keepalive_interval;
     keepalive_interval keepalive_interval_option(keepalive_intvl);
@@ -747,9 +745,7 @@ boost::system::error_code TcpSession::SetSocketKeepaliveOptions(int keepalive_ti
         return ec;
     }
 #endif
-
 #endif
-
 #ifdef TCP_USER_TIMEOUT
     typedef boost::asio::detail::socket_option::integer< IPPROTO_TCP, TCP_USER_TIMEOUT > tcp_user_timeout;
     tcp_user_timeout tcp_user_timeout_option(tcp_user_timeout_val);
