@@ -14,10 +14,6 @@
 #include <cmn/index_vector.h>
 #include <oper_db.h>
 
-#ifdef _WIN32
-#include <Ifdef.h>
-#endif
-
 struct InterfaceData;
 class VmInterface;
 class IFMapDependencyManager;
@@ -183,6 +179,8 @@ protected:
     boost::optional<IfGuid> os_guid_;
 
 private:
+    void GetOsSpecificParams(Agent *agent, const std::string &name);
+
     friend class InterfaceTable;
     InterfaceTable *table_;
     DISALLOW_COPY_AND_ASSIGN(Interface);

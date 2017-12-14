@@ -57,8 +57,7 @@ class AgentRouteTable::DeleteActor : public LifetimeActor {
     AgentRouteTable *table_;
 };
 
-bool RouteComparator::operator() (const AgentRoute *rt1,
-                                  const AgentRoute *rt2) const {
+bool RouteComparator::operator() (const AgentRoute *rt1, const AgentRoute *rt2) const {
     return rt1->IsLess(*rt2);
 }
 
