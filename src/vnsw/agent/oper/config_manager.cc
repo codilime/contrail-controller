@@ -41,7 +41,7 @@ public:
     };
 
     struct NodeCmp {
-        bool operator() (const Node &lhs, const Node &rhs) const{
+        bool operator() (const Node &lhs, const Node &rhs) const {
             return lhs.state_.get() < rhs.state_.get();
         }
     };

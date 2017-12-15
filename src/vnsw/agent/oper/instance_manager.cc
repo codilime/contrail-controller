@@ -732,7 +732,7 @@ void InstanceManager::StopStaleNetNS(ServiceInstance::Properties &props) {
     std::stringstream ss;
     ss << "StaleNetNS " << cmd;
     INSTANCE_MANAGER_TRACE(Trace, ss.str().c_str());
-#if 0 //WINDOWS-TEMP
+
     pid_t pid = vfork();
     if (pid == 0) {
         CloseTaskFds();
@@ -741,7 +741,6 @@ void InstanceManager::StopStaleNetNS(ServiceInstance::Properties &props) {
 
         _exit(127);
     }
-#endif
 }
 
 void InstanceManager::SetLastCmdType(ServiceInstance *svc_instance,

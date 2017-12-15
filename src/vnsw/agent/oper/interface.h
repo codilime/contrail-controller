@@ -13,6 +13,7 @@
 #include <cmn/agent_cmn.h>
 #include <cmn/index_vector.h>
 #include <oper_db.h>
+#include <boost/optional.hpp>
 
 struct InterfaceData;
 class VmInterface;

@@ -35,7 +35,7 @@ void Interface::GetOsSpecificParams(Agent *agent, const std::string &name) {
 #elif defined(__FreeBSD__)
     mac_ = ifr.ifr_addr;
 #endif
-    
+
     int idx = if_nametoindex(name.c_str());
     if (idx)
         os_index_ = idx;

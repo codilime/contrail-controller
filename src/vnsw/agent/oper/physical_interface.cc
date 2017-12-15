@@ -114,6 +114,7 @@ void PhysicalInterface::PostAdd() {
     memset(&ifr, 0, sizeof(ifr));
     strncpy(ifr.ifr_name, interface_name.c_str(), IF_NAMESIZE);
 
+// Not yet suported on Windows
 #ifndef _WIN32
     if (ioctl(fd, SIOCGIFFLAGS, (void *)&ifr) < 0) {
         LOG(ERROR, "Error <" << errno << ": " << strerror(errno) <<
