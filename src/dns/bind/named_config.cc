@@ -127,9 +127,10 @@ void NamedConfig::DelZone(const Subnet &subnet, const VirtualDnsConfig *vdns) {
 }
 
 void NamedConfig::UpdateNamedConf(const VirtualDnsConfig *updated_vdns) {
-    #ifndef _WIN32
     CreateNamedConf(updated_vdns);
+    #ifndef _WIN32
     sync();
+    #endif
     // rndc_reconfig();
     // TODO: convert this to a call to rndc library
     std::stringstream str;
@@ -140,7 +141,6 @@ void NamedConfig::UpdateNamedConf(const VirtualDnsConfig *updated_vdns) {
     if (res) {
         LOG(WARN, "/usr/bin/contrail-rndc command failed");
     }
-    #endif
 }
 
 void NamedConfig::CreateNamedConf(const VirtualDnsConfig *updated_vdns) {
