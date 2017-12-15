@@ -17,7 +17,7 @@ NexthopManager::NexthopManager(EventManager *evm, const std::string &endpoint)
   : evm_(evm), nh_table_(NULL), nh_listener_(DBTableBase::kInvalidId)
 {
 #ifndef _WIN32
-    nh_server_.reset(new NexthopDBServer(*(evm->io_service()), endpoint))
+    nh_server_.reset(new NexthopDBServer(*(evm->io_service()), endpoint));
 #endif
 }
 
