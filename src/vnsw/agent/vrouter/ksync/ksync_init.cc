@@ -57,9 +57,7 @@ KSync::KSync(Agent *agent)
       vxlan_ksync_obj_(new VxLanKSyncObject(this)),
       vrf_assign_ksync_obj_(new VrfAssignKSyncObject(this)),
       interface_scanner_(new InterfaceKScan(agent)),
-#ifndef _WIN32
       vnsw_interface_listner_(new VnswInterfaceListener(agent)),
-#endif
       ksync_flow_memory_(new KSyncFlowMemory(this)),
       ksync_flow_index_manager_(new KSyncFlowIndexManager(this)),
       qos_queue_ksync_obj_(new QosQueueKSyncObject(this)),
@@ -234,11 +232,9 @@ void KSync::ResetVRouter(bool run_sync_mode) {
     KSyncSock::Start(run_sync_mode);
 }
 
-#ifndef _WIN32
 void KSync::VnswInterfaceListenerInit() {
     vnsw_interface_listner_->Init();
 }
-#endif
 
 void KSync::CreateVhostIntf() {
 #if defined(__linux__)
@@ -332,10 +328,8 @@ void KSync::UpdateVhostMac() {
 }
 
 void KSync::Shutdown() {
-#ifndef _WIN32
     vnsw_interface_listner_->Shutdown();
     vnsw_interface_listner_.reset(NULL);
-#endif
     interface_ksync_obj_.reset(NULL);
     vrf_ksync_obj_.get()->Shutdown();
     vrf_ksync_obj_.reset(NULL);
