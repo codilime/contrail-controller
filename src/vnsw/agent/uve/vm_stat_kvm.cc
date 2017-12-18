@@ -1,10 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
-#include <boost/asio.hpp>
-#include <windows.h>
-#endif
+
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -302,10 +299,5 @@ void VmStatKvm::GetPid() {
 }
 
 void VmStatKvm::Start() {
-    // TODO(WINDOWS): JW-1109: Implement metrics gathering
-#ifndef _WIN32
     GetPid();
-#else
-    // For now: do nothing on Windows
-#endif
 }
