@@ -9,23 +9,12 @@
  * - Parameters
  */
 
-#ifdef _WINDOWS
-#include <boost/asio.hpp>
-#include <windows.h>
-#include "AgentConstants.h"
-#endif
-
 #include "base/os.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef _WINDOWS
 #include <sys/resource.h>
 #include <net/if_arp.h>
-
 #include <unistd.h>
-#else
-#include "winutils.h"
-#endif
 #include <iostream>
 #include <string>
 
@@ -501,17 +490,17 @@ void AgentParam::ParseDefaultSection() {
 
     if (!GetValueFromTree<string>(xmpp_server_cert_, "DEFAULT.xmpp_server_cert")) {
         // set defaults
-        xmpp_server_cert_ = AgentConstants::contrail_ssl_certs_server_pem;
+        xmpp_server_cert_ = "/etc/contrail/ssl/certs/server.pem";
     }
 
     if (!GetValueFromTree<string>(xmpp_server_key_, "DEFAULT.xmpp_server_key")) {
         // set defaults
-        xmpp_server_key_ = AgentConstants::contrail_ssl_server_privkey_pem;
+        xmpp_server_key_ = "/etc/contrail/ssl/private/server-privkey.pem";
     }
 
     if (!GetValueFromTree<string>(xmpp_ca_cert_, "DEFAULT.xmpp_ca_cert")) {
         // set defaults
-        xmpp_ca_cert_ = AgentConstants::contrail_ssl_certs_ca_cert_pem;
+        xmpp_ca_cert_ = "/etc/contrail/ssl/certs/ca-cert.pem";
     }
 
     if (!GetValueFromTree<bool>(xmpp_dns_auth_enable_,
@@ -1147,7 +1136,8 @@ static bool ValidateInterface(bool test_mode, const std::string &ifname,
     if (test_mode) {
         return true;
     }
-#ifndef _WINDOWS
+
+#ifndef _WIN32
     int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
     assert(fd >= 0);
 
@@ -1179,6 +1169,7 @@ static bool ValidateInterface(bool test_mode, const std::string &ifname,
         }
     }
 #endif
+
     return true;
 }
 
@@ -1499,11 +1490,11 @@ AgentParam::AgentParam(bool enable_flow_options,
          "Enable Xmpp over TLS")
         ("DEFAULT.xmpp_server_cert",
           opt::value<string>()->default_value(
-          AgentConstants::contrail_ssl_certs_server_pem),
+          "/etc/contrail/ssl/certs/server.pem"),
           "XMPP Server ssl certificate")
         ("DEFAULT.xmpp_server_key",
           opt::value<string>()->default_value(
-          AgentConstants::contrail_ssl_server_privkey_pem),
+          "/etc/contrail/ssl/private/server-privkey.pem"),
           "XMPP Server ssl private key")
         ("DEFAULT.xmpp_ca_cert",
           opt::value<string>()->default_value(

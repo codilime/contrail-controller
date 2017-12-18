@@ -1,18 +1,9 @@
-void DeleteTapByName(const char* if_name) {
-    // TODO(WINDOWS) JW-1115
-}
-
 void DeleteTap(int fd) {
     // TODO(WINDOWS) JW-1115
 }
 
 void DeleteTapIntf(const int fd[], int count) {
     // TODO(WINDOWS) JW-1115
-}
-
-static bool InterfaceExists(const char* if_name) {
-    // TODO(WINDOWS) JW-1115
-    return false;
 }
 
 int CreateTap(const char *name) {

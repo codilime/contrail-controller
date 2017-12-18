@@ -184,8 +184,8 @@ void AgentXmppChannel::ReceiveEvpnUpdate(XmlPugi *pugi) {
                 CONTROLLER_INFO_TRACE(Trace, GetBgpPeerName(), vrf_name,
                                             "EVPN Delete Node id:" + id);
 
-                char *buff = new char[id.length() + 1];
-                strcpy(buff, id.c_str());
+                boost::scoped_array<char> buff(new char[id.length() + 1]);
+                strcpy(buff.get(), id.c_str());
 
                 // retract does not have nlri. Need to decode key fields from
                 // retract id. Format of retract-id expected are:
@@ -203,14 +203,14 @@ void AgentXmppChannel::ReceiveEvpnUpdate(XmlPugi *pugi) {
 
                 // If id has "-", the value before "-" is treated as
                 // ethernet-tag
-                char *token = strtok_r(buff + offset, "-", &saveptr);
+                char *token = strtok_r(buff.get() + offset, "-", &saveptr);
                 if ((strlen(saveptr) != 0) && token) {
                     ethernet_tag = atoi(token);
                     offset += strlen(token) + 1;
                 }
 
                 // Get MAC address. Its delimited by ","
-                token = strtok_r(buff + offset, ",", &saveptr);
+                token = strtok_r(buff.get() + offset, ",", &saveptr);
                 if ((strlen(saveptr) == 0) || (token == NULL)) {
                     CONTROLLER_TRACE(Trace, GetBgpPeerName(), vrf_name,
                                      "Error parsing MAC from retract-id: " +id);
@@ -227,7 +227,7 @@ void AgentXmppChannel::ReceiveEvpnUpdate(XmlPugi *pugi) {
 
                 offset += strlen(token) + 1;
                 IpAddress ip_addr;
-                if (ParseAddress(buff + offset, &ip_addr) < 0) {
+                if (ParseAddress(buff.get() + offset, &ip_addr) < 0) {
                     CONTROLLER_TRACE(Trace, GetBgpPeerName(), vrf_name,
                                      "Error decoding IP address from "
                                      "retract-id: "+id);
@@ -259,7 +259,6 @@ void AgentXmppChannel::ReceiveEvpnUpdate(XmlPugi *pugi) {
                                         ip_addr, ethernet_tag,
                                         new ControllerVmRoute(bgp_peer_id()));
                 }
-                delete[] buff;
             }
         }
         return;

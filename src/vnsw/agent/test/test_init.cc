@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
 
 #include "base/os.h"
 #include "test/test_init.h"
@@ -13,6 +11,7 @@
 #include <uve/test/agent_uve_test.h>
 #include <vrouter/ksync/test/ksync_test.h>
 #include <boost/functional/factory.hpp>
+#include <boost/thread.hpp>
 #include <cmn/agent_factory.h>
 
 namespace opt = boost::program_options;
@@ -25,13 +24,7 @@ void *asio_poll() {
 }
 
 void AsioRun() {
-    try {
-        asio_thread = boost::thread(asio_poll);
-    }
-    catch (const std::exception &e) {
-        LOG(ERROR, std::string("boost::thread failed: ") + std::string(e.what()));
-        assert(0);
-    }
+    asio_thread = boost::thread(asio_poll);
 }
 
 void AsioStop() {

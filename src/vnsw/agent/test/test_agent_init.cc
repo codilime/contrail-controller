@@ -64,13 +64,13 @@ void TestAgentInit::ProcessComputeAddress(AgentParam *param) {
 void TestAgentInit::FactoryInit() {
     AgentObjectFactory::Register<AgentUveBase>(
         boost::forward_adapter<boost::factory<AgentUveBaseTest *> >(
-        boost::factory<AgentUveBaseTest *>()));
+            boost::factory<AgentUveBaseTest *>()));
     AgentObjectFactory::Register<KSync>(
         boost::forward_adapter<boost::factory<KSyncTest *> >(
-        boost::factory<KSyncTest *>()));
+            boost::factory<KSyncTest *>()));
     AgentObjectFactory::Register<FlowStatsCollector>(
         boost::forward_adapter<boost::factory<FlowStatsCollectorTest *> >(
-        boost::factory<FlowStatsCollectorTest *>()));
+            boost::factory<FlowStatsCollectorTest *>()));
 }
 
 // Create the basic modules for agent operation.
@@ -82,11 +82,10 @@ void TestAgentInit::CreateModules() {
                 *agent()->event_manager()->io_service()));
     agent()->pkt()->set_control_interface(pkt0_.get());
 
-	Agent *pAgent = agent();
     uve_.reset(AgentObjectFactory::Create<AgentUveBase>
-               (pAgent, const_cast<uint64_t&>(AgentUveBase::kBandwidthInterval),
-                const_cast<uint32_t&>(TestAgentInit::kDefaultInterval),
-                const_cast<uint32_t&>(TestAgentInit::kIncrementalInterval)));
+               (agent(), AgentUveBase::kBandwidthInterval,
+                TestAgentInit::kDefaultInterval,
+                TestAgentInit::kIncrementalInterval));
     agent()->set_uve(uve_.get());
 
     if (agent()->tsn_enabled() == false) {
