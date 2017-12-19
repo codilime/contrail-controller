@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2017 Juniper Networks, Inc. All rights reserved.
+ */
+
 #include <oper/interface.h>
 
 #include <Iphlpapi.h>
