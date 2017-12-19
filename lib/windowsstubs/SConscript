@@ -9,6 +9,7 @@ buildpath = Dir('.').abspath + '/src'
 files = Glob(buildpath + '/misc/*.cc') + [buildpath + '/sys/ioctl.cc',
                                           buildpath + '/sys/time.cc',
                                           buildpath + '/sys/eventfd.cc',
+                                          buildpath + '/isc/hmacsha.cc',
                                           buildpath + '/strings.cc',
                                           buildpath + '/unistd.cc',
                                           buildpath + '/posix_time.cc',

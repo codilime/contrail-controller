@@ -34,21 +34,6 @@
 #include "services/metadata_client_session.h"
 #include "services/services_sandesh.h"
 
-void isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
-	unsigned int len)
-{
-
-}
-
-void isc_hmacsha256_invalidate(isc_hmacsha256_t *ctx)
-{}
-
-void isc_hmacsha256_update(isc_hmacsha256_t *ctx, const unsigned char *buf,
-	unsigned int len)
-{}
-
-void isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len)
-{}
 ////////////////////////////////////////////////////////////////////////////////
 
 #define METADATA_TRACE(obj, arg)                                               \

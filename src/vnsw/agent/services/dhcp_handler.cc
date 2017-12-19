@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WIN32
-#include <winnw.h>
-#endif
 
 #include <stdint.h>
 #include "base/os.h"

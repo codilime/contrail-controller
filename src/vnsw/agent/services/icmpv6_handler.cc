@@ -2,7 +2,6 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
-#include <memory>
 #include "base/os.h"
 #include <netinet/icmp6.h>
 
@@ -17,11 +16,7 @@
 #include <oper/operdb_init.h>
 #include <oper/path_preference.h>
 #include <oper/vn.h>
-
-#ifdef _WIN32
-#include <netinet/ip6.h>
-#include <winnw.h>
-#endif
+#include <boost/scoped_array.hpp>
 
 const Ip6Address::bytes_type Icmpv6Handler::kPrefix =
     { {0xFF, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0xFF, 0, 0, 0} };
@@ -280,7 +275,7 @@ void Icmpv6Handler::SendIcmpv6Response(uint32_t ifindex, uint32_t vrfindex,
 
     char *buff = (char *)pkt_info_->pkt;
     uint16_t buff_len = pkt_info_->packet_buffer()->data_len();
-    std::auto_ptr<char> icmpv6_payload(new char[icmp_len_]);
+    boost::scoped_array<char> icmpv6_payload(new char[icmp_len_]);
     memcpy(icmpv6_payload.get(),icmp_,icmp_len_);
     uint16_t eth_len = EthHdr(buff, buff_len, ifindex, agent()->vrrp_mac(),
                               dest_mac, ETHERTYPE_IPV6);

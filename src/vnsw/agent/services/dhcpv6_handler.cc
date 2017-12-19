@@ -3,7 +3,6 @@
  */
 
 #include <stdint.h>
-#include <memory>
 #include "base/os.h"
 #include "vr_defs.h"
 #include "cmn/agent_cmn.h"
@@ -19,12 +18,7 @@
 #include "bind/xmpp_dns_agent.h"
 
 #include <boost/assign/list_of.hpp>
-
-#ifdef _WIN32
-#include <netinet/ip6.h>
-#include <netinet/udp.h>
-#endif
-
+#include <boost/scoped_array.hpp>
 using namespace boost::assign;
 
 // since the DHCPv4 and DHCPv6 option codes mean different things
@@ -539,7 +533,7 @@ uint16_t Dhcpv6Handler::AddDomainNameOption(uint16_t opt_len) {
     if (ipam_type_.ipam_dns_method == "virtual-dns-server") {
         if (is_dns_enabled() && config_.domain_name_.size()) {
             // encode the domain name in the dns encoding format
-            std::auto_ptr<uint8_t> domain_name(new uint8_t[config_.domain_name_.size() * 2 + 2]);
+            boost::scoped_array<uint8_t> domain_name(new uint8_t[config_.domain_name_.size() * 2 + 2]);
             uint16_t len = 0;
             BindUtil::AddName(domain_name.get(), config_.domain_name_, 0, 0, len);
             option_->WriteData(DHCPV6_OPTION_DOMAIN_LIST, len,
