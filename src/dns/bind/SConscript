@@ -7,7 +7,7 @@ import sys
 Import('DnsEnv')
 env = DnsEnv.Clone()
 
-if not sys.platform.startswith('win'):
+if sys.platform != 'win32':
     env.AppendUnique(CCFLAGS='-Wno-return-type')
 
 SandeshGenFiles = env.SandeshGenCpp('bind.sandesh')
