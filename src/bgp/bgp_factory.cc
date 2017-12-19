@@ -48,7 +48,7 @@ FACTORY_STATIC_REGISTER(BgpObjectFactory, RTargetGroupMgr, RTargetGroupMgr);
 FACTORY_STATIC_REGISTER(BgpObjectFactory, PeerCloseManager, PeerCloseManager);
 
 #include "bgp/scheduling_group.h"
-FACTORY_N0_STATIC_REGISTER(BgpObjectFactory, SchedulingGroup, SchedulingGroup);
+FACTORY_STATIC_REGISTER(BgpObjectFactory, SchedulingGroup, SchedulingGroup);
 
 FACTORY_STATIC_REGISTER(BgpObjectFactory, StateMachine, StateMachine);
 
@@ -56,7 +56,7 @@ FACTORY_STATIC_REGISTER(BgpObjectFactory, StateMachine, StateMachine);
 FACTORY_STATIC_REGISTER(BgpObjectFactory, McastTreeManager, McastTreeManager);
 
 #include "bgp/bgp_message_builder.h"
-FACTORY_N0_STATIC_REGISTER(BgpObjectFactory, BgpMessageBuilder, BgpMessageBuilder);
+FACTORY_STATIC_REGISTER(BgpObjectFactory, BgpMessageBuilder, BgpMessageBuilder);
 
 #include "bgp/routing-instance/route_aggregator.h"
 FACTORY_PARAM_STATIC_REGISTER(BgpObjectFactory, IRouteAggregator,

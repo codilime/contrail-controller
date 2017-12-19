@@ -6,6 +6,8 @@
 // so we need to define it manually
 #define BOOST_FUNCTIONAL_FORWARD_ADAPTER_MAX_ARITY 7
 
+#include <boost/functional/forward_adapter.hpp>
+
 #include <cmn/agent_cmn.h>
 #include <cmn/agent_factory.h>
 #include <init/agent_param.h>
