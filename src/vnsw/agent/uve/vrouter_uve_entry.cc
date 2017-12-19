@@ -1,12 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
 
-#include <boost/asio.hpp>
-#include <windows.h>
-
-#endif
 #include <sstream>
 #include <fstream>
 #include <uve/vrouter_uve_entry.h>
@@ -213,11 +208,11 @@ bool VrouterUveEntry::SendVrouterMsg() {
         uint64_t diff_secs = diff_time / 1000000;
         if (diff_secs) {
             //Flow setup/delete rate are always sent
-            if (created_flows && agent_->stats()) {
+            if (created_flows) {
                 max_add_rate = agent_->stats()->max_flow_adds_per_second();
                 min_add_rate = agent_->stats()->min_flow_adds_per_second();
             }
-            if (aged_flows && agent_->stats()) {
+            if (aged_flows) {
                 max_del_rate = agent_->stats()->max_flow_deletes_per_second();
                 min_del_rate = agent_->stats()->min_flow_deletes_per_second();
             }
@@ -229,18 +224,14 @@ bool VrouterUveEntry::SendVrouterMsg() {
             flow_rate.set_deleted_flows(aged_flows);
             flow_rate.set_max_flow_deletes_per_second(max_del_rate);
             flow_rate.set_min_flow_deletes_per_second(min_del_rate);
-			if(agent_->pkt() && agent_->pkt()->get_flow_proto())
-				   flow_rate.set_active_flows(agent_->pkt()->get_flow_proto()->FlowCount());
+            flow_rate.set_active_flows(agent_->pkt()->get_flow_proto()->
+                                       FlowCount());
             stats.set_flow_rate(flow_rate);
-			if (agent_->stats())
-			{
-				agent_->stats()->ResetFlowAddMinMaxStats(cur_time);
-				agent_->stats()->ResetFlowDelMinMaxStats(cur_time);
-				prev_flow_created_ = agent_->stats()->flow_created();
-				prev_flow_aged_ = agent_->stats()->flow_aged();
-			}
-			prev_flow_setup_rate_export_time_ = cur_time;
-
+            agent_->stats()->ResetFlowAddMinMaxStats(cur_time);
+            agent_->stats()->ResetFlowDelMinMaxStats(cur_time);
+            prev_flow_setup_rate_export_time_ = cur_time;
+            prev_flow_created_ = agent_->stats()->flow_created();
+            prev_flow_aged_ = agent_->stats()->flow_aged();
         }
     } else {
         prev_flow_setup_rate_export_time_ = cur_time;

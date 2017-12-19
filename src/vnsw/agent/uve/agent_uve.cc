@@ -1,8 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
+
 #include <base/cpuinfo.h>
 #include <db/db.h>
 #include <cmn/agent_cmn.h>

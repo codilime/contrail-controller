@@ -1,12 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#ifdef _WINDOWS
 
-#include <boost/asio.hpp>
-#include <windows.h>
-
-#endif
 #include <uve/agent_uve_stats.h>
 #include <uve/vn_uve_table.h>
 #include <uve/vn_uve_entry.h>
