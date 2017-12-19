@@ -7,13 +7,12 @@
 
 #include <memory>
 #include <vector>
+#include <unistd.h>
 #include <boost/function.hpp>
 #include <boost/intrusive_ptr.hpp>
 #include <tbb/atomic.h>
-#include <unistd.h>
 
 #include "base/util.h"
-#include "winutils.h"
 
 class DB;
 class DBClient;
