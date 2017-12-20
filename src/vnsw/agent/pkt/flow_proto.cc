@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
+
 #include <net/address_util.h>
 #include <boost/functional/hash.hpp>
 #include <init/agent_param.h>
@@ -14,6 +15,7 @@
 #include "flow_mgmt_dbclient.h"
 #include "flow_mgmt.h"
 #include "flow_event.h"
+#include <strings.h>
 
 static void UpdateStats(FlowEvent *event, FlowStats *stats);
 

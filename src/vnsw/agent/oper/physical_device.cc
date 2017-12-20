@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <string>
+#include <strings.h>
 #include <multicast_types.h>
 
 using std::string;

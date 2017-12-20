@@ -6,6 +6,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <cmn/agent_cmn.h>
 
+#include <base/os.h>
 #include <base/parse_object.h>
 #include <base/util.h>
 #include <ifmap/ifmap_link.h>
