@@ -5,7 +5,12 @@
 #ifndef __HTPP_CURL_INCLUDE__
 #define __HTPP_CURL_INCLUDE__
 
-#include <boost/config.hpp>
+#ifdef _WIN32
+#define NOEXCEPT noexcept
+#else
+#define NOEXCEPT
+#endif
+
 #include <curl/curl.h>
 
 /* Global information, common to all connections */
@@ -38,7 +43,7 @@ typedef struct _SockInfo
 class CurlErrorCategory : public boost::system::error_category
 {
  public:
-    virtual const char *name() const BOOST_NOEXCEPT { return "http_curl"; }
+    virtual const char *name() const NOEXCEPT { return "http_curl"; }
     virtual std::string message( int ev ) const {
         return curl_easy_strerror((CURLcode)ev);
     }
