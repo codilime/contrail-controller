@@ -9,7 +9,7 @@
 #include "base/task.h"
 #include "base/task_annotations.h"
 
-#include <boost/thread.hpp>
+#include <pthread.h>
 #include <sandesh/sandesh.h>
 
 #include "testing/gunit.h"

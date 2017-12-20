@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
-#include <boost/asio.hpp>
-#include <windows.h>
 
 #include "ifmap/ifmap_server_table.h"
 
@@ -32,10 +30,10 @@ IFMapServerTable::RequestData::RequestData() {
 // auto_ptr appears to be generated when needed by an enclosing type.
 // gcc appears to behave differently.
 IFMapServerTable::RequestData::~RequestData() {
-//#if defined(__GNUC__) && (__GNUC_PREREQ(4, 2) > 0)
+#if defined(__GNUC__) && __GNUC_PREREQ(4, 2)
     boost::has_virtual_destructor<AutogenProperty>::type has_destructor;
     assert(has_destructor);
-//#endif
+#endif
     boost::checked_delete(content.release());
 }
 
