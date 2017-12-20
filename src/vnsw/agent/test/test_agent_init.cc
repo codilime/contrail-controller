@@ -2,9 +2,11 @@
  * Copyright (c) 2013 Juniper Networks, Inc. All rights reserved.
  */
 
-// in Boost this macro defaults to 6 but we're using FACTORY_TYPE_N7,
+// in Boost this macro defaults to 6 but we're using FACTORY_TYPE_N8,
 // so we need to define it manually
-#define BOOST_FUNCTIONAL_FORWARD_ADAPTER_MAX_ARITY 7
+#define BOOST_FUNCTIONAL_FORWARD_ADAPTER_MAX_ARITY 8
+
+#include <boost/functional/forward_adapter.hpp>
 
 #include <base/test/task_test_util.h>
 
@@ -19,7 +21,6 @@
 #include <uve/agent_uve.h>
 #include <uve/test/agent_uve_test.h>
 #include <vrouter/flow_stats/test/flow_stats_collector_test.h>
-#include <boost/functional/forward_adapter.hpp>
 
 #include "test_agent_init.h"
 TestAgentInit::TestAgentInit() : ContrailInitCommon() {
