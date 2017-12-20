@@ -89,7 +89,7 @@ SandeshGenFiles += env.SandeshGenCpp('acl.sandesh')
 SandeshGenFiles += env.SandeshGenCpp('prouter.sandesh')
 
 SandeshGenSrcs = env.ExtractCpp(SandeshGenFiles)
-env.Depends(SandeshGenSrcs,'#build/lib/' + env['LIBPREFIX'] + 'sandesh' + env['LIBSUFFIX'])
+env.Depends(SandeshGenSrcs,'#/build/lib/' + env['LIBPREFIX'] + 'sandesh' + env['LIBSUFFIX'])
 SandeshGenObjs = env.Object(SandeshGenSrcs)
 
 StatsSandeshGenFiles = env.SandeshGenCpp('stats_interval.sandesh')
