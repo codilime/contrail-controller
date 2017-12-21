@@ -7,6 +7,8 @@
 
 #ifdef _WIN32
 #define NOEXCEPT noexcept
+#elif __cplusplus > 199711L
+#define NOEXCEPT noexcept
 #else
 #define NOEXCEPT
 #endif
