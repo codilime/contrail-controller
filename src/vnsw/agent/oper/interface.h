@@ -13,10 +13,7 @@
 #include <cmn/agent_cmn.h>
 #include <cmn/index_vector.h>
 #include <oper_db.h>
-
-#ifdef _WIN32
-#include <Ifdef.h>
-#endif
+#include <boost/optional.hpp>
 
 struct InterfaceData;
 class VmInterface;
@@ -183,6 +180,8 @@ protected:
     boost::optional<IfGuid> os_guid_;
 
 private:
+    void GetOsSpecificParams(Agent *agent, const std::string &name);
+
     friend class InterfaceTable;
     InterfaceTable *table_;
     DISALLOW_COPY_AND_ASSIGN(Interface);
