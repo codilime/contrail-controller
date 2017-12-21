@@ -22,7 +22,7 @@ class IFMapDependencyManager;
 class Interface : AgentRefCount<Interface>, public AgentOperDBEntry {
 public:
     // Used on Windows as operating system identifier's type
-    using IfGuid = boost::uuids::uuid;
+    typedef boost::uuids::uuid IfGuid;
 
     // Type of interfaces supported
     enum Type {
