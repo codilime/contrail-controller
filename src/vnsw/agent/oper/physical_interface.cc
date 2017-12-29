@@ -130,13 +130,12 @@ void PhysicalInterface::PostAdd() {
         close(fd);
         return;
     }
+
+    close(fd);
+#else
+    closesocket(fd);
 #endif
 
-#ifdef _WIN32
-    closesocket(fd);
-#else
-    close(fd);
-#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////
