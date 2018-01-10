@@ -25,6 +25,7 @@ def call_powershell(cmds):
 LEFT_DEV_PREFIX = 'int'
 RIGHT_DEV_PREFIX = 'gw'
 WINGW_PREFIX = 'contrail-wingw-'
+DEBUG_SCRIPT = "DEBUG_VROUTER_HYPERV_SCRIPTS" in os.environ
 
 
 class BlockingSSHClient(paramiko.SSHClient):
@@ -224,6 +225,9 @@ class SNATVirtualMachine(object):
         inject_ip_script_path = os.path.join(this_script_dir,
                                              self.INJECT_IP_SCRIPT_REL_PATH)
         retry_num = 0
+        if DEBUG_SCRIPT:
+            print("Injecting IP to VM. Trying %d times..." % self.NUM_INJECT_RETRIES)
+
         while retry_num < self.NUM_INJECT_RETRIES:
             retry_num += 1
             time.sleep(self.WAIT_FOR_VM_TIME_SEC)
@@ -235,8 +239,12 @@ class SNATVirtualMachine(object):
                                  "-Subnet", self.MGMT_SUBNET_MASK])
                 call_powershell(["ping", str(mgmt_ip), "-n", "1"])
             except subprocess.CalledProcessError:
+                if DEBUG_SCRIPT:
+                    print("Failed %d times" % retry_num)
                 continue
             else:
+                if DEBUG_SCRIPT:
+                    print("Injecting IP to VM: SUCCESS")
                 break
         if retry_num == self.NUM_INJECT_RETRIES:
             raise RuntimeError("Waited for SNAT VM for too long")
@@ -491,7 +499,8 @@ class VRouterHyperV(object):
             snat_vm.set_snat(mgmt_ip)
             snat_vm.register()
         except:
-            snat_vm.cleanup()
+            if not DEBUG_SCRIPT:
+                snat_vm.cleanup()
             raise
 
     def destroy(self):
